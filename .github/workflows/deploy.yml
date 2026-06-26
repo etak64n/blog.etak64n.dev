@@ -1,0 +1,212 @@
+name: Deploy Zola to Cloudflare Pages
+run-name: "Zola → CF Pages • ${{ github.ref_name }} #${{ github.run_number }}"
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+  CF_PAGES_PROJECT: etak64n-blog
+  BUILD_DIR: public
+
+jobs:
+  # --- 1) Build ---
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install Zola
+        uses: taiki-e/install-action@v2
+        with:
+          tool: zola@latest
+
+      - name: Build
+        run: zola build
+
+      - name: Upload artifact (site)
+        uses: actions/upload-artifact@v4
+        with:
+          name: zola-public
+          path: ${{ env.BUILD_DIR }}
+          if-no-files-found: error
+          retention-days: 1
+
+  # --- 2) Deploy ---
+  deploy:
+    needs: build
+    if: ${{ needs.build.result == 'success' && (github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    timeout-minutes: 10
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: zola-public
+          path: ${{ env.BUILD_DIR }}
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken:  ${{ env.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy ${{ env.BUILD_DIR }} --project-name=${{ env.CF_PAGES_PROJECT }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+  # --- 3) Notify（1回通知・1つのEmbedに統合／ZWSP修正・ProjectはGitHubへ） ---
+  notify:
+    needs: [build, deploy]
+    if: ${{ always() && (github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Verify DISCORD_WEBHOOK_URL is set
+        run: |
+          set -euo pipefail
+          if [ -z "${DISCORD_WEBHOOK_URL:-}" ] || [ -z "$(printf '%s' "$DISCORD_WEBHOOK_URL" | tr -d '[:space:]')" ]; then
+            echo "::error::DISCORD_WEBHOOK_URL secret is not set. Configure it in Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
+      - name: Notify Discord (single embed, horizontal fields)
+        env:
+          BUILD_RES: ${{ needs.build.result }}
+          DEPLOY_RES: ${{ needs.deploy.result }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          HEAD_MSG: ${{ github.event.head_commit.message }}
+          REF_NAME: ${{ github.ref_name }}
+          HEAD_REF: ${{ github.head_ref }}
+          IS_FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+
+          BUILD="${BUILD_RES:-unknown}"
+          DEPLOY="${DEPLOY_RES:-skipped}"
+          EVENT="${EVENT_NAME:-push}"
+
+          case "$BUILD" in
+            success) BUILD_TEXT="Success" ;;
+            failure) BUILD_TEXT="Failed"  ;;
+            *)       BUILD_TEXT="$BUILD"  ;;
+          esac
+
+          if [ "$DEPLOY" = "success" ]; then
+            DEPLOY_TEXT="Success"
+          elif [ "$DEPLOY" = "failure" ]; then
+            DEPLOY_TEXT="Failed"
+          else
+            REASON=""
+            if [ "$EVENT" = "pull_request" ] && [ "${IS_FORK}" = "true" ]; then
+              REASON="(forked PR / secrets unavailable)"
+            elif [ "$BUILD" != "success" ]; then
+              REASON="(build not successful)"
+            fi
+            DEPLOY_TEXT="Skipped ${REASON}"
+          fi
+
+          # 色（Embed 全体：ワースト優先）
+          if   [ "$BUILD"  = "failure" ]; then SUMMARY_COLOR=15158332     # red
+          elif [ "$DEPLOY" = "failure" ]; then SUMMARY_COLOR=15105570     # orange
+          elif [ "$BUILD"  != "success" ] || [ "$DEPLOY" != "success" ]; then SUMMARY_COLOR=16705372  # yellow
+          else SUMMARY_COLOR=3066993; fi                                  # green
+
+          SUBJECT="${HEAD_MSG:-Workflow summary}"
+          [ "$EVENT" = "pull_request" ] && [ -n "${PR_TITLE:-}" ] && SUBJECT="$PR_TITLE"
+          SUBJECT=$(printf '%s' "$SUBJECT" | tr -d '\r' | head -n1 | cut -c1-120)
+
+          BRANCH="${REF_NAME}"; [ "$EVENT" = "pull_request" ] && [ -n "${HEAD_REF:-}" ] && BRANCH="$HEAD_REF"
+          SHORT_SHA="${GITHUB_SHA::7}"
+
+          RUN_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          COMMIT_URL="https://github.com/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}"
+          REPO_URL="https://github.com/${GITHUB_REPOSITORY}"
+          BRANCH_URL="https://github.com/${GITHUB_REPOSITORY}/tree/${BRANCH}"
+          ACTOR_URL="https://github.com/${ACTOR}"
+          SITE_URL="https://${CF_PAGES_PROJECT}.pages.dev"
+          TITLE="Zola → CF Pages • ${BRANCH} #${GITHUB_RUN_NUMBER}"
+          NOW_UTC="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          # ★ ZWSP は Bash の ANSI-C 形式で“実体”を渡す（表示されない）
+          SPACER=$'\u200B'
+
+          jq -n \
+            --arg title "$TITLE" --arg run_url "$RUN_URL" --arg subject "$SUBJECT" \
+            --arg now "$NOW_UTC" --arg repo "$GITHUB_REPOSITORY" --arg repo_url "$REPO_URL" \
+            --arg branch "$BRANCH" --arg branch_url "$BRANCH_URL" \
+            --arg short_sha "$SHORT_SHA" --arg commit_url "$COMMIT_URL" \
+            --arg actor "$ACTOR" --arg actor_url "$ACTOR_URL" \
+            --arg build_text "$BUILD_TEXT" --arg deploy_text "$DEPLOY_TEXT" \
+            --arg run_number "$GITHUB_RUN_NUMBER" \
+            --arg spacer "$SPACER" \
+            --arg site_url "$SITE_URL" \
+            --argjson color "$SUMMARY_COLOR" \
+            '{
+              username: "GitHub Actions",
+              avatar_url: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+              allowed_mentions: {parse: []},
+              embeds: [
+                {
+                  title: $title, url: $run_url, description: $subject,
+                  color: $color, timestamp: $now,
+                  author: {name: $repo, url: $repo_url},
+                  thumbnail: {url: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"},
+                  fields: [
+                    # 1段目（横並び）
+                    {name:"Build",  value:$build_text,  inline:true},
+                    {name:"Deploy", value:$deploy_text, inline:true},
+                    {name:$spacer,  value:$spacer,      inline:true},
+
+                    # 2段目
+                    {name:"Branch", value:("["+$branch+"]("+$branch_url+")"), inline:true},
+                    {name:"Commit", value:("["+$short_sha+"]("+$commit_url+")"), inline:true},
+                    {name:$spacer,  value:$spacer, inline:true},
+
+                    # 3段目（★ Project は GitHub リポジトリにリンク）
+                    {name:"Actor",   value:("["+$actor+"]("+$actor_url+")"), inline:true},
+                    {name:"Project", value:("["+$repo+"]("+$repo_url+")"),   inline:true},
+                    {name:$spacer,   value:$spacer, inline:true}
+                  ],
+                  footer:{text: ("Run #"+$run_number)}
+                }
+              ],
+              components: [{
+                type: 1,
+                components: [
+                  {type:2, style:5, label:"Open Run",    url:$run_url},
+                  {type:2, style:5, label:"View Commit", url:$commit_url},
+                  {type:2, style:5, label:"Repository",  url:$repo_url},
+                  {type:2, style:5, label:"View Site",   url:$site_url}
+                ]
+              }]
+            }' > payload.json
+
+          code=$(curl -sS -o resp.json -w "%{http_code}" -H 'Content-Type: application/json' -d @payload.json "$DISCORD_WEBHOOK_URL")
+          echo "Discord HTTP: $code"
+          if [ "$code" != "200" ] && [ "$code" != "204" ]; then
+            echo "::error::Discord webhook error (HTTP $code)"
+            echo "Response body:"; cat resp.json || true
+            echo "Payload preview:"; head -c 500 payload.json; echo
+            exit 1
+          fi
+          echo "Discord OK"

@@ -1,0 +1,69 @@
+{#
+  Usage (page-bundle/local images only):
+  {{ img(src="screenshot.png", alt="caption", percent=0.6, class="", style="", link=true, caption="…") }}
+  - One-size policy: resize to a percentage of the original width (default 60%).
+  - Generates responsive srcset at ~480 / ~800 / target widths (deduped).
+  - Never upscales; always outputs width/height.
+  - `percent` optional, defaults to 0.6.
+#}
+{% set _percent = percent | default(value=0.6) %}
+{% set _link = link | default(value=false) %}
+{% set _alt = alt | default(value="") %}
+
+{# Build content-relative path to the colocated asset (page bundle) #}
+{% set rel = page.relative_path | default(value="") %}
+{% set base = rel | replace(from="index.md", to="") %}
+{% set content_path = "@/" ~ base ~ src %}
+
+{# Get original metadata and compute 60% width (no upscaling) #}
+{% set parts = src | lower | split(pat=".") %}
+{% set _ext = parts | last %}
+{% set is_svg = _ext == "svg" %}
+
+{% if is_svg %}
+  {% set final_url = src %}
+  <figure class="img">
+    {% if _link %}
+    <a href="{{ final_url }}" target="_blank" rel="noopener">
+      <img src="{{ final_url }}" alt="{{ _alt }}" loading="lazy" decoding="async" class="{{ class | default(value="") }}" style="{{ style | default(value="") }}">
+    </a>
+    {% else %}
+    <img src="{{ final_url }}" alt="{{ _alt }}" loading="lazy" decoding="async" class="{{ class | default(value="") }}" style="{{ style | default(value="") }}">
+    {% endif %}
+    {% if caption %}<figcaption class="muted">{{ caption }}</figcaption>{% endif %}
+  </figure>
+{% else %}
+  {% set meta = get_image_metadata(path=content_path) %}
+  {% set base_w = meta.width | default(value=1200) %}
+  {% set calc = (base_w * _percent) | int %}
+  {% if calc < 1 %}{% set calc = 1 %}{% endif %}
+  {% set w_sm = calc %}
+  {% if w_sm > 480 %}{% set w_sm = 480 %}{% endif %}
+  {% set w_md = calc %}
+  {% if w_md > 800 %}{% set w_md = 800 %}{% endif %}
+
+  {% set img_sm = resize_image(path=content_path, width=w_sm, op="fit_width") %}
+  {% set img_md = resize_image(path=content_path, width=w_md, op="fit_width") %}
+  {% set img_lg = resize_image(path=content_path, width=calc, op="fit_width") %}
+
+  {% set final_url = img_lg.url %}
+  {% set final_w = img_lg.width %}
+  {% set final_h = img_lg.height %}
+
+  <figure class="img">
+    {% if _link %}
+    <a href="{{ final_url }}" target="_blank" rel="noopener">
+      <img src="{{ final_url }}"
+           srcset="{{ img_sm.url }} {{ img_sm.width }}w, {{ img_md.url }} {{ img_md.width }}w{% if img_lg.width != img_md.width %}, {{ img_lg.url }} {{ img_lg.width }}w{% endif %}"
+           sizes="100vw"
+           width="{{ final_w }}" height="{{ final_h }}" alt="{{ _alt }}" loading="lazy" decoding="async" class="{{ class | default(value="") }}" style="{{ style | default(value="") }}">
+    </a>
+    {% else %}
+    <img src="{{ final_url }}"
+         srcset="{{ img_sm.url }} {{ img_sm.width }}w, {{ img_md.url }} {{ img_md.width }}w{% if img_lg.width != img_md.width %}, {{ img_lg.url }} {{ img_lg.width }}w{% endif %}"
+         sizes="100vw"
+         width="{{ final_w }}" height="{{ final_h }}" alt="{{ _alt }}" loading="lazy" decoding="async" class="{{ class | default(value="") }}" style="{{ style | default(value="") }}">
+    {% endif %}
+    {% if caption %}<figcaption class="muted">{{ caption }}</figcaption>{% endif %}
+  </figure>
+{% endif %}

@@ -1,0 +1,22 @@
+{
+  "name": "etak64n-blog",
+  "version": "1.0.0",
+  "description": "Blog built with Zola + Tera, managed with Sveltia CMS, deployed to Cloudflare Pages via GitHub Actions.",
+  "scripts": {
+    "dev": "zola serve",
+    "build": "zola build",
+    "preview": "zola build && wrangler pages dev public"
+  },
+  "devDependencies": {
+    "wrangler": "^4.20.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/etak64n/etak64n-blog.git"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/etak64n/etak64n-blog/issues"
+  },
+  "homepage": "https://github.com/etak64n/etak64n-blog#readme"
+}

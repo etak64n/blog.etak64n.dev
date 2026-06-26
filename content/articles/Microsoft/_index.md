@@ -1,0 +1,4 @@
++++
+title = "Microsoft"
+transparent = true
++++

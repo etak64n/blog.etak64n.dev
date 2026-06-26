@@ -1,0 +1,4 @@
++++
+title = "Nintendo"
+transparent = true
++++

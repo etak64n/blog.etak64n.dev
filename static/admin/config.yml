@@ -1,0 +1,606 @@
+# Sveltia CMS 設定 — etak64n's blog (Zola)
+# docs: https://sveltiacms.app/en/docs/
+#
+# 記事は content/articles/{Category}/{slug}/index.md の page bundle 構成。
+# 画像は各記事フォルダに co-located でアップロードされる (media_folder: '')。
+# frontmatter は Zola 互換の TOML (+++)。
+
+backend:
+  name: github
+  repo: etak64n/etak64n-blog
+  branch: main
+  # OAuth Worker (sveltia-cms-auth) の URL に置き換える。README 参照。
+  base_url: https://sveltia-cms-auth.CHANGE-ME.workers.dev
+
+# 日本語 UI
+locale: ja
+
+# グローバルなメディア既定値 (ヒーロー画像のアップロード先など)。
+# 各記事の本文画像はコレクション側の media_folder: '' で co-located になる。
+media_folder: static/images/uploads
+public_folder: /images/uploads
+
+# 記事の slug は日本語タイトルでも安全になるよう調整
+slug:
+  encoding: ascii
+  clean_accents: true
+
+collections:
+
+  - name: ai
+    label: "AI"
+    label_singular: "AI の記事"
+    folder: content/articles/AI
+    path: "{{slug}}/index"
+    extension: md
+    format: toml-frontmatter
+    media_folder: ""
+    public_folder: ""
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}}"
+    sortable_fields: [date, updated, title]
+    fields:
+      - { name: title, label: タイトル, widget: string }
+      - { name: date, label: 公開日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: updated, label: 更新日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: draft, label: 下書き, widget: boolean, default: true }
+      - name: taxonomies
+        label: 分類
+        widget: object
+        fields:
+          - { name: categories, label: カテゴリ, widget: list, default: ["AI"] }
+          - { name: tags, label: タグ, widget: list, required: false, default: [] }
+      - { name: math, label: "数式 (KaTeX)", widget: boolean, default: false }
+      - name: extra
+        label: Extra
+        widget: object
+        fields:
+          - { name: author, label: 著者, widget: string, default: "etak64n" }
+          - { name: hero, label: ヒーロー画像パス, widget: string, default: "/images/hero/placeholder.svg" }
+          - { name: toc, label: 目次, widget: boolean, default: true }
+      - { name: body, label: 本文, widget: markdown }
+
+  - name: application
+    label: "Application"
+    label_singular: "Application の記事"
+    folder: content/articles/Application
+    path: "{{slug}}/index"
+    extension: md
+    format: toml-frontmatter
+    media_folder: ""
+    public_folder: ""
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}}"
+    sortable_fields: [date, updated, title]
+    fields:
+      - { name: title, label: タイトル, widget: string }
+      - { name: date, label: 公開日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: updated, label: 更新日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: draft, label: 下書き, widget: boolean, default: true }
+      - name: taxonomies
+        label: 分類
+        widget: object
+        fields:
+          - { name: categories, label: カテゴリ, widget: list, default: ["Application"] }
+          - { name: tags, label: タグ, widget: list, required: false, default: [] }
+      - { name: math, label: "数式 (KaTeX)", widget: boolean, default: false }
+      - name: extra
+        label: Extra
+        widget: object
+        fields:
+          - { name: author, label: 著者, widget: string, default: "etak64n" }
+          - { name: hero, label: ヒーロー画像パス, widget: string, default: "/images/hero/placeholder.svg" }
+          - { name: toc, label: 目次, widget: boolean, default: true }
+      - { name: body, label: 本文, widget: markdown }
+
+  - name: aws
+    label: "AWS"
+    label_singular: "AWS の記事"
+    folder: content/articles/AWS
+    path: "{{slug}}/index"
+    extension: md
+    format: toml-frontmatter
+    media_folder: ""
+    public_folder: ""
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}}"
+    sortable_fields: [date, updated, title]
+    fields:
+      - { name: title, label: タイトル, widget: string }
+      - { name: date, label: 公開日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: updated, label: 更新日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: draft, label: 下書き, widget: boolean, default: true }
+      - name: taxonomies
+        label: 分類
+        widget: object
+        fields:
+          - { name: categories, label: カテゴリ, widget: list, default: ["AWS"] }
+          - { name: tags, label: タグ, widget: list, required: false, default: [] }
+      - { name: math, label: "数式 (KaTeX)", widget: boolean, default: false }
+      - name: extra
+        label: Extra
+        widget: object
+        fields:
+          - { name: author, label: 著者, widget: string, default: "etak64n" }
+          - { name: hero, label: ヒーロー画像パス, widget: string, default: "/images/hero/placeholder.svg" }
+          - { name: toc, label: 目次, widget: boolean, default: true }
+      - { name: body, label: 本文, widget: markdown }
+
+  - name: baas
+    label: "BaaS"
+    label_singular: "BaaS の記事"
+    folder: content/articles/BaaS
+    path: "{{slug}}/index"
+    extension: md
+    format: toml-frontmatter
+    media_folder: ""
+    public_folder: ""
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}}"
+    sortable_fields: [date, updated, title]
+    fields:
+      - { name: title, label: タイトル, widget: string }
+      - { name: date, label: 公開日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: updated, label: 更新日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: draft, label: 下書き, widget: boolean, default: true }
+      - name: taxonomies
+        label: 分類
+        widget: object
+        fields:
+          - { name: categories, label: カテゴリ, widget: list, default: ["BaaS"] }
+          - { name: tags, label: タグ, widget: list, required: false, default: [] }
+      - { name: math, label: "数式 (KaTeX)", widget: boolean, default: false }
+      - name: extra
+        label: Extra
+        widget: object
+        fields:
+          - { name: author, label: 著者, widget: string, default: "etak64n" }
+          - { name: hero, label: ヒーロー画像パス, widget: string, default: "/images/hero/placeholder.svg" }
+          - { name: toc, label: 目次, widget: boolean, default: true }
+      - { name: body, label: 本文, widget: markdown }
+
+  - name: claude
+    label: "Claude"
+    label_singular: "Claude の記事"
+    folder: content/articles/Claude
+    path: "{{slug}}/index"
+    extension: md
+    format: toml-frontmatter
+    media_folder: ""
+    public_folder: ""
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}}"
+    sortable_fields: [date, updated, title]
+    fields:
+      - { name: title, label: タイトル, widget: string }
+      - { name: date, label: 公開日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: updated, label: 更新日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: draft, label: 下書き, widget: boolean, default: true }
+      - name: taxonomies
+        label: 分類
+        widget: object
+        fields:
+          - { name: categories, label: カテゴリ, widget: list, default: ["Claude"] }
+          - { name: tags, label: タグ, widget: list, required: false, default: [] }
+      - { name: math, label: "数式 (KaTeX)", widget: boolean, default: false }
+      - name: extra
+        label: Extra
+        widget: object
+        fields:
+          - { name: author, label: 著者, widget: string, default: "etak64n" }
+          - { name: hero, label: ヒーロー画像パス, widget: string, default: "/images/hero/placeholder.svg" }
+          - { name: toc, label: 目次, widget: boolean, default: true }
+      - { name: body, label: 本文, widget: markdown }
+
+  - name: clerk
+    label: "Clerk"
+    label_singular: "Clerk の記事"
+    folder: content/articles/Clerk
+    path: "{{slug}}/index"
+    extension: md
+    format: toml-frontmatter
+    media_folder: ""
+    public_folder: ""
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}}"
+    sortable_fields: [date, updated, title]
+    fields:
+      - { name: title, label: タイトル, widget: string }
+      - { name: date, label: 公開日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: updated, label: 更新日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: draft, label: 下書き, widget: boolean, default: true }
+      - name: taxonomies
+        label: 分類
+        widget: object
+        fields:
+          - { name: categories, label: カテゴリ, widget: list, default: ["Clerk"] }
+          - { name: tags, label: タグ, widget: list, required: false, default: [] }
+      - { name: math, label: "数式 (KaTeX)", widget: boolean, default: false }
+      - name: extra
+        label: Extra
+        widget: object
+        fields:
+          - { name: author, label: 著者, widget: string, default: "etak64n" }
+          - { name: hero, label: ヒーロー画像パス, widget: string, default: "/images/hero/placeholder.svg" }
+          - { name: toc, label: 目次, widget: boolean, default: true }
+      - { name: body, label: 本文, widget: markdown }
+
+  - name: cloudflare
+    label: "Cloudflare"
+    label_singular: "Cloudflare の記事"
+    folder: content/articles/Cloudflare
+    path: "{{slug}}/index"
+    extension: md
+    format: toml-frontmatter
+    media_folder: ""
+    public_folder: ""
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}}"
+    sortable_fields: [date, updated, title]
+    fields:
+      - { name: title, label: タイトル, widget: string }
+      - { name: date, label: 公開日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: updated, label: 更新日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: draft, label: 下書き, widget: boolean, default: true }
+      - name: taxonomies
+        label: 分類
+        widget: object
+        fields:
+          - { name: categories, label: カテゴリ, widget: list, default: ["Cloudflare"] }
+          - { name: tags, label: タグ, widget: list, required: false, default: [] }
+      - { name: math, label: "数式 (KaTeX)", widget: boolean, default: false }
+      - name: extra
+        label: Extra
+        widget: object
+        fields:
+          - { name: author, label: 著者, widget: string, default: "etak64n" }
+          - { name: hero, label: ヒーロー画像パス, widget: string, default: "/images/hero/placeholder.svg" }
+          - { name: toc, label: 目次, widget: boolean, default: true }
+      - { name: body, label: 本文, widget: markdown }
+
+  - name: github
+    label: "GitHub"
+    label_singular: "GitHub の記事"
+    folder: content/articles/GitHub
+    path: "{{slug}}/index"
+    extension: md
+    format: toml-frontmatter
+    media_folder: ""
+    public_folder: ""
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}}"
+    sortable_fields: [date, updated, title]
+    fields:
+      - { name: title, label: タイトル, widget: string }
+      - { name: date, label: 公開日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: updated, label: 更新日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: draft, label: 下書き, widget: boolean, default: true }
+      - name: taxonomies
+        label: 分類
+        widget: object
+        fields:
+          - { name: categories, label: カテゴリ, widget: list, default: ["GitHub"] }
+          - { name: tags, label: タグ, widget: list, required: false, default: [] }
+      - { name: math, label: "数式 (KaTeX)", widget: boolean, default: false }
+      - name: extra
+        label: Extra
+        widget: object
+        fields:
+          - { name: author, label: 著者, widget: string, default: "etak64n" }
+          - { name: hero, label: ヒーロー画像パス, widget: string, default: "/images/hero/placeholder.svg" }
+          - { name: toc, label: 目次, widget: boolean, default: true }
+      - { name: body, label: 本文, widget: markdown }
+
+  - name: howto
+    label: "Howto"
+    label_singular: "Howto の記事"
+    folder: content/articles/Howto
+    path: "{{slug}}/index"
+    extension: md
+    format: toml-frontmatter
+    media_folder: ""
+    public_folder: ""
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}}"
+    sortable_fields: [date, updated, title]
+    fields:
+      - { name: title, label: タイトル, widget: string }
+      - { name: date, label: 公開日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: updated, label: 更新日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: draft, label: 下書き, widget: boolean, default: true }
+      - name: taxonomies
+        label: 分類
+        widget: object
+        fields:
+          - { name: categories, label: カテゴリ, widget: list, default: ["Howto"] }
+          - { name: tags, label: タグ, widget: list, required: false, default: [] }
+      - { name: math, label: "数式 (KaTeX)", widget: boolean, default: false }
+      - name: extra
+        label: Extra
+        widget: object
+        fields:
+          - { name: author, label: 著者, widget: string, default: "etak64n" }
+          - { name: hero, label: ヒーロー画像パス, widget: string, default: "/images/hero/placeholder.svg" }
+          - { name: toc, label: 目次, widget: boolean, default: true }
+      - { name: body, label: 本文, widget: markdown }
+
+  - name: microsoft
+    label: "Microsoft"
+    label_singular: "Microsoft の記事"
+    folder: content/articles/Microsoft
+    path: "{{slug}}/index"
+    extension: md
+    format: toml-frontmatter
+    media_folder: ""
+    public_folder: ""
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}}"
+    sortable_fields: [date, updated, title]
+    fields:
+      - { name: title, label: タイトル, widget: string }
+      - { name: date, label: 公開日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: updated, label: 更新日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: draft, label: 下書き, widget: boolean, default: true }
+      - name: taxonomies
+        label: 分類
+        widget: object
+        fields:
+          - { name: categories, label: カテゴリ, widget: list, default: ["Microsoft"] }
+          - { name: tags, label: タグ, widget: list, required: false, default: [] }
+      - { name: math, label: "数式 (KaTeX)", widget: boolean, default: false }
+      - name: extra
+        label: Extra
+        widget: object
+        fields:
+          - { name: author, label: 著者, widget: string, default: "etak64n" }
+          - { name: hero, label: ヒーロー画像パス, widget: string, default: "/images/hero/placeholder.svg" }
+          - { name: toc, label: 目次, widget: boolean, default: true }
+      - { name: body, label: 本文, widget: markdown }
+
+  - name: nintendo
+    label: "Nintendo"
+    label_singular: "Nintendo の記事"
+    folder: content/articles/Nintendo
+    path: "{{slug}}/index"
+    extension: md
+    format: toml-frontmatter
+    media_folder: ""
+    public_folder: ""
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}}"
+    sortable_fields: [date, updated, title]
+    fields:
+      - { name: title, label: タイトル, widget: string }
+      - { name: date, label: 公開日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: updated, label: 更新日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: draft, label: 下書き, widget: boolean, default: true }
+      - name: taxonomies
+        label: 分類
+        widget: object
+        fields:
+          - { name: categories, label: カテゴリ, widget: list, default: ["Nintendo"] }
+          - { name: tags, label: タグ, widget: list, required: false, default: [] }
+      - { name: math, label: "数式 (KaTeX)", widget: boolean, default: false }
+      - name: extra
+        label: Extra
+        widget: object
+        fields:
+          - { name: author, label: 著者, widget: string, default: "etak64n" }
+          - { name: hero, label: ヒーロー画像パス, widget: string, default: "/images/hero/placeholder.svg" }
+          - { name: toc, label: 目次, widget: boolean, default: true }
+      - { name: body, label: 本文, widget: markdown }
+
+  - name: openai
+    label: "OpenAI"
+    label_singular: "OpenAI の記事"
+    folder: content/articles/OpenAI
+    path: "{{slug}}/index"
+    extension: md
+    format: toml-frontmatter
+    media_folder: ""
+    public_folder: ""
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}}"
+    sortable_fields: [date, updated, title]
+    fields:
+      - { name: title, label: タイトル, widget: string }
+      - { name: date, label: 公開日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: updated, label: 更新日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: draft, label: 下書き, widget: boolean, default: true }
+      - name: taxonomies
+        label: 分類
+        widget: object
+        fields:
+          - { name: categories, label: カテゴリ, widget: list, default: ["OpenAI"] }
+          - { name: tags, label: タグ, widget: list, required: false, default: [] }
+      - { name: math, label: "数式 (KaTeX)", widget: boolean, default: false }
+      - name: extra
+        label: Extra
+        widget: object
+        fields:
+          - { name: author, label: 著者, widget: string, default: "etak64n" }
+          - { name: hero, label: ヒーロー画像パス, widget: string, default: "/images/hero/placeholder.svg" }
+          - { name: toc, label: 目次, widget: boolean, default: true }
+      - { name: body, label: 本文, widget: markdown }
+
+  - name: security
+    label: "Security"
+    label_singular: "Security の記事"
+    folder: content/articles/Security
+    path: "{{slug}}/index"
+    extension: md
+    format: toml-frontmatter
+    media_folder: ""
+    public_folder: ""
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}}"
+    sortable_fields: [date, updated, title]
+    fields:
+      - { name: title, label: タイトル, widget: string }
+      - { name: date, label: 公開日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: updated, label: 更新日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: draft, label: 下書き, widget: boolean, default: true }
+      - name: taxonomies
+        label: 分類
+        widget: object
+        fields:
+          - { name: categories, label: カテゴリ, widget: list, default: ["Security"] }
+          - { name: tags, label: タグ, widget: list, required: false, default: [] }
+      - { name: math, label: "数式 (KaTeX)", widget: boolean, default: false }
+      - name: extra
+        label: Extra
+        widget: object
+        fields:
+          - { name: author, label: 著者, widget: string, default: "etak64n" }
+          - { name: hero, label: ヒーロー画像パス, widget: string, default: "/images/hero/placeholder.svg" }
+          - { name: toc, label: 目次, widget: boolean, default: true }
+      - { name: body, label: 本文, widget: markdown }
+
+  - name: tools
+    label: "Tools"
+    label_singular: "Tools の記事"
+    folder: content/articles/Tools
+    path: "{{slug}}/index"
+    extension: md
+    format: toml-frontmatter
+    media_folder: ""
+    public_folder: ""
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}}"
+    sortable_fields: [date, updated, title]
+    fields:
+      - { name: title, label: タイトル, widget: string }
+      - { name: date, label: 公開日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: updated, label: 更新日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: draft, label: 下書き, widget: boolean, default: true }
+      - name: taxonomies
+        label: 分類
+        widget: object
+        fields:
+          - { name: categories, label: カテゴリ, widget: list, default: ["Tools"] }
+          - { name: tags, label: タグ, widget: list, required: false, default: [] }
+      - { name: math, label: "数式 (KaTeX)", widget: boolean, default: false }
+      - name: extra
+        label: Extra
+        widget: object
+        fields:
+          - { name: author, label: 著者, widget: string, default: "etak64n" }
+          - { name: hero, label: ヒーロー画像パス, widget: string, default: "/images/hero/placeholder.svg" }
+          - { name: toc, label: 目次, widget: boolean, default: true }
+      - { name: body, label: 本文, widget: markdown }
+
+  - name: turso
+    label: "Turso"
+    label_singular: "Turso の記事"
+    folder: content/articles/Turso
+    path: "{{slug}}/index"
+    extension: md
+    format: toml-frontmatter
+    media_folder: ""
+    public_folder: ""
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}}"
+    sortable_fields: [date, updated, title]
+    fields:
+      - { name: title, label: タイトル, widget: string }
+      - { name: date, label: 公開日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: updated, label: 更新日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: draft, label: 下書き, widget: boolean, default: true }
+      - name: taxonomies
+        label: 分類
+        widget: object
+        fields:
+          - { name: categories, label: カテゴリ, widget: list, default: ["Turso"] }
+          - { name: tags, label: タグ, widget: list, required: false, default: [] }
+      - { name: math, label: "数式 (KaTeX)", widget: boolean, default: false }
+      - name: extra
+        label: Extra
+        widget: object
+        fields:
+          - { name: author, label: 著者, widget: string, default: "etak64n" }
+          - { name: hero, label: ヒーロー画像パス, widget: string, default: "/images/hero/placeholder.svg" }
+          - { name: toc, label: 目次, widget: boolean, default: true }
+      - { name: body, label: 本文, widget: markdown }
+
+  - name: web
+    label: "Web"
+    label_singular: "Web の記事"
+    folder: content/articles/Web
+    path: "{{slug}}/index"
+    extension: md
+    format: toml-frontmatter
+    media_folder: ""
+    public_folder: ""
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}}"
+    sortable_fields: [date, updated, title]
+    fields:
+      - { name: title, label: タイトル, widget: string }
+      - { name: date, label: 公開日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: updated, label: 更新日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: draft, label: 下書き, widget: boolean, default: true }
+      - name: taxonomies
+        label: 分類
+        widget: object
+        fields:
+          - { name: categories, label: カテゴリ, widget: list, default: ["Web"] }
+          - { name: tags, label: タグ, widget: list, required: false, default: [] }
+      - { name: math, label: "数式 (KaTeX)", widget: boolean, default: false }
+      - name: extra
+        label: Extra
+        widget: object
+        fields:
+          - { name: author, label: 著者, widget: string, default: "etak64n" }
+          - { name: hero, label: ヒーロー画像パス, widget: string, default: "/images/hero/placeholder.svg" }
+          - { name: toc, label: 目次, widget: boolean, default: true }
+      - { name: body, label: 本文, widget: markdown }
+
+  - name: blog
+    label: "ブログ"
+    label_singular: "ブログ の記事"
+    folder: content/articles/ブログ
+    path: "{{slug}}/index"
+    extension: md
+    format: toml-frontmatter
+    media_folder: ""
+    public_folder: ""
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}}"
+    sortable_fields: [date, updated, title]
+    fields:
+      - { name: title, label: タイトル, widget: string }
+      - { name: date, label: 公開日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: updated, label: 更新日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: draft, label: 下書き, widget: boolean, default: true }
+      - name: taxonomies
+        label: 分類
+        widget: object
+        fields:
+          - { name: categories, label: カテゴリ, widget: list, default: ["ブログ"] }
+          - { name: tags, label: タグ, widget: list, required: false, default: [] }
+      - { name: math, label: "数式 (KaTeX)", widget: boolean, default: false }
+      - name: extra
+        label: Extra
+        widget: object
+        fields:
+          - { name: author, label: 著者, widget: string, default: "etak64n" }
+          - { name: hero, label: ヒーロー画像パス, widget: string, default: "/images/hero/placeholder.svg" }
+          - { name: toc, label: 目次, widget: boolean, default: true }
+      - { name: body, label: 本文, widget: markdown }

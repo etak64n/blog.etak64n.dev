@@ -1,0 +1,412 @@
+{% set math_enabled = config.extra.enable_math | default(value=false) %}
+{% if page is defined %}
+  {% set math_enabled = page.extra.math | default(value=math_enabled) %}
+{% endif %}
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>{% if page %}{{ page.title }} | {% endif %}{{ config.title }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{{ get_url(path='main.css', cachebust=true) }}">
+  {% if math_enabled %}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  {% endif %}
+  <script>
+    // Apply saved or preferred theme early to avoid FOUC
+    (function(){
+      try {
+        const saved = localStorage.getItem('theme');
+        const prefDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = saved || (prefDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="left">
+      <button id="menu-toggle" class="menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-nav">
+        <!-- Hamburger icon (closed) -->
+        <svg class="icon-hamburger" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+          <path class="l1" d="M4 8h24"></path>
+          <path class="l2" d="M4 16h24"></path>
+          <path class="l3" d="M4 24h24"></path>
+        </svg>
+        <!-- Close icon (open) -->
+        <svg class="icon-close" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+          <path d="M7 7L25 25"></path>
+          <path d="M25 7L7 25"></path>
+        </svg>
+      </button>
+      <a class="brand" href="{{ get_url(path='@/_index.md') }}">{{ config.title }}</a>
+    </div>
+    <div class="right">
+      <nav class="nav-desktop">
+        <a href="{{ get_url(path='@/articles/_index.md') }}">Articles</a>
+        <a href="{{ get_url(path='tags') }}/">Tags</a>
+        <a href="{{ get_url(path='categories') }}/">Categories</a>
+      </nav>
+      <button id="theme-toggle" class="theme-switch" type="button" aria-label="Toggle theme" title="Toggle theme" aria-pressed="false">
+        <span class="switch-track">
+          <span class="switch-icons" aria-hidden="true">
+            <!-- sun -->
+            <svg class="icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            <!-- moon -->
+            <svg class="icon moon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z"/></svg>
+          </span>
+          <span class="switch-thumb" aria-hidden="true"></span>
+        </span>
+      </button>
+    </div>
+  </div>
+  </header>
+<nav id="mobile-nav" class="mobile-nav" hidden>
+  <a href="{{ get_url(path='@/articles/_index.md') }}">Articles</a>
+  <a href="{{ get_url(path='tags') }}/">Tags</a>
+  <a href="{{ get_url(path='categories') }}/">Categories</a>
+</nav>
+<main>
+  <div class="wrap">
+    {% block content %}{% endblock content %}
+  </div>
+</main>
+<footer>
+  <div class="wrap">
+    <p>&copy; {{ now() | date(format="%Y") }} etak64n</p>
+  </div>
+</footer>
+  {% if math_enabled %}
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+  {% endif %}
+</body>
+<script>
+  // Theme toggle wiring (single button at top-right)
+  (function(){
+    const btn = document.getElementById('theme-toggle');
+    function current(){ return document.documentElement.getAttribute('data-theme') || 'light'; }
+    function reflect(mode){ if(!btn) return; btn.setAttribute('data-mode', mode); btn.setAttribute('aria-pressed', String(mode==='dark')); btn.title = `Toggle theme (${mode})`; }
+    function apply(mode){ document.documentElement.setAttribute('data-theme', mode); try{ localStorage.setItem('theme', mode);}catch(e){} reflect(mode); }
+    if (btn) {
+      reflect(current());
+      btn.addEventListener('click', function(){ apply(current()==='dark' ? 'light' : 'dark'); });
+    }
+    // Sync with OS preference changes if user hasn't explicitly chosen
+    try {
+      const saved = localStorage.getItem('theme');
+      if (!saved && window.matchMedia) {
+        const mq = window.matchMedia('(prefers-color-scheme: dark)');
+        const handler = e => apply(e.matches ? 'dark' : 'light');
+        mq.addEventListener ? mq.addEventListener('change', handler) : mq.addListener && mq.addListener(handler);
+      }
+    } catch(e){}
+  })();
+
+  // Mobile menu toggle
+  (function(){
+    const html = document.documentElement;
+    const btn = document.getElementById('menu-toggle');
+    const panel = document.getElementById('mobile-nav');
+    if (!btn || !panel) return;
+    // Keep layout aligned by reflecting actual header height to CSS var
+    function updateHeaderHeight(){
+      const header = document.querySelector('header');
+      if (!header) return;
+      const h = Math.round(header.getBoundingClientRect().height);
+      document.documentElement.style.setProperty('--header-h', h + 'px');
+    }
+    updateHeaderHeight();
+    let rhTimer;
+    window.addEventListener('resize', function(){
+      clearTimeout(rhTimer);
+      rhTimer = setTimeout(updateHeaderHeight, 120);
+    }, {passive:true});
+    function setOpen(open){
+      html.setAttribute('data-menu', open ? 'open' : 'closed');
+      btn.setAttribute('aria-expanded', String(open));
+      if (open) panel.removeAttribute('hidden'); else panel.setAttribute('hidden','');
+    }
+    btn.addEventListener('click', function(){ setOpen(!(html.getAttribute('data-menu')==='open')); });
+    document.addEventListener('keydown', function(e){ if (e.key==='Escape') setOpen(false); }, {passive:true});
+    // Close when clicking a link
+    panel.addEventListener('click', function(e){ const target = e.target; if (target && target.tagName==='A') setOpen(false); });
+  })();
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const blocks = document.querySelectorAll('.content pre > code');
+    blocks.forEach(code => {
+      const pre = code.parentElement;
+      if (!pre || pre.classList.contains('codebox-pre') || pre.parentElement?.classList.contains('codebox')) return;
+
+      // Detect optional filename on the first line (various comment syntaxes supported)
+      const text = code.textContent || '';
+      const firstLine = text.split('\n')[0] || '';
+      const m = firstLine.match(/^\s*(?:\/\/|#|;|--|%|\/\*|<!--)?\s*filename\s*[:=]\s*(.+?)(?:\s*\*\/|-->|)\s*$/i);
+      const hasTitle = !!m;
+      const title = hasTitle ? m[1].trim() : '';
+      const hasExt = hasTitle ? /(\.|^)([^\/\s]+)\.[A-Za-z0-9]+$/.test(title) : false;
+
+      // If a filename header is embedded, drop that first line from the code
+      if (hasTitle && hasExt) {
+        const html = code.innerHTML;
+        const idx = html.indexOf('\n');
+        if (idx > -1) code.innerHTML = html.slice(idx + 1);
+      }
+
+      // Wrap every code block in a unified dark codebox for consistent styling
+      const wrapper = document.createElement('div');
+      wrapper.className = 'codebox dark';
+      const bar = document.createElement('div');
+      bar.className = 'codebox-bar';
+      const preClone = pre.cloneNode(true);
+      preClone.classList.add('codebox-pre');
+      if (hasTitle && hasExt) {
+        preClone.classList.add('has-title');
+        const pill = document.createElement('div');
+        pill.className = 'codebox-title-inside';
+        pill.textContent = title;
+        preClone.insertBefore(pill, preClone.firstChild);
+      }
+      wrapper.appendChild(bar);
+
+      // Add copy button with icon
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'codebox-copy';
+      btn.setAttribute('aria-label', 'Copy code');
+      const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+      const checkIcon = '<svg viewBox="2 4 20 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+      btn.innerHTML = copyIcon;
+      const codeInClone = preClone.querySelector('code');
+      btn.addEventListener('click', async () => {
+        const text = codeInClone ? codeInClone.innerText : '';
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+          } else {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+          }
+          btn.innerHTML = checkIcon;
+          btn.classList.add('copied');
+          setTimeout(() => {
+            btn.classList.remove('copied');
+            setTimeout(() => {
+              btn.innerHTML = copyIcon;
+            }, 200);
+          }, 1200);
+        } catch (e) {
+          setTimeout(() => { btn.innerHTML = copyIcon; }, 1200);
+        }
+      });
+
+      wrapper.appendChild(preClone);
+      wrapper.appendChild(btn);
+      pre.replaceWith(wrapper);
+    });
+
+    // Make ref badges open their referenced link directly
+    const refBadges = document.querySelectorAll('.ref-trigger-badge');
+    refBadges.forEach(badge => {
+      const url = badge.getAttribute('data-url');
+      if (!url) return;
+      const openTarget = () => window.open(url, '_blank', 'noopener');
+      badge.addEventListener('click', function (event) {
+        event.stopPropagation();
+        openTarget();
+      });
+      badge.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          event.stopPropagation();
+          openTarget();
+        }
+      });
+    });
+
+    // Ensure ref tooltips stay within article width
+    const refNodes = document.querySelectorAll('.ref');
+    const boundaryPadding = 12;
+    const hoverPadding = 8;
+    const hoverPaddingRight = 4;
+    const scheduleAdjust = (panel, trigger, ref) => {
+      if (!panel || !trigger) return;
+      const frame = () => {
+        const container = trigger.closest('.content') || document.querySelector('.content');
+        const bounds = container ? container.getBoundingClientRect() : document.body.getBoundingClientRect();
+        const rect = panel.getBoundingClientRect();
+        const leftLimit = bounds.left + boundaryPadding;
+        const rightLimit = bounds.right - boundaryPadding;
+        let shift = 0;
+        const available = rightLimit - leftLimit;
+        if (rect.width > available) {
+          shift = leftLimit - rect.left;
+        } else {
+          if (rect.left < leftLimit) {
+            shift = leftLimit - rect.left;
+          } else if (rect.right > rightLimit) {
+            shift = rightLimit - rect.right;
+          }
+        }
+        panel.style.setProperty('--ref-shift', `${shift}px`);
+      };
+      requestAnimationFrame(() => requestAnimationFrame(frame));
+    };
+
+    const tables = document.querySelectorAll('.content table');
+    tables.forEach(table => {
+      if (!table.closest('.table-wrap')) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'table-wrap';
+        table.parentNode.insertBefore(wrapper, table);
+        wrapper.appendChild(table);
+      }
+    });
+
+    // Auto-link plain URLs in .content (excluding code blocks and existing links)
+    (function(){
+      const content = document.querySelector('.content');
+      if (!content) return;
+      const urlPattern = /https?:\/\/[^\s<>"')\]]+/g;
+      const walk = (node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          const text = node.textContent;
+          if (!urlPattern.test(text)) return;
+          urlPattern.lastIndex = 0;
+          const parent = node.parentNode;
+          if (!parent) return;
+          // Skip if inside excluded elements
+          if (parent.closest('a, pre, code, .codebox')) return;
+          const frag = document.createDocumentFragment();
+          let lastIdx = 0;
+          let match;
+          while ((match = urlPattern.exec(text)) !== null) {
+            if (match.index > lastIdx) {
+              frag.appendChild(document.createTextNode(text.slice(lastIdx, match.index)));
+            }
+            const a = document.createElement('a');
+            a.href = match[0];
+            a.textContent = match[0];
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            frag.appendChild(a);
+            lastIdx = urlPattern.lastIndex;
+          }
+          if (lastIdx < text.length) {
+            frag.appendChild(document.createTextNode(text.slice(lastIdx)));
+          }
+          parent.replaceChild(frag, node);
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          // Skip excluded elements
+          const tag = node.tagName.toLowerCase();
+          if (tag === 'a' || tag === 'pre' || tag === 'code' || node.classList.contains('codebox')) return;
+          // Process children (copy to array to avoid live collection issues)
+          Array.from(node.childNodes).forEach(walk);
+        }
+      };
+      walk(content);
+    })();
+
+    refNodes.forEach(ref => {
+      const trigger = ref.querySelector('.ref-trigger');
+      const panel = ref.querySelector('.ref-panel');
+      if (!trigger || !panel) return;
+
+      let pointerTracker = null;
+      let openState = false;
+
+      const zoneContains = (x, y) => {
+        const tRect = trigger.getBoundingClientRect();
+        const pRect = panel.getBoundingClientRect();
+        // トリガー領域
+        const inTrigger = x >= tRect.left - hoverPadding && x <= tRect.right + hoverPaddingRight &&
+                          y >= tRect.top - hoverPadding && y <= tRect.bottom + hoverPadding;
+        // パネル領域
+        const inPanel = x >= pRect.left - hoverPadding && x <= pRect.right + hoverPaddingRight &&
+                        y >= pRect.top - hoverPadding && y <= pRect.bottom + hoverPadding;
+        // トリガーとパネルの間の接続領域（縦方向）
+        const inBridge = x >= Math.max(tRect.left, pRect.left) - hoverPadding &&
+                         x <= Math.min(tRect.right, pRect.right) + hoverPaddingRight &&
+                         y >= tRect.bottom && y <= pRect.top;
+        return inTrigger || inPanel || inBridge;
+      };
+
+      const closeRef = () => {
+        if (!openState) return;
+        openState = false;
+        ref.removeAttribute('data-ref-open');
+        panel.style.removeProperty('--ref-shift');
+        if (pointerTracker) {
+          document.removeEventListener('pointermove', pointerTracker);
+          pointerTracker = null;
+        }
+      };
+
+      const ensureTracker = () => {
+        if (pointerTracker) return;
+        pointerTracker = (event) => {
+          if (!openState) return;
+          if (!zoneContains(event.clientX, event.clientY)) {
+            closeRef();
+          }
+        };
+        document.addEventListener('pointermove', pointerTracker);
+      };
+
+      const openRef = () => {
+        if (openState) return;
+        openState = true;
+        ref.setAttribute('data-ref-open', 'true');
+        scheduleAdjust(panel, trigger, ref);
+        ensureTracker();
+      };
+
+      const handleMouseLeave = (event) => {
+        if (!openState) return;
+        const { clientX, clientY } = event;
+        if (!zoneContains(clientX, clientY)) {
+          closeRef();
+        }
+      };
+
+      const handleFocusOut = (event) => {
+        if (!ref.contains(event.relatedTarget)) {
+          closeRef();
+        }
+      };
+
+      ref.addEventListener('mouseenter', openRef);
+      ref.addEventListener('focusin', openRef);
+      ref.addEventListener('touchstart', openRef, { passive: true });
+      ref.addEventListener('mouseleave', handleMouseLeave);
+      ref.addEventListener('focusout', handleFocusOut);
+    });
+  });
+</script>
+{% if math_enabled %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof renderMathInElement !== 'function') return;
+    const root = document.querySelector('.content') || document.body;
+    renderMathInElement(root, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+        {left: '\(', right: '\)', display: false},
+        {left: '\[', right: '\]', display: true}
+      ],
+      throwOnError: false
+    });
+  });
+</script>
+{% endif %}
+</html>

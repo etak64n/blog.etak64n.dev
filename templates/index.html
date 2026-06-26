@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>最新記事</h1>
+
+{% set articles = get_section(path="articles/_index.md") %}
+
+<ul class="post-list post-grid">
+  {% for p in articles.pages | slice(end=10) %}
+    <li>
+      {% set img = p.extra.hero %}
+      {% if not img %}{% set img = get_url(path='images/placeholder.svg') %}{% endif %}
+      <a class="thumb" href="{{ p.permalink }}">
+        <img src="{{ img }}" alt="{{ p.title }}">
+      </a>
+      <div class="card-body">
+        <div class="post-title"><a href="{{ p.permalink }}">{{ p.title }}</a></div>
+        <div class="post-meta">{{ p.date | date(format="%Y-%m-%d") }}</div>
+      </div>
+    </li>
+  {% endfor %}
+  {% if articles.pages | length == 0 %}
+    <li class="muted">まだ記事がありません。</li>
+  {% endif %}
+</ul>
+
+{% endblock content %}

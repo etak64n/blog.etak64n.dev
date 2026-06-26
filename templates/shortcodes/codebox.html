@@ -1,0 +1,23 @@
+{#
+Usage examples in Markdown:
+
+{% codebox title="main.tf" lang="hcl" %}
+resource "aws_s3_bucket" "example" {
+  bucket = "my-bucket"
+}
+{% end %}
+
+Params:
+- title (or filename): Optional string shown in the header bar
+- lang: Optional language hint (adds class `language-<lang>`)
+#}
+{% set title = title | default(value=filename) %}
+{% set theme = theme | default(value="dark") %}
+{% set show_tab = title and title is matching("(\\.|^)([^/\\s]+)\\.[A-Za-z0-9]+$") %}
+<div class="codebox{% if theme == "dark" %} dark{% endif %}">
+  <div class="codebox-bar"></div>
+  <pre class="codebox-pre{% if show_tab %} has-title{% endif %}">
+    {% if show_tab %}<div class="codebox-title-inside">{{ title }}</div>{% endif %}
+    <code{% if lang %} class="language-{{ lang }}"{% endif %}>{{ body | safe }}</code>
+  </pre>
+</div>

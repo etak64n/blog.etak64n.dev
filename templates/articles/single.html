@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-body">
+  {% if page.toc %}
+    <aside class="toc" aria-label="目次">
+      <div class="toc-title">目次</div>
+      <ul class="toc-list">
+        {% for h1 in page.toc %}
+          <li>
+            <a href="#{{ h1.id }}">{{ h1.title | safe }}</a>
+            {% if h1.children and h1.children | length > 0 %}
+              <ul>
+                {% for h2 in h1.children %}
+                  <li>
+                    <a href="#{{ h2.id }}">{{ h2.title | safe }}</a>
+                    {% if h2.children and h2.children | length > 0 %}
+                      <ul>
+                        {% for h3 in h2.children %}
+                          <li><a href="#{{ h3.id }}">{{ h3.title | safe }}</a></li>
+                        {% endfor %}
+                      </ul>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </aside>
+  {% else %}
+    <aside class="toc placeholder" aria-hidden="true"></aside>
+  {% endif %}
+<article class="post-col">
+  {% set hero = page.extra.hero | default(value=get_url(path='images/placeholder.svg')) %}
+  <div class="post-hero">
+    <img src="{{ hero }}" alt="{{ page.title }}">
+  </div>
+
+  <h1>{{ page.title }}</h1>
+  <p class="post-meta">{{ page.date | date(format="%Y-%m-%d") }}</p>
+
+  {% set cats = page.taxonomies.categories | default(value=[]) %}
+  {% set tags = page.taxonomies.tags | default(value=[]) %}
+  {% if cats | length > 0 or tags | length > 0 %}
+    <p class="tax">
+      {% for c in cats %}{% set url = get_taxonomy_url(kind="categories", name=c) %}<a class="pill cat" href="{{ url }}">{{ c }}</a>{% endfor %}
+      {% for t in tags %}{% set url = get_taxonomy_url(kind="tags", name=t) %}<a class="pill tag" href="{{ url }}">#{{ t }}</a>{% endfor %}
+    </p>
+  {% endif %}
+
+  <div class="content">{{ page.content | safe }}</div>
+
+</article>
+</div>
+
+{# Related posts footer (full width, grid cards) #}
+{# Note: set_global is required here because Tera resets variable scope on each loop iteration.
+   - `shown`: tracks displayed post count across iterations (max 4)
+   - `score`: accumulates tag/category match score within nested loops
+   Without set_global, these counters would reset to their initial value on each iteration. #}
+{% set mytags = page.taxonomies.tags | default(value=[]) %}
+{% set mycats = page.taxonomies.categories | default(value=[]) %}
+{% set banned = ["AWS"] %}
+{% set root = get_section(path="articles/_index.md") %}
+
+<section class="related">
+  <h2>関連記事</h2>
+  <ul class="post-list post-grid">
+    {% set_global shown = 0 %}
+    {% for p in root.pages | slice(end=200) %}
+      {% if p.permalink != page.permalink and shown < 4 %}
+        {% set p_tags = p.taxonomies.tags | default(value=[]) %}
+        {% set p_cats = p.taxonomies.categories | default(value=[]) %}
+        {% set_global score = 0 %}
+        {% for t in p_tags %}
+          {% if (t in mytags) and (t not in banned) %}
+            {% set_global score = score + 1 %}
+          {% endif %}
+        {% endfor %}
+        {% for c in p_cats %}
+          {% if c in mycats %}
+            {% set_global score = score + 2 %}
+          {% endif %}
+        {% endfor %}
+        {% if score > 0 %}
+          {% set img = p.extra.hero | default(value=get_url(path='images/placeholder.svg')) %}
+          <li>
+            <a class="thumb" href="{{ p.permalink }}"><img src="{{ img }}" alt="{{ p.title }}"></a>
+            <div class="card-body">
+              <div class="post-title"><a href="{{ p.permalink }}">{{ p.title }}</a></div>
+              <div class="post-meta">{{ p.date | date(format="%Y-%m-%d") }}</div>
+            </div>
+          </li>
+          {% set_global shown = shown + 1 %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+
+    {% if shown == 0 %}
+      {% set cur = get_section(path=page.ancestors | last) %}
+      {% for p in cur.pages | slice(end=10) %}
+        {% if p.permalink != page.permalink and shown < 4 %}
+          {% set img = p.extra.hero | default(value=get_url(path='images/placeholder.svg')) %}
+          <li>
+            <a class="thumb" href="{{ p.permalink }}"><img src="{{ img }}" alt="{{ p.title }}"></a>
+            <div class="card-body">
+              <div class="post-title"><a href="{{ p.permalink }}">{{ p.title }}</a></div>
+              <div class="post-meta">{{ p.date | date(format="%Y-%m-%d") }}</div>
+            </div>
+          </li>
+          {% set_global shown = shown + 1 %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  </ul>
+</section>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const toc = document.querySelector('.toc');
+    if (!toc) return;
+
+    const pruneEmpty = (node) => {
+      let current = node;
+      while (current && current !== toc) {
+        if (current.tagName === 'UL' && current.children.length === 0) {
+          const next = current.parentElement;
+          current.remove();
+          current = next;
+          continue;
+        }
+        if (current.tagName === 'LI' && current.children.length === 0) {
+          const next = current.parentElement;
+          current.remove();
+          current = next;
+          continue;
+        }
+        break;
+      }
+    };
+
+    const anchors = [];
+    Array.from(toc.querySelectorAll('a[href^="#"]')).forEach(a => {
+      const id = decodeURIComponent(a.getAttribute('href').slice(1));
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.closest('blockquote')) {
+        const li = a.closest('li');
+        if (li) {
+          const parent = li.parentElement;
+          li.remove();
+          if (parent) pruneEmpty(parent);
+        }
+        return;
+      }
+      anchors.push({ a, el });
+    });
+
+    if (anchors.length === 0) {
+      toc.classList.add('placeholder');
+      toc.setAttribute('aria-hidden', 'true');
+      toc.innerHTML = '';
+      return;
+    }
+
+    const offset = 100;
+    let lastIdx = -1;
+    let ticking = false;
+    function computeAndAdjust() {
+      // Find current section index
+      let idx = -1;
+      for (let i = 0; i < anchors.length; i++) {
+        const rect = anchors[i].el.getBoundingClientRect();
+        if (rect.top - offset <= 0) idx = i; else break;
+      }
+      // On initial load (or if no section has crossed the offset yet),
+      // treat the first ToC item as active.
+      if (idx === -1 && anchors.length > 0) idx = 0;
+      anchors.forEach(entry => entry.a.classList.remove('active'));
+      if (idx >= 0) {
+        anchors[idx].a.classList.add('active');
+        if (idx !== lastIdx) {
+          lastIdx = idx;
+          // If we're at the very top area, reset ToC scroll so the title (目次) is visible.
+          if (idx === 0 && toc.scrollTop > 0) {
+            toc.scrollTo({ top: 0, behavior: 'auto' });
+          }
+          // Keep about 5 items visible below the active one when possible.
+          const post = 5;
+          const wantIdx = Math.min(anchors.length - 1, idx + post);
+          const container = toc;
+          const cTop = container.scrollTop;
+          const cH = container.clientHeight;
+          const aTop = anchors[idx].a.getBoundingClientRect().top - container.getBoundingClientRect().top + cTop;
+          const wantEl = anchors[wantIdx].a;
+          const wantBottom = (wantEl.getBoundingClientRect().bottom - container.getBoundingClientRect().top) + cTop;
+          // If active is above current view, bring it into view (top side ok)
+          if (aTop < cTop + 4) {
+            container.scrollTo({ top: aTop - 8, behavior: 'auto' });
+          }
+          // If the bottom buffer is outside, scroll down so wantIdx bottom is visible
+          else if (wantBottom > cTop + cH - 4) {
+            container.scrollTo({ top: wantBottom - cH + 8, behavior: 'auto' });
+          }
+        }
+      }
+    }
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => { computeAndAdjust(); ticking = false; });
+    }
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+  });
+</script>
+{% endblock content %}

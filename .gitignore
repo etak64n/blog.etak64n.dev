@@ -1,0 +1,10 @@
+public/
+.cache/
+.DS_Store
+zola
+zola-*.tar.gz
+.tmpz/
+.wrangler/
+.zola_build_out/
+node_modules/
+.dev.vars

@@ -1,0 +1,39 @@
+{#
+  Usage:
+  {{ link(url="https://example.com/article", title="Title", desc="Optional description", image="/path/thumb.webp", site="example.com", favicon="https://icons.duckduckgo.com/ip3/example.com.ico") }}
+  - If `site` is omitted, the host is derived from `url`.
+  - If `favicon` is omitted, a DuckDuckGo favicon URL is used.
+  - `image` is optional; when present, a thumbnail appears on the right.
+#}
+{% set _url = url | default(value="") %}
+{% set _title = title | default(value=_url) %}
+{% set _desc = desc | default(value="") %}
+{% set _image = image | default(value="") %}
+
+{# derive host from url if not provided #}
+{% set _raw = _url | replace(from="https://", to="") | replace(from="http://", to="") %}
+{% set _derived_host = _raw | split(pat="/") | first %}
+{% set _host = site | default(value=_derived_host) %}
+{% set _favicon = favicon | default(value="https://icons.duckduckgo.com/ip3/" ~ _host ~ ".ico") %}
+{% set _has_image = _image != "" %}
+
+<figure class="link-card{% if _has_image %} has-image{% endif %}">
+  <a href="{{ _url }}" target="_blank" rel="noopener">
+    <div class="link-card-body">
+      <div class="link-card-text">
+        <div class="link-card-title">{{ _title }}</div>
+        {% if _desc %}<div class="link-card-desc">{{ _desc }}</div>{% endif %}
+        <div class="link-card-meta">
+          <img class="link-card-favicon" src="{{ _favicon }}" alt="" width="16" height="16" loading="lazy" decoding="async">
+          <span class="link-card-host">{{ _host }}</span>
+        </div>
+      </div>
+      {% if _has_image %}
+      <div class="link-card-thumb">
+        <img src="{{ _image }}" alt="" loading="lazy" decoding="async">
+      </div>
+      {% endif %}
+    </div>
+  </a>
+  {% if caption %}<figcaption class="muted">{{ caption }}</figcaption>{% endif %}
+</figure>

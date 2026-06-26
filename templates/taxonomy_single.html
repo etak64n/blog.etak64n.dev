@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>{{ term.name }}</h1>
+  <ul class="post-list post-grid">
+  {% set pages = paginator.pages | default(value=term.pages) %}
+  {% for p in pages %}
+    <li>
+      {% set img = p.extra.hero %}
+      {% if not img %}{% set img = get_url(path='images/placeholder.svg') %}{% endif %}
+      <a class="thumb" href="{{ p.permalink }}">
+        <img src="{{ img }}" alt="{{ p.title }}">
+      </a>
+      <div class="card-body">
+        <div class="post-title"><a href="{{ p.permalink }}">{{ p.title }}</a></div>
+        <div class="post-meta">{{ p.date | date(format="%Y-%m-%d") }}</div>
+      </div>
+    </li>
+  {% endfor %}
+  </ul>
+  {% if paginator %}
+  <nav class="pagination">
+    {% if paginator.previous %}<a href="{{ paginator.previous }}">←</a>{% endif %}
+    {% for i in range(end=paginator.number_pagers) %}
+      {% set n = i + 1 %}
+      {% if n == paginator.current_index %}
+        <span class="current">{{ n }}</span>
+      {% else %}
+        {% if n == 1 %}
+          <a href="{{ term.permalink }}">{{ n }}</a>
+        {% else %}
+          <a href="{{ paginator.base_url ~ n ~ '/' }}">{{ n }}</a>
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+    {% if paginator.next %}<a href="{{ paginator.next }}">→</a>{% endif %}
+  </nav>
+  {% endif %}
+{% endblock content %}

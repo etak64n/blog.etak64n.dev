@@ -1,0 +1,21 @@
+base_url = "https://blog.etak64n.dev/"
+title = "etak64n's blog"
+default_language = "ja"
+generate_feeds = false
+generate_sitemap = true
+build_search_index = false       # 日本語は未対応のため無効化
+compile_sass = true
+
+[markdown.highlighting]
+enabled = true
+theme = "nord"
+
+[[taxonomies]]
+name = "tags"
+render = true
+paginate_by = 20
+
+[[taxonomies]]
+name = "categories"
+render = true
+paginate_by = 20

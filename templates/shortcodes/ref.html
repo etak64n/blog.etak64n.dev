@@ -1,0 +1,81 @@
+{#
+  Hover reference pill.
+  Usage example:
+  {{ ref(url="https://example.com", title="Article title", excerpt="Quick summary") }}
+#}
+{%- set _id = id | default(value="") -%}
+{%- set _url = url | default(value="") -%}
+{%- set _title = title | default(value=_url) -%}
+{%- set _label = label | default(value="") -%}
+{%- set _site = site | default(value="") -%}
+{%- set _subtitle = subtitle | default(value="") -%}
+{%- set _date = date | default(value="") -%}
+{%- set _excerpt = excerpt | default(value="") -%}
+{%- set _badge = badge | default(value="") -%}
+{%- set _icon = icon | default(value="") -%}
+{%- set _body = body | default(value="") -%}
+
+{# derive host/domain #}
+{%- set _raw = _url | replace(from="https://", to="") | replace(from="http://", to="") -%}
+{%- set _derived_host = _raw | split(pat="/") | first -%}
+{%- set _host = host | default(value=_derived_host) -%}
+{%- set _site_name = _site | default(value=_host) -%}
+{%- set _favicon = _icon -%}
+{%- if not _favicon and _host -%}
+  {%- set _favicon = "https://icons.duckduckgo.com/ip3/" ~ _host ~ ".ico" -%}
+{%- endif -%}
+{%- set _display_host = _host | lower -%}
+
+{%- if _label == "" -%}
+  {%- set _label = _display_host -%}
+{%- endif -%}
+
+{# generate fallback id if omitted #}
+{%- if _id == "" -%}
+  {%- set _id_source = "ref-" ~ _site_name ~ "-" ~ _title -%}
+  {%- set _id = _id_source | slugify -%}
+{%- endif -%}
+
+{%- if _excerpt == "" and _body != "" -%}
+  {%- set _excerpt = _body -%}
+{%- endif -%}
+{%- set _clean_excerpt = _excerpt | trim -%}
+{%- set _lines = _clean_excerpt | split(pat="\n") -%}
+<span class="ref" data-ref="{{ _id }}">
+  <span class="ref-trigger"
+        role="button"
+        tabindex="0"
+        aria-describedby="ref-panel-{{ _id }}"
+        aria-haspopup="true"
+        aria-label="{{ _title }}">
+    <span class="ref-trigger-meta">
+      {% if _favicon %}
+        <img src="{{ _favicon }}" alt="" class="ref-trigger-icon" width="18" height="18" loading="lazy" decoding="async">
+      {% endif %}
+      {% if _display_host %}<span class="ref-trigger-host">{{ _display_host }}</span>{% endif %}
+    </span>
+    <span class="ref-trigger-text sr-only">{{ _label }}</span>{% if _badge %}<span class="ref-trigger-badge" role="link" tabindex="0" data-url="{{ _url }}" aria-label="{{ _title }} へ移動">{{ _badge }}</span>{% endif %}
+  </span>
+  <span class="ref-panel" role="tooltip" id="ref-panel-{{ _id }}">
+    <span class="ref-panel-meta">
+      {%- if _favicon -%}
+        <img src="{{ _favicon }}" alt="" class="ref-panel-icon" width="18" height="18" loading="lazy" decoding="async">
+      {%- endif -%}
+      {%- if _display_host -%}<span class="ref-panel-host">{{ _display_host }}</span>{%- endif -%}
+    </span>
+    <span class="ref-panel-title">{{ _title }}</span>
+    {%- if _subtitle or _date or _clean_excerpt -%}
+      <span class="ref-panel-body">
+        {%- if _subtitle -%}<span class="ref-panel-subtitle">{{ _subtitle }}</span>{%- endif -%}
+        {%- if _date -%}<span class="ref-panel-date">{{ _date }}</span>{%- endif -%}
+        {%- if _clean_excerpt -%}
+          <span class="ref-panel-text">
+            {%- for line in _lines -%}
+              <span class="ref-panel-line">{{- line | trim | markdown(inline=true) | safe -}}</span>
+            {%- endfor -%}
+          </span>
+        {%- endif -%}
+      </span>
+    {%- endif -%}
+  </span>
+</span>{{- "" -}}

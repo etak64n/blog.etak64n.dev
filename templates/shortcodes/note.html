@@ -1,0 +1,16 @@
+{#
+  Usage:
+  :::note info
+  Content...
+  :::
+  - type defaults to "info". Supported: info, warn, alert.
+#}
+{% set _type = type | default(value="info") | lower %}
+{% if _type not in ["info", "warn", "alert"] %}{% set _type = "info" %}{% endif %}
+
+<div class="note note-{{ _type }}">
+  <div class="note-icon" aria-hidden="true"></div>
+  <div class="note-body">
+    {{ body | safe }}
+  </div>
+</div>

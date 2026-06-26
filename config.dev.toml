@@ -1,0 +1,6 @@
+base_url = "http://127.0.0.1:1111/"
+title = "etak64n's blog (dev)"
+compile_sass = true
+
+# Keep other defaults from config.toml; this file only overrides what's different in dev.
+

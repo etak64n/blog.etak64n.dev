@@ -3,7 +3,7 @@ title = "ファミコンを作る 03 - ファミコン CPU 解説 Ricoh 2A03 編
 date = 2025-10-27
 updated = 2025-10-27
 draft = true
-taxonomies = { tags=["Nintendo","Game","NES", "ファミコンを作る"], categories=["Nintendo"] }
+taxonomies = { tags=["Nintendo","Game","NES", "ファミコンを作る"] }
 math = true
 [extra]
 author = "etak64n"

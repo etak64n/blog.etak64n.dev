@@ -1,4 +1,0 @@
-+++
-title = "OpenAI"
-transparent = true
-+++

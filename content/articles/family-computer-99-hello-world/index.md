@@ -3,7 +3,7 @@ title = "ファミコンを作る 99 - Hello, World!"
 date = 2025-10-28
 updated = 2025-10-28
 draft = true
-taxonomies = { tags=["Nintendo","Game","NES", "ファミコンを作る"], categories=["Nintendo"] }
+taxonomies = { tags=["Nintendo","Game","NES", "ファミコンを作る"] }
 math = true
 [extra]
 author = "etak64n"

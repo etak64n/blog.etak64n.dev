@@ -1,4 +1,0 @@
-+++
-title = "AWS"
-transparent = true
-+++

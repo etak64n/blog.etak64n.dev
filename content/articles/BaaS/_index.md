@@ -1,4 +1,0 @@
-+++
-title = "BaaS"
-transparent = true
-+++

@@ -14,8 +14,3 @@ theme = "nord"
 name = "tags"
 render = true
 paginate_by = 20
-
-[[taxonomies]]
-name = "categories"
-render = true
-paginate_by = 20

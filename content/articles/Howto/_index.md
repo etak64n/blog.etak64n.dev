@@ -1,4 +1,0 @@
-+++
-title = "Howto"
-transparent = true
-+++

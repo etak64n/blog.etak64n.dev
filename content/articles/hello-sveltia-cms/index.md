@@ -3,7 +3,7 @@ title = "Sveltia CMS でブログを書いてみるテスト"
 date = 2026-07-02
 updated = 2026-07-02
 draft = false
-taxonomies = { tags=["Sveltia CMS","Zola","Cloudflare Pages","テスト"], categories=["ブログ"] }
+taxonomies = { tags=["Sveltia CMS","Zola","Cloudflare Pages","テスト"] }
 math = false
 [extra]
 author = "etak64n"

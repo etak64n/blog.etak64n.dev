@@ -3,7 +3,7 @@ title = "ファミコンを作る 02 - ファミコン CPU 解説 MOS 6502 編"
 date = 2025-10-26
 updated = 2025-10-26
 draft = true
-taxonomies = { tags=["Nintendo","Game","NES", "ファミコンを作る"], categories=["Nintendo"] }
+taxonomies = { tags=["Nintendo","Game","NES", "ファミコンを作る"] }
 math = true
 [extra]
 author = "etak64n"

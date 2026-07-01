@@ -1,4 +1,0 @@
-+++
-title = "Microsoft"
-transparent = true
-+++

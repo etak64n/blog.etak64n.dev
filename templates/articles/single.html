@@ -40,11 +40,9 @@
   <h1>{{ page.title }}</h1>
   <p class="post-meta">{{ page.date | date(format="%Y-%m-%d") }}</p>
 
-  {% set cats = page.taxonomies.categories | default(value=[]) %}
   {% set tags = page.taxonomies.tags | default(value=[]) %}
-  {% if cats | length > 0 or tags | length > 0 %}
+  {% if tags | length > 0 %}
     <p class="tax">
-      {% for c in cats %}{% set url = get_taxonomy_url(kind="categories", name=c) %}<a class="pill cat" href="{{ url }}">{{ c }}</a>{% endfor %}
       {% for t in tags %}{% set url = get_taxonomy_url(kind="tags", name=t) %}<a class="pill tag" href="{{ url }}">#{{ t }}</a>{% endfor %}
     </p>
   {% endif %}
@@ -60,7 +58,6 @@
    - `score`: accumulates tag/category match score within nested loops
    Without set_global, these counters would reset to their initial value on each iteration. #}
 {% set mytags = page.taxonomies.tags | default(value=[]) %}
-{% set mycats = page.taxonomies.categories | default(value=[]) %}
 {% set banned = ["AWS"] %}
 {% set root = get_section(path="articles/_index.md") %}
 
@@ -71,16 +68,10 @@
     {% for p in root.pages | slice(end=200) %}
       {% if p.permalink != page.permalink and shown < 4 %}
         {% set p_tags = p.taxonomies.tags | default(value=[]) %}
-        {% set p_cats = p.taxonomies.categories | default(value=[]) %}
         {% set_global score = 0 %}
         {% for t in p_tags %}
           {% if (t in mytags) and (t not in banned) %}
             {% set_global score = score + 1 %}
-          {% endif %}
-        {% endfor %}
-        {% for c in p_cats %}
-          {% if c in mycats %}
-            {% set_global score = score + 2 %}
           {% endif %}
         {% endfor %}
         {% if score > 0 %}

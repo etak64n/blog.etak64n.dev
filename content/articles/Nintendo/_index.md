@@ -1,4 +1,0 @@
-+++
-title = "Nintendo"
-transparent = true
-+++

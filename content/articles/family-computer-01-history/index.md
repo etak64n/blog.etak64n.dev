@@ -3,7 +3,7 @@ title = "ファミコンを作る 01 - ファミコンの歴史"
 date = 2025-10-25
 updated = 2025-10-25
 draft = true
-taxonomies = { tags=["Nintendo","Game","NES", "ファミコンを作る"], categories=["Nintendo"] }
+taxonomies = { tags=["Nintendo","Game","NES", "ファミコンを作る"] }
 math = true
 [extra]
 author = "etak64n"

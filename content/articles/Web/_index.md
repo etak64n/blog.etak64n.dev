@@ -1,4 +1,0 @@
-+++
-title = "Web"
-transparent = true
-+++

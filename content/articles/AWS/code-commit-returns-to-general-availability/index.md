@@ -1,10 +1,14 @@
 +++
 title = "AWS CodeCommit が帰ってきました"
-date = 2025-11-25
-updated = 2025-11-25
-draft = false
-taxonomies = { tags=["AWS","CodeCommit","Deployment"], categories=["AWS"] }
+date = "2025-11-25"
+updated = "2025-11-25"
+draft = true
 math = true
+
+[taxonomies]
+categories = [ "AWS" ]
+tags = [ "AWS", "CodeCommit", "Deployment" ]
+
 [extra]
 author = "etak64n"
 hero = "/images/hero/hero-aws.png"

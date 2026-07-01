@@ -1,10 +1,13 @@
 +++
 title = "Sveltia CMS でブログを書いてみるテスト"
-date = 2026-07-02
-updated = 2026-07-02
+date = "2026-07-02"
+updated = "2026-07-02"
 draft = false
-taxonomies = { tags=["Sveltia CMS","Zola","Cloudflare Pages","テスト"] }
 math = false
+
+[taxonomies]
+tags = [ "Sveltia CMS", "Zola", "Cloudflare Pages", "テスト" ]
+
 [extra]
 author = "etak64n"
 hero = "/images/hero/placeholder.svg"
@@ -31,6 +34,8 @@ Cloudflare Pages で構築したブログの、投稿フローを確認するた
 2. 記事を書いて保存 → GitHub にコミットされる
 3. GitHub Actions がビルドして Cloudflare Pages へデプロイ
 4. 数分以内に本番へ反映
+
+![](20260702-005754.png)
 
 ## おわりに
 

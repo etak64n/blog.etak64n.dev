@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>{{ section.title }}</h1>
+{% if paginator.pages | length == 0 %}
+  <p class="empty-state">まだ記事がありません。</p>
+{% else %}
 <ul class="post-list post-grid">
   {% for p in paginator.pages %}
     <li>
@@ -15,10 +18,8 @@
       </div>
     </li>
   {% endfor %}
-  {% if paginator.pages | length == 0 %}
-    <li class="muted">まだ記事がありません。</li>
-  {% endif %}
 </ul>
+{% endif %}
 
 <nav class="pagination">
   {% if paginator.previous %}<a href="{{ paginator.previous }}">←</a>{% endif %}

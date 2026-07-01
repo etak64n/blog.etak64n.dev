@@ -494,6 +494,15 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0
 
 /* Utilities */
 .muted { color: var(--muted); }
+.empty-state {
+  color: var(--muted);
+  margin: 14px 0;
+  padding: 28px 16px;
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: var(--surface, transparent);
+}
 .sr-only {
   position: absolute;
   width: 1px;

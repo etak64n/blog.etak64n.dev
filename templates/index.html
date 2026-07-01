@@ -4,6 +4,9 @@
 
 {% set articles = get_section(path="articles/_index.md") %}
 
+{% if articles.pages | length == 0 %}
+  <p class="empty-state">まだ記事がありません。</p>
+{% else %}
 <ul class="post-list post-grid">
   {% for p in articles.pages | slice(end=10) %}
     <li>
@@ -18,9 +21,7 @@
       </div>
     </li>
   {% endfor %}
-  {% if articles.pages | length == 0 %}
-    <li class="muted">まだ記事がありません。</li>
-  {% endif %}
 </ul>
+{% endif %}
 
 {% endblock content %}

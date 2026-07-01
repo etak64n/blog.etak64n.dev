@@ -7,10 +7,10 @@
 
 backend:
   name: github
-  repo: etak64n/etak64n-blog
+  repo: etak64n/blog.etak64n.dev
   branch: main
-  # OAuth Worker (sveltia-cms-auth) の URL に置き換える。README 参照。
-  base_url: https://sveltia-cms-auth.CHANGE-ME.workers.dev
+  # OAuth Worker は使わず、ログイン時に GitHub Personal Access Token を貼る運用。
+  # (base_url を設定すれば OAuth ログインに切り替え可能。README 参照。)
 
 # 日本語 UI
 locale: ja

@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f7f8fa;
+  --surface: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --brand: #2563eb;
+}
+[data-theme='dark'] {
+  --bg: #0b1020;
+  --surface: #121a2e;
+  --text: #e5e9f0;
+  --muted: #94a3b8;
+  --border: #24304a;
+  --brand: #60a5fa;
+}
+
+html {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Rendered markdown body */
+.prose-content {
+  line-height: 1.8;
+}
+.prose-content h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 2rem 0 0.75rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3rem;
+}
+.prose-content h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 1.5rem 0 0.5rem;
+}
+.prose-content p {
+  margin: 0.9rem 0;
+}
+.prose-content a {
+  color: var(--brand);
+  text-decoration: underline;
+}
+.prose-content ul,
+.prose-content ol {
+  margin: 0.9rem 0;
+  padding-left: 1.4rem;
+  list-style: revert;
+}
+.prose-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+.prose-content pre {
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 0.9rem;
+}
+.prose-content code:not(pre code) {
+  background: rgba(100, 116, 139, 0.15);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+.prose-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 1rem 0;
+}

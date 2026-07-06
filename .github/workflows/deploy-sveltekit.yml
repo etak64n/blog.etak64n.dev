@@ -1,0 +1,55 @@
+name: Deploy SvelteKit to Cloudflare Pages
+run-name: "SvelteKit → CF Pages • ${{ inputs.project }} #${{ github.run_number }}"
+
+# 手動実行のみ（自動デプロイしない）。切替が済むまで本番 (etak64n-blog) を汚さないため、
+# デフォルトはプレビュー用の別プロジェクト名にしている。
+on:
+  workflow_dispatch:
+    inputs:
+      project:
+        description: "Cloudflare Pages project name"
+        required: true
+        default: "etak64n-blog-sveltekit"
+
+env:
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          # R2 + Image Transformations 導入後にここを Transformations URL prefix にする
+          # 例: https://blog.etak64n.dev/cdn-cgi/image/format=auto,width=1200/https://images.etak64n.dev
+          IMAGES_BASE: ${{ vars.IMAGES_BASE || '' }}
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: app
+          command: pages deploy .svelte-kit/cloudflare --project-name=${{ inputs.project }}

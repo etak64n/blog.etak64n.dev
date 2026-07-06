@@ -1,0 +1,69 @@
+# Sveltia CMS 設定 — etak64n's blog (SvelteKit 版)
+# 記事は app/src/content/blogPost/{slug}/index.md（YAML frontmatter）。
+# 画像は各記事フォルダに co-located（method 3b: 原本は Git、R2 はミラー）。
+
+backend:
+  name: github
+  repo: etak64n/blog.etak64n.dev
+  branch: main
+  # GitHub OAuth ログイン (sveltia-cms-auth Worker 経由)。
+  base_url: https://sveltia-cms-auth.etak64n.workers.dev
+
+locale: ja
+
+# ヒーロー以外の本文画像はコレクション側 media_folder: '' で co-located。
+media_folder: app/static/images/uploads
+public_folder: /images/uploads
+
+slug:
+  encoding: ascii
+  clean_accents: true
+
+collections:
+  - name: articles
+    label: "記事"
+    label_singular: "記事"
+    folder: app/src/content/blogPost
+    path: "{{slug}}/index"
+    extension: md
+    format: yaml-frontmatter
+    media_folder: ""
+    public_folder: ""
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}}"
+    sortable_fields: [date, updated, title]
+    fields:
+      - { name: title, label: タイトル, widget: string }
+      - { name: slug, label: Slug, widget: string, required: false, hint: "URL に使う英数字スラッグ" }
+      - { name: date, label: 公開日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: updated, label: 更新日, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { name: draft, label: 下書き, widget: boolean, default: true }
+      - { name: description, label: 概要, widget: text, required: false }
+      - { name: tags, label: タグ, widget: list, required: false, default: [] }
+      - name: thumbnail
+        label: サムネイル
+        widget: object
+        required: false
+        fields:
+          - { name: url, label: 画像URL, widget: string, required: false }
+          - { name: title, label: 代替テキスト, widget: string, required: false }
+      - { name: audio, label: 音声URL, widget: string, required: false }
+      - name: quizzes
+        label: 理解度チェック（クイズ）
+        widget: list
+        required: false
+        label_singular: 設問
+        summary: "{{fields.question}}"
+        fields:
+          - { name: question, label: 設問, widget: string }
+          - name: answers
+            label: 選択肢
+            widget: list
+            label_singular: 選択肢
+            summary: "{{fields.text}}"
+            fields:
+              - { name: text, label: 選択肢テキスト, widget: string }
+              - { name: correct, label: 正解, widget: boolean, default: false }
+              - { name: explanation, label: 解説, widget: text, required: false }
+      - { name: body, label: 本文, widget: markdown }

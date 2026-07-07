@@ -3,6 +3,14 @@
 ブランチ: **`feat/sveltekit`**（`main` / 本番 blog.etak64n.dev には未反映・無影響）
 アプリ: **`app/`**（SvelteKit 2 + Svelte 5 + adapter-cloudflare）
 
+## 🌐 ライブプレビュー（本番とは別プロジェクト）
+
+**https://etak64n-blog-sveltekit.pages.dev**
+
+Cloudflare Pages の**新規プロジェクト** `etak64n-blog-sveltekit` にデプロイ済み。
+本番 `etak64n-blog` / `blog.etak64n.dev` には一切影響していません（別プロジェクト・別URL）。
+全ページ 200、クイズ・コードハイライト(shiki)・sitemap/RSS 動作確認済み。
+
 ## ✅ 実装済み（ローカルで `npm run build` 通過）
 
 - SvelteKit + adapter-cloudflare + Tailwind の土台
@@ -75,11 +83,14 @@ R2 に載せる場合:
 - 現状は ja のみ。構造は後付け可能な形で用意済み。
 
 ### 3. デプロイ & 切替
-- [ ] `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` はリポジトリ secret に設定済み（流用可）
-- [ ] Actions から **Deploy SvelteKit**（workflow_dispatch）を実行 → **新規プレビュー用プロジェクト** `etak64n-blog-sveltekit` にデプロイ
-- [ ] プレビューURLで確認
-- [ ] 問題なければ独自ドメイン `blog.etak64n.dev` を新プロジェクトへ付け替え（旧 Zola はロールバック用に温存）
+- [x] `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` はリポジトリ secret に設定済み（流用可）
+- [x] **新規プレビュー用プロジェクト** `etak64n-blog-sveltekit` を作成・デプロイ済み → https://etak64n-blog-sveltekit.pages.dev
+- [x] プレビューURLで動作確認（全ページ 200 / クイズ / shiki / sitemap / rss）
+- [ ] （あなた）プレビューを実際に見て内容を確認
+- [ ] （あなた）問題なければ独自ドメイン `blog.etak64n.dev` を新プロジェクトへ付け替え（旧 Zola はロールバック用に温存）
 - [ ] `/admin` の CSP Transform Rule は既存を流用（jsdelivr 許可済み）
+- 手動再デプロイ: `cd app && npm run build && npx wrangler pages deploy .svelte-kit/cloudflare --project-name=etak64n-blog-sveltekit`
+  もしくは Actions の **Deploy SvelteKit**（workflow_dispatch）
 
 ### 4. 仕上げ（任意）
 - [ ] Pagefind 検索、関連記事（タグ一致）、ダークモード切替ボタン、404 ページの整備

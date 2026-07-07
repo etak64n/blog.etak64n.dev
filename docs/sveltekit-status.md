@@ -22,8 +22,10 @@ Cloudflare Pages の**新規プロジェクト** `etak64n-blog-sveltekit` にデ
 - **sitemap.xml / rss.xml**（prerender 生成）
 - 全ページ prerender（静的出力、Cloudflare Pages 向け）
 - 既存 7 記事を Zola(TOML)→ YAML へ移行（`app/scripts/migrate-from-zola.mjs`）
-- デモ記事 `css-random-function`（クイズ + コードハイライトの実証、公開）
 - Sveltia CMS 設定を新スキーマ・新配置へ更新（`app/static/admin/`）
+
+> 注: クイズ/ハイライト検証用に他サイト記事を丸写ししたデモ記事を一時作成・デプロイしてしまい、
+> 撤去済み（記事削除・Pages プロジェクト削除）。クイズ機能の確認は自作のダミー記事で行うこと。
 - 手動デプロイ workflow（`.github/workflows/deploy-sveltekit.yml`、`workflow_dispatch` のみ）
 
 ## ローカルでの動かし方

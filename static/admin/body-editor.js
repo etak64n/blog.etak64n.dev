@@ -22,7 +22,7 @@ const PALETTE_KEY = IS_MAC ? '⌘/' : 'Ctrl+/';
 
 /** Replace the textarea's selection with `text` so that the browser's undo history keeps it. */
 function insertText(textarea, text) {
-  textarea.focus();
+  textarea.focus({ preventScroll: true });
 
   // execCommand is deprecated but still the only way to edit a textarea undoably.
   if (!document.execCommand('insertText', false, text)) {
@@ -109,13 +109,28 @@ const BodyEditorControl = createClass({
     this.resize();
   },
 
+  /**
+   * Fit the textarea's height to its content. Measuring needs a collapsed textarea, which makes
+   * the page shorter for a moment, and the browser clamps the edit pane's scroll position when
+   * that happens. Remember every scrolled ancestor and put it back, or the view would jump up
+   * whenever a long body is edited below the first screen.
+   */
   resize: function () {
     const textarea = this.textarea;
 
     if (!textarea) return;
 
+    const scrolled = [];
+
+    for (let node = textarea.parentElement; node; node = node.parentElement) {
+      if (node.scrollTop > 0) scrolled.push([node, node.scrollTop]);
+    }
+
     textarea.style.height = 'auto';
     textarea.style.height = `${textarea.scrollHeight + 2}px`;
+    scrolled.forEach(([node, top]) => {
+      node.scrollTop = top;
+    });
   },
 
   onInput: function () {
@@ -209,7 +224,7 @@ const BodyEditorControl = createClass({
       }
     }
 
-    textarea.focus();
+    textarea.focus({ preventScroll: true });
     textarea.setSelectionRange(exit, exit);
   },
 
@@ -278,7 +293,7 @@ const BodyEditorControl = createClass({
     const { prefix, suffix } = surroundings(value.slice(0, start), after, snippet.inline);
     const base = start + prefix.length;
 
-    textarea.focus();
+    textarea.focus({ preventScroll: true });
     textarea.setSelectionRange(start, end);
     insertText(textarea, prefix + text + suffix);
 
@@ -389,7 +404,7 @@ const BodyEditorControl = createClass({
     const textarea = this.textarea;
 
     this.savedSelection = [textarea.selectionStart, textarea.selectionEnd];
-    this.setState({ paletteOpen: true, query: '', active: 0 }, () => this.paletteInput?.focus());
+    this.setState({ paletteOpen: true, query: '', active: 0 }, () => this.paletteInput?.focus({ preventScroll: true }));
   },
 
   closePalette: function (restoreFocus) {
@@ -399,7 +414,7 @@ const BodyEditorControl = createClass({
     this.setState({ paletteOpen: false });
 
     if (restoreFocus && selection) {
-      this.textarea.focus();
+      this.textarea.focus({ preventScroll: true });
       this.textarea.setSelectionRange(selection[0], selection[1]);
     }
   },

@@ -1,23 +1,24 @@
 {#
-Usage examples in Markdown:
+Usage:
 
-{% codebox title="main.tf" lang="hcl" %}
+{% codebox(title="main.tf", language="hcl") %}
 resource "aws_s3_bucket" "example" {
   bucket = "my-bucket"
 }
 {% end %}
 
 Params:
-- title (or filename): Optional string shown in the header bar
-- lang: Optional language hint (adds class `language-<lang>`)
+- title (or filename): optional string shown in a tab when it looks like a file name
+- language: optional language hint (adds class `language-<language>`). Zola reserves `lang`
+  for the page language, so a `lang` argument is not seen here.
+- theme: "dark" (default) or "light"
+
+The body is plain code and is HTML-escaped. See code.html for the Zola 0.22 notes.
 #}
-{% set title = title | default(value=filename) %}
-{% set theme = theme | default(value="dark") %}
-{% set show_tab = title and title is matching("(\\.|^)([^/\\s]+)\\.[A-Za-z0-9]+$") %}
-<div class="codebox{% if theme == "dark" %} dark{% endif %}">
-  <div class="codebox-bar"></div>
-  <pre class="codebox-pre{% if show_tab %} has-title{% endif %}">
-    {% if show_tab %}<div class="codebox-title-inside">{{ title }}</div>{% endif %}
-    <code{% if lang %} class="language-{{ lang }}"{% endif %}>{{ body | safe }}</code>
-  </pre>
-</div>
+{%- set _title = title | default(value="") -%}
+{%- if _title == "" %}{% set _title = filename | default(value="") %}{% endif -%}
+{%- set _theme = theme | default(value="dark") -%}
+{%- set _lang = language | default(value="") | lower -%}
+{%- set _code = body | regex_replace(pattern="^\n+|\n+$", rep="") -%}
+{%- set show_tab = _title != "" and _title is matching("(\.|^)([^/\s]+)\.[A-Za-z0-9]+$") -%}
+<div class="codebox{% if _theme == "dark" %} dark{% endif %}"><div class="codebox-bar"></div><pre class="codebox-pre{% if show_tab %} has-title{% endif %}">{% if show_tab %}<div class="codebox-title-inside">{{ _title }}</div>{% endif %}<code{% if _lang %} class="language-{{ _lang }}"{% endif %}>{{ _code }}</code></pre></div>

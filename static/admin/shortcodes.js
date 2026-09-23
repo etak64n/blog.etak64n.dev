@@ -157,7 +157,7 @@ export const renderers = {
 
     return codeboxHtml({
       title: String(args.file ?? args.title ?? ''),
-      lang: String(args.lang ?? args.language ?? fenced?.lang ?? ''),
+      lang: String(args.language ?? fenced?.lang ?? ''),
       theme: String(args.theme ?? 'dark'),
       code: fenced ? fenced.code : String(body).trim(),
     });
@@ -166,7 +166,8 @@ export const renderers = {
   codebox(args = {}, body = '') {
     return codeboxHtml({
       title: String(args.title ?? args.filename ?? ''),
-      lang: String(args.lang ?? ''),
+      // Zola hides a `lang` argument behind the page language, so only `language` counts.
+      lang: String(args.language ?? ''),
       theme: String(args.theme ?? 'dark'),
       code: String(body).replace(/^\n+|\n+$/g, ''),
     });

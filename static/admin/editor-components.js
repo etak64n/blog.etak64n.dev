@@ -35,7 +35,7 @@ const code = {
   icon: 'code_blocks',
   fields: [
     { name: 'file', label: 'ファイル名 (タブに表示)', widget: 'string', required: false },
-    { name: 'lang', label: '言語 (省略時は拡張子から推定)', widget: 'string', required: false },
+    { name: 'lang', label: '言語 (省略時はコードの ``` の言語か拡張子から推定)', widget: 'string', required: false },
     { name: 'theme', label: 'テーマ', widget: 'select', options: ['dark', 'light'], default: 'dark', required: false },
     { name: 'code', label: 'コード', widget: 'text' },
     // Language written on the fence inside the block; kept apart from `lang` so that a block
@@ -49,7 +49,7 @@ const code = {
 
     return {
       file: String(args.file ?? args.title ?? ''),
-      lang: String(args.lang ?? args.language ?? ''),
+      lang: String(args.language ?? ''),
       theme: String(args.theme ?? 'dark'),
       code: fenced ? fenced.code : String(match[3] ?? '').trim(),
       fenceLang: String(fenced?.lang ?? ''),
@@ -57,7 +57,10 @@ const code = {
   },
   toBlock: ({ file = '', lang = '', theme = 'dark', code = '', fenceLang = '' }) => {
     const fence = '`'.repeat(Math.max(3, longestBacktickRun(code) + 1));
-    const args = formatArgs({ file, lang, theme: theme === 'dark' ? '' : theme });
+    // code.html fails the Zola build without `file` (or `title`), so always write it.
+    // Zola hides a `lang` argument behind the page language, so the hint goes in `language`.
+    const rest = formatArgs({ language: lang, theme: theme === 'dark' ? '' : theme });
+    const args = `file="${String(file).replace(/"/g, '\\"')}"${rest ? `, ${rest}` : ''}`;
 
     return `{% code(${args}) %}\n${fence}${lang || fenceLang}\n${code}\n${fence}\n{% end %}`;
   },

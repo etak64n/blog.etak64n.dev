@@ -67,6 +67,7 @@ collections:
             media_folder: /static/images/hero
             public_folder: /images/hero
           - { name: toc, label: 目次, widget: boolean, default: true }
-      # ショートコードを手書きするため raw (Markdown) モードを既定にする。
-      # リッチテキストに切り替えると note / code / img / link を挿入メニューから入れられる。
-      - { name: body, label: 本文, widget: markdown, modes: [raw, rich_text] }
+      # 本文: 独自記法 (ref / note / code / codebox / link / img) をボタンと ⌘/ ですぐ挿入できる
+      # Markdown エディタ (static/admin/body-editor.js)。標準エディタに戻すときは
+      # widget: markdown にする (リッチテキストの挿入メニューで note / code / img / link が使える)。
+      - { name: body, label: 本文, widget: body-editor }

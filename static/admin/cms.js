@@ -6,6 +6,7 @@
  */
 // Must run first: adapts the preview pane to the /admin Content-Security-Policy.
 import './csp-compat.js';
+import { registerBodyEditor } from './body-editor.js';
 import { registerEditorComponents } from './editor-components.js';
 import { registerHeroField } from './hero-field.js';
 import { registerPreviewTemplate } from './preview-template.js';
@@ -16,9 +17,11 @@ CMS.registerPreviewStyle('/main.css');
 CMS.registerPreviewStyle('https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/github-dark.min.css');
 CMS.registerPreviewStyle('/admin/preview.css');
 
+// Used by the built-in Markdown widget only, i.e. if `body` is switched back to `widget: markdown`.
 registerEditorComponents();
 registerPreviewTemplate();
 registerHeroField();
+registerBodyEditor();
 
 // `?backend=test` swaps in the in-browser Test backend for local development without GitHub.
 const params = new URLSearchParams(location.search);

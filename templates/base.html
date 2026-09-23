@@ -22,6 +22,14 @@
         document.documentElement.setAttribute('data-theme', theme);
       } catch (e) {}
     })();
+    // Link-card and ref favicons show a globe (CSS background) until they have loaded. Image
+    // load events do not bubble, so listen in the capture phase from the start of the page.
+    document.addEventListener('load', function (e) {
+      var img = e.target;
+      if (img && img.tagName === 'IMG' && img.matches('.link-card-favicon, .ref-trigger-icon, .ref-panel-icon')) {
+        img.classList.add('is-loaded');
+      }
+    }, true);
   </script>
 </head>
 <body>

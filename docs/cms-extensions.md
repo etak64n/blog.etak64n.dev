@@ -53,7 +53,9 @@ note / code / img / link をフォーム入力できる。`ref` は文中(イン
 2. `hero-field.js` がタイトル・タグ・本文冒頭 (1500 字) を `/api/admin/hero` に POST
 3. `hero.ts` がテキストモデルで英語の画像プロンプトを作り (サイトの配色に合わせたスタイル固定)、
    画像モデルで生成して画像をそのまま返す。使ったプロンプトは `X-Hero-Prompt` ヘッダー
-4. ブラウザ側で 1200×630 に cover 切り抜き → WebP 化 → `addFile()` で記事の下書きに添付
+4. ブラウザ側で 1200×630 に収めて WebP 化し、`addFile()` で記事の下書きに添付する。
+   縦横比が 1200:630 に近い画像は枠いっぱいに切り抜く。既定モデルの正方形のように比率が違う画像は、
+   被写体が欠けないよう全体を中央に置き、左右を同じ画像のぼかしで埋める
 5. 保存すると `static/images/hero/<slug>-hero.webp` が記事と同じコミットに入り、
    `extra.hero` は `/images/hero/<slug>-hero.webp` になる
 
@@ -68,8 +70,9 @@ note / code / img / link をフォーム入力できる。`ref` は文中(イン
 | 画像生成 | `@cf/black-forest-labs/flux-1-schnell` (1024², 6 steps) | Pages の変数 `AI_IMAGE_MODEL` |
 
 flux-1-schnell は Cloudflare ホストで Workers AI の無料枠 (1 日 10,000 neurons) に収まる。
-`@cf/leonardo/phoenix-1.0` や `@cf/bytedance/stable-diffusion-xl-lightning` のように
-width/height を受け付けるモデルに変えると、`hero.ts` は 1216×640 で生成する。
+flux-1-schnell は正方形 (1024×1024) しか出せない。`@cf/leonardo/phoenix-1.0` や
+`@cf/bytedance/stable-diffusion-xl-lightning` のように width/height を受け付けるモデルに変えると、
+`hero.ts` は 1216×640 で生成し、ブラウザ側は切り抜きで枠いっぱいに使う。
 
 ### 認証
 

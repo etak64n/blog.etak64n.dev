@@ -7,7 +7,7 @@
  * Response: the raw image (JPEG/PNG/WebP), plus headers
  *   - X-Hero-Prompt: the prompt used, URL-encoded (headers are ASCII only)
  *   - X-Hero-Model:  the image model used
- * The admin UI crops the image to 1200x630 and converts it to WebP before uploading.
+ * The admin UI fits the image into 1200x630 and converts it to WebP before uploading.
  *
  * Environment:
  *   AI              Workers AI binding (wrangler.toml)
@@ -129,7 +129,7 @@ async function generateImage(env: Env, model: string, prompt: string): Promise<{
   const input: Record<string, unknown> = { prompt };
 
   if (model.includes('flux-1-schnell')) {
-    input.steps = 6; // max 8; the admin UI crops the square output to 1200x630
+    input.steps = 6; // max 8; the output is square, and the admin UI fits it into 1200x630
   } else {
     input.width = 1216;
     input.height = 640;
@@ -149,17 +149,20 @@ async function generateImage(env: Env, model: string, prompt: string): Promise<{
   return { bytes, type: sniffImageType(bytes) };
 }
 
-/** Local development stand-in: an SVG that shows what would have been sent to the model. */
+/**
+ * Local development stand-in: an SVG that shows what would have been sent to the model. It is
+ * square like the output of the default model, so the admin UI's fitting is exercised locally.
+ */
 function fakeImage(prompt: string, title: string): Response {
-  const lines = prompt.match(/.{1,70}(\s|$)/g) ?? [prompt];
+  const lines = prompt.match(/.{1,60}(\s|$)/g) ?? [prompt];
   const text = lines
-    .slice(0, 6)
-    .map((line, i) => `<text x="60" y="${300 + i * 34}" font-size="22" fill="#334155">${escapeXml(line.trim())}</text>`)
+    .slice(0, 8)
+    .map((line, i) => `<text x="60" y="${330 + i * 34}" font-size="22" fill="#334155">${escapeXml(line.trim())}</text>`)
     .join('');
   const svg =
-    '<svg xmlns="http://www.w3.org/2000/svg" width="1216" height="640" viewBox="0 0 1216 640">' +
+    '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">' +
     '<defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#dbeafe"/><stop offset="1" stop-color="#f8fafc"/></linearGradient></defs>' +
-    '<rect width="100%" height="100%" fill="url(#g)"/><circle cx="1000" cy="160" r="110" fill="#bfdbfe"/><rect x="820" y="420" width="260" height="120" rx="16" fill="#93c5fd"/>' +
+    '<rect width="100%" height="100%" fill="url(#g)"/><circle cx="830" cy="190" r="110" fill="#bfdbfe"/><rect x="700" y="800" width="260" height="120" rx="16" fill="#93c5fd"/>' +
     `<text x="60" y="120" font-size="44" font-weight="700" fill="#1e3a8a" font-family="sans-serif">${escapeXml(clip(title || 'DEV_FAKE_AI', 40))}</text>` +
     '<text x="60" y="170" font-size="20" fill="#64748b" font-family="sans-serif">DEV_FAKE_AI placeholder (Workers AI not called)</text>' +
     `<g font-family="sans-serif">${text}</g></svg>`;

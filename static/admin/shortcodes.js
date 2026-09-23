@@ -202,7 +202,7 @@ export const renderers = {
     return (
       `<figure class="link-card${args.image ? ' has-image' : ''}"><a href="${escapeHtml(url)}" target="_blank" rel="noopener">` +
       `<div class="link-card-body"><div class="link-card-text"><div class="link-card-title">${escapeHtml(title)}</div>${desc}` +
-      `<div class="link-card-meta"><img class="link-card-favicon" src="${escapeHtml(favicon)}" alt="" width="16" height="16">` +
+      `<div class="link-card-meta"><img class="link-card-favicon" src="${escapeHtml(favicon)}" alt="" width="16" height="16" loading="lazy" decoding="async">` +
       `<span class="link-card-host">${escapeHtml(host)}</span></div></div>${thumb}</div></a>${caption}</figure>`
     );
   },
@@ -217,7 +217,8 @@ export const renderers = {
     const lines = excerpt ? excerpt.split('\n').map((line) => line.trim()).filter(Boolean) : [];
     const id = String(args.id || slugId(`ref-${args.site || host}-${title}`));
     const favicon = String(args.icon || faviconOf(host));
-    const icon = (cls) => (favicon ? `<img src="${escapeHtml(favicon)}" alt="" class="${cls}" width="18" height="18">` : '');
+    const icon = (cls) =>
+      favicon ? `<img src="${escapeHtml(favicon)}" alt="" class="${cls}" width="18" height="18" loading="lazy" decoding="async">` : '';
     const hostSpan = (cls) => (host ? `<span class="${cls}">${mdText(host)}</span>` : '');
     const badge = args.badge ? `<span class="ref-trigger-badge" role="link" tabindex="0">${mdText(args.badge)}</span>` : '';
     const subtitle = args.subtitle ? `<span class="ref-panel-subtitle">${mdText(args.subtitle)}</span>` : '';

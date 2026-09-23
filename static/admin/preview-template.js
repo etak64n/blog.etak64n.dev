@@ -74,6 +74,22 @@ function resolveImages(root, getAsset) {
   });
 }
 
+const FAVICONS = '.link-card-favicon, .ref-trigger-icon, .ref-panel-icon';
+
+/**
+ * Like the script in templates/base.html on the site: favicons show a globe (a CSS background
+ * in main.css) until they have loaded, then `.is-loaded` removes it.
+ */
+function markLoadedFavicons(root) {
+  root.querySelectorAll(FAVICONS).forEach((img) => {
+    if (img.complete && img.naturalWidth > 0) {
+      img.classList.add('is-loaded');
+    } else {
+      img.addEventListener('load', () => img.classList.add('is-loaded'), { once: true });
+    }
+  });
+}
+
 /** Apply the `{{ img() }}` options that Markdown alone cannot express. */
 function applyImageOptions(root) {
   root.querySelectorAll('figure.img').forEach((figure) => {
@@ -156,6 +172,7 @@ const ArticlePreview = createClass({
 
     resolveImages(element, this.props.getAsset);
     applyImageOptions(element);
+    markLoadedFavicons(element);
     highlightCode(element);
   },
 

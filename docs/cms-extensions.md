@@ -136,6 +136,8 @@ Transform Rule に `frame-src 'self' blob:` と `script-src` の `https://unpkg.
 - 中身は先頭バイトで PNG / ICO / GIF / JPEG / WebP を判定し、正しい型を付けて返す。
   それ以外 (見つからない・空・SVG など) は地球アイコンにするので、壊れた画像にはならない
 - 取得元の URL はレスポンスヘッダー `X-Favicon-Source` に出る
+- 読み込み中は地球アイコンを出す。main.css が画像の背景に地球を敷き、読み込み完了で
+  `.is-loaded` を付けて外す (公開ページは templates/base.html、プレビューは preview-template.js)
 - 読者のブラウザが普通の画像と同じく 1 日保持する。他サイトからの直リンク
   (Sec-Fetch-Site が cross-site / same-site) は 403
 - 1 件あたり 0.1〜2 秒ほどかかる (リンク先の応答しだい)。ボットを拒むサイトは地球アイコンになる

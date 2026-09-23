@@ -445,13 +445,13 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0
   color: #f87171;
 }
 
-/* Codebox shortcode */
+/* Code boxes: fenced code (wrapped by the script in base.html) and the code / codebox shortcodes.
+   Zola highlights the code at build time: a `pre.giallo` with the Nord colours inline. */
 .codebox { border: 1px solid var(--border); border-radius: 4px; background: #ffffff; margin: 16px 0; position: relative; padding-top: 0; max-width: 100%; }
 .codebox .codebox-bar { display: none; }
 .codebox-title-tab { display: none; }
-.codebox-pre { margin: 0 0 10px 0; padding: 0; background: #f8fafc; border: 1px solid var(--border); border-radius: 4px; overflow-x: auto; max-width: 100%; }
-.codebox-pre code { display: block; padding: 14px 16px; padding-right: 56px; font-size: 0.85em; line-height: 1.5; min-width: fit-content; }
-.codebox-pre { position: relative; }
+.codebox > pre { margin: 0 0 10px 0; padding: 0; background: #f8fafc; border: 1px solid var(--border); border-radius: 4px; overflow-x: auto; max-width: 100%; }
+.codebox > pre code { display: block; padding: 14px 16px; padding-right: 56px; font-size: 0.85em; line-height: 1.5; min-width: fit-content; }
 .codebox-copy {
   position: absolute;
   top: 8px;
@@ -476,16 +476,57 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0
 .codebox-copy.copied { background: #d1fae5; border-color: transparent; box-shadow: inset 0 0 0 1px #86efac; color: #065f46; }
 .codebox.dark .codebox-copy { background: #111827; color: #e5e7eb; border-color: rgba(148,163,184,0.25); }
 .codebox.dark .codebox-copy.copied { background: #064e3b; color: #bbf7d0; border-color: transparent; box-shadow: inset 0 0 0 1px #10b981; }
-.codebox-pre { position: relative; }
-.codebox-pre.has-title code { padding-top: 42px; }
-.codebox-title-inside { position: absolute; top: 8px; left: 10px; padding: 0 6px; border-radius: 0; border: 1px solid var(--border); background: #fafafa; color: #334155; font: inherit; font-size: 0.85rem; font-weight: 500; white-space: nowrap; max-width: calc(100% - 32px); overflow: hidden; text-overflow: ellipsis; pointer-events: auto; user-select: text; cursor: text; }
+
+/* File name: a tab bar on top of the code, as in a code editor */
+.codebox-header {
+  display: flex;
+  height: 34px;
+  box-sizing: border-box;
+  background: #e2e8f0;
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+}
+.codebox-filename {
+  box-sizing: border-box;
+  max-width: calc(100% - 48px); /* clear of the copy button */
+  height: 100%;
+  padding: 0 14px 0 12px;
+  border-top: 2px solid #3b82f6;
+  border-top-left-radius: 3px;
+  background: #f8fafc;
+  color: #334155;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  line-height: 31px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.codebox-filename::before {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 7px;
+  vertical-align: -2px;
+  background: currentColor;
+  opacity: 0.65;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z'/%3E%3Cpath d='M14 3v5h5'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z'/%3E%3Cpath d='M14 3v5h5'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.codebox.has-title .codebox-copy { top: 2px; }
 
 /* Dark variant (default) */
 .codebox.dark { border: 0; background: transparent; box-shadow: none; padding-top: 0; }
 .codebox.dark .codebox-bar { display: none; }
-.codebox.dark .codebox-pre { margin: 0 0 10px 0; padding: 0; background: #0f172a; border: 1px solid rgba(148,163,184,0.15); border-radius: 4px; }
-.codebox.dark .codebox-title-inside { background: #f8fafc; color: #1f2937; border-color: rgba(148,163,184,0.35); }
-.codebox.dark .codebox-pre code { color: #e5e7eb; }
+.codebox.dark > pre { background: #2e3440; border: 1px solid rgba(148,163,184,0.15); }
+.codebox.dark > pre code { color: #d8dee9; }
+.codebox.dark .codebox-header { background: #242933; border-color: rgba(148,163,184,0.15); }
+.codebox.dark .codebox-filename { background: #2e3440; color: #d8dee9; border-top-color: #88c0d0; }
+
+/* The tab bar and the code form one box */
+.codebox.has-title > pre { border-top: 0; border-radius: 0 0 4px 4px; }
 
 /* Tags/Categories */
 .tax .pill { display: inline-block; padding: 2px 10px; margin: 0 8px 8px 0; border-radius: 0; font-size: 0.85rem; border: 1px solid; }

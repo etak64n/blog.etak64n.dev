@@ -17,13 +17,12 @@ body { padding: 16px; }
   transform: translate(calc(-50% + var(--ref-shift, 0px)), 0);
 }
 
-/* Fenced code is plain <pre><code> here (highlight.js adds colours); mimic the site's blocks. */
-.content pre { margin: 12px 0; border-radius: 4px; overflow-x: auto; background: #0f172a; }
-.content pre code { display: block; padding: 14px 16px; font-size: 0.85em; line-height: 1.5; background: transparent; }
-.codebox { position: relative; }
-.codebox pre { margin: 0 0 10px; border: 1px solid var(--border); background: #f8fafc; }
-.codebox pre code { color: #1e293b; }
-.codebox.has-title pre code { padding-top: 42px; }
-.codebox.dark pre { background: #0f172a; border-color: rgba(148, 163, 184, 0.15); }
-.codebox.dark pre code { color: #e5e7eb; }
-.codebox .codebox-title-inside { z-index: 1; }
+/*
+ * Code is plain <pre><code> here and highlight.js adds the colours (Nord, like Zola on the site).
+ * Code boxes take the rest of their look, including the file name tab, from main.css.
+ */
+.content pre { margin: 12px 0; border-radius: 4px; overflow-x: auto; background: #2e3440; }
+.content pre code { display: block; padding: 14px 16px; font-size: 0.85em; line-height: 1.5; color: #d8dee9; background: transparent; }
+.codebox pre { margin: 0 0 10px; }
+.codebox:not(.dark) pre { background: #f8fafc; }
+.codebox:not(.dark) pre code { color: #1e293b; }

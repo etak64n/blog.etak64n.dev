@@ -13,8 +13,9 @@ import { registerPreviewTemplate } from './preview-template.js';
 
 // The preview pane is an iframe: give it the site's stylesheet plus a few preview-only rules.
 CMS.registerPreviewStyle('/main.css');
-// Theme for the highlight.js output used by the preview template (loaded from jsDelivr).
-CMS.registerPreviewStyle('https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/github-dark.min.css');
+// Theme for the highlight.js output used by the preview template (loaded from jsDelivr): Nord,
+// the theme Zola uses for the site's code (config.toml).
+CMS.registerPreviewStyle('https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/nord.min.css');
 CMS.registerPreviewStyle('/admin/preview.css');
 
 // Used by the built-in Markdown widget only, i.e. if `body` is switched back to `widget: markdown`.

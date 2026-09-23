@@ -125,7 +125,10 @@ export function splitFence(text = '') {
   return m ? { lang: m[2].trim().split(/\s+/)[0] || '', code: m[3] } : null;
 }
 
-/** Shared HTML for `code` and `codebox`; the fence inside is highlighted by the CMS. */
+/**
+ * Shared HTML for `code` and `codebox`, in the structure of templates/shortcodes/code.html: an
+ * optional tab bar with the file name, then the code as a fence that the preview highlights.
+ */
 function codeboxHtml({ title = '', lang = '', theme = 'dark', code = '' }) {
   const showTab = /(\.|^)([^/\s]+)\.[A-Za-z0-9]+$/.test(title);
   const fenceLang = String(lang || (showTab ? langFromTitle(title) : ''))
@@ -133,7 +136,9 @@ function codeboxHtml({ title = '', lang = '', theme = 'dark', code = '' }) {
     .replace(/^c\+\+$/, 'cpp');
   const fence = '`'.repeat(Math.max(3, longestBacktickRun(code) + 1));
   const classes = ['codebox', theme === 'dark' ? 'dark' : '', showTab ? 'has-title' : ''].filter(Boolean).join(' ');
-  const tab = showTab ? `<div class="codebox-title-inside">${escapeHtml(title)}</div>` : '';
+  const tab = showTab
+    ? `<div class="codebox-header"><span class="codebox-filename">${escapeHtml(title)}</span></div>`
+    : '';
 
   return `<div class="${classes}"><div class="codebox-bar"></div>${tab}\n\n${fence}${fenceLang}\n${code}\n${fence}\n\n</div>`;
 }

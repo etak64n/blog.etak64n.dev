@@ -105,10 +105,19 @@ function applyImageOptions(root) {
   });
 }
 
+/** Code that templates/shortcodes/code.html leaves plain because it looks like a shortcode call. */
+const SHORTCODE_LIKE = /\{[{%]\s*[A-Za-z_][A-Za-z0-9_]*\s*\(|\{%\s*end\s*%\}/;
+
 async function highlightCode(root) {
-  // Only plain fences: Zola highlights those at build time, but not the code of the code /
-  // codebox shortcodes, which the site shows as plain text.
-  const blocks = [...root.querySelectorAll('pre code')].filter((block) => !block.closest('.codebox'));
+  // Colour what Zola colours at build time: code with a language, except in light-theme code
+  // boxes and in code boxes whose code looks like a shortcode call.
+  const blocks = [...root.querySelectorAll('pre code')].filter((block) => {
+    if (!/\blanguage-/.test(block.className)) return false;
+
+    const box = block.closest('.codebox');
+
+    return !box || (box.classList.contains('dark') && !SHORTCODE_LIKE.test(block.textContent));
+  });
 
   if (!blocks.length) return;
 

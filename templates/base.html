@@ -169,14 +169,18 @@
       bar.className = 'codebox-bar';
       const preClone = pre.cloneNode(true);
       preClone.classList.add('codebox-pre');
-      if (hasTitle && hasExt) {
-        preClone.classList.add('has-title');
-        const pill = document.createElement('div');
-        pill.className = 'codebox-title-inside';
-        pill.textContent = title;
-        preClone.insertBefore(pill, preClone.firstChild);
-      }
       wrapper.appendChild(bar);
+      if (hasTitle && hasExt) {
+        // The file name goes in a tab bar above the code, as with the code / codebox shortcodes.
+        wrapper.classList.add('has-title');
+        const header = document.createElement('div');
+        header.className = 'codebox-header';
+        const name = document.createElement('span');
+        name.className = 'codebox-filename';
+        name.textContent = title;
+        header.appendChild(name);
+        wrapper.appendChild(header);
+      }
 
       // Add copy button with icon
       const btn = document.createElement('button');

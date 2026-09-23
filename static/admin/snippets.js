@@ -1,5 +1,6 @@
 /**
- * The blog's special notations (Zola shortcodes) as snippets for the body editor.
+ * The blog's special notations (Zola shortcodes) as snippets for the body editor. `codebox` is
+ * not offered: it renders the same box as `code` and stays supported for existing text only.
  *
  * `${name}` marks a field. After insertion the editor visits the fields in order with Tab and
  * selects each one, so typing replaces it. A field starts with its `samples` entry, an example of
@@ -67,8 +68,8 @@ export const SNIPPETS = [
   {
     id: 'code',
     label: 'コード',
-    description: 'ファイル名のタブ付きコード。言語は拡張子から推定',
-    keywords: 'code コード ファイル file',
+    description: 'ファイル名のタブ付きで色付けしたコード。言語は拡張子から推定',
+    keywords: 'code コード ファイル file codebox コード枠 box',
     template: '{% code(file="${file}") %}\n```${lang}\n${code}\n```\n{% end %}',
     samples: { file: 'main.py', lang: 'python', code: 'print("Hello, world!")' },
     labels: { file: 'ファイル名', lang: '言語', code: 'コード' },
@@ -77,18 +78,6 @@ export const SNIPPETS = [
     multiline: ['code'],
     optional: ['file'],
     clear: ['lang'],
-  },
-  {
-    id: 'codebox',
-    label: 'コード枠',
-    description: 'タイトルと言語を指定するコード枠',
-    keywords: 'codebox コード枠 box',
-    template: '{% codebox(title="${title}", language="${language}") %}\n${code}\n{% end %}',
-    samples: { title: 'main.tf', language: 'hcl', code: 'resource "aws_s3_bucket" "example" {}' },
-    labels: { title: 'タイトル (ファイル名ならタブに表示)', language: '言語', code: 'コード' },
-    wrap: 'code',
-    multiline: ['code'],
-    optional: ['title', 'language'],
   },
   {
     id: 'link',

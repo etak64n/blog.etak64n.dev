@@ -1,9 +1,10 @@
 {#
   Usage:
-  {{ link(url="https://example.com/article", title="Title", desc="Optional description", image="/path/thumb.webp", site="example.com", favicon="https://icons.duckduckgo.com/ip3/example.com.ico") }}
+  {{ link(url="https://example.com/article", title="Title", desc="Optional description", image="/path/thumb.webp", site="example.com") }}
   - If `site` is omitted, the host is derived from `url`.
   - If `favicon` is omitted, the icon comes from /favicon/<host of url>, which functions/favicon/[host].ts
-    serves from this origin (the site's CSP blocks images from other origins).
+    fetches from the linked site and serves from this origin. An explicit `favicon` must be a path
+    on this site: the site's CSP blocks images from other origins.
   - `image` is optional; when present, a thumbnail appears on the right.
 #}
 {% set _url = url | default(value="") %}

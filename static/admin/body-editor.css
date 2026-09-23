@@ -49,19 +49,31 @@
 }
 
 .be-status {
-  min-height: 1.5em;
   padding: 0 0 6px;
   color: var(--sui-secondary-foreground-color, #64748b);
   font-size: var(--sui-font-size-x-small, 11px);
+  line-height: 1.5;
 }
 
-.be-status.be-error {
+/* One line each, cut with an ellipsis (the full text is the tooltip). */
+.be-status-main,
+.be-status-notice {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.be-status-main.be-error {
   color: #dc2626;
 }
 
 .be-status-field {
   color: var(--sui-primary-foreground-color, inherit);
   font-weight: 600;
+}
+
+.be-status-notice {
+  color: var(--sui-primary-accent-color, #2563eb);
 }
 
 .be-textarea {

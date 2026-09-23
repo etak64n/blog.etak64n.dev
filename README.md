@@ -122,8 +122,10 @@ The Sveltia CMS at `/admin/` is extended through its JavaScript API (no fork). S
 - **Body editor** — the body is a plain Markdown editor with one-click insertion of the shortcodes
   (toolbar, or a searchable list on ⌘/ / Ctrl+/). Inserted shortcodes come with example values
   and Tab stops between their arguments; examples left in optional arguments are removed when the
-  shortcode is finished. Images that are pasted or dropped are saved next to `index.md` as
-  `{{ img() }}` (`static/admin/body-editor.js`, `snippets.js`).
+  shortcode is finished. Link cards and refs get the title (and description) of the linked page
+  through `GET /api/admin/link-meta` (`functions/api/admin/link-meta.ts`). Images that are pasted
+  or dropped are saved next to `index.md` as `{{ img() }}` (`static/admin/body-editor.js`,
+  `snippets.js`).
 - **Insert forms** — kept for the built-in Markdown widget: `note`, `code`, `img` and `link` in
   the rich text editor's Insert menu (`static/admin/editor-components.js`).
 - **AI hero image** — the `hero-ai` field generates a 1200×630 hero with Workers AI through

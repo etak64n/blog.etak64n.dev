@@ -9,6 +9,8 @@
  * 3. Accept only PNG, ICO, GIF, JPEG or WebP recognised by their first bytes. SVG is refused:
  *    served from the blog's origin, a hostile SVG could run script when opened directly.
  */
+import { fetchLimited } from './fetch-limited';
+
 export interface Favicon {
   bytes: Uint8Array;
   type: string;
@@ -51,60 +53,6 @@ export function sniffImage(bytes: Uint8Array): { type: string; ext: string } | n
   if (b.length >= 12 && ascii(0, 4) === 'RIFF' && ascii(8, 12) === 'WEBP') return { type: 'image/webp', ext: 'webp' };
 
   return null;
-}
-
-/** GET `url` and read at most `limit` bytes. `complete` is false when the body was longer. */
-async function fetchLimited(
-  url: string,
-  accept: string,
-  limit: number,
-  timeoutMs: number,
-): Promise<{ url: string; bytes: Uint8Array; complete: boolean } | null> {
-  try {
-    const response = await fetch(url, {
-      headers: { 'User-Agent': USER_AGENT, Accept: accept },
-      redirect: 'follow',
-      signal: AbortSignal.timeout(timeoutMs),
-    });
-
-    if (!response.ok || !response.body) return null;
-
-    const reader = response.body.getReader();
-    const chunks: Uint8Array[] = [];
-    let size = 0;
-    let complete = true;
-
-    for (;;) {
-      const { done, value } = await reader.read();
-
-      if (done) break;
-
-      chunks.push(value);
-      size += value.byteLength;
-
-      if (size > limit) {
-        complete = false;
-        await reader.cancel();
-        break;
-      }
-    }
-
-    const bytes = new Uint8Array(Math.min(size, limit));
-    let offset = 0;
-
-    for (const chunk of chunks) {
-      const part = chunk.subarray(0, Math.min(chunk.byteLength, bytes.byteLength - offset));
-
-      bytes.set(part, offset);
-      offset += part.byteLength;
-
-      if (offset >= bytes.byteLength) break;
-    }
-
-    return { url: response.url || url, bytes, complete };
-  } catch {
-    return null;
-  }
 }
 
 function attributes(tag: string): Record<string, string> {
@@ -194,7 +142,7 @@ export async function resolveFavicon(
   if (!normalized) return null;
 
   const home = `https://${normalized}/`;
-  const page = await fetchLimited(home, 'text/html,application/xhtml+xml', MAX_HTML, timeoutMs);
+  const page = await fetchLimited(home, 'text/html,application/xhtml+xml', MAX_HTML, timeoutMs, USER_AGENT);
   const pageUrl = page?.url ?? home;
   const candidates = page ? iconCandidates(new TextDecoder().decode(page.bytes), pageUrl) : [];
 
@@ -208,7 +156,7 @@ export async function resolveFavicon(
     if (href.startsWith('data:')) {
       bytes = decodeDataUrl(href);
     } else {
-      const icon = await fetchLimited(href, 'image/*', MAX_ICON, timeoutMs);
+      const icon = await fetchLimited(href, 'image/*', MAX_ICON, timeoutMs, USER_AGENT);
 
       bytes = icon?.complete ? icon.bytes : null;
     }

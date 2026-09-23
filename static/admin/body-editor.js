@@ -9,6 +9,9 @@
  *   Enter does the same in one-line fields, and the status line names the current field.
  * - Tab after the last field, Escape, or moving the caret out of the notation finishes it: optional
  *   fields that still hold their example, or are empty, are dropped (see `finishSnippetText`).
+ * - Once the URL of a link card or a ref is in, the title (and description) of the linked page are
+ *   fetched through /api/admin/link-meta and put into the fields that still hold their example,
+ *   even when the notation was finished in the meantime.
  * - Images that are pasted, dropped or chosen with the 画像 button are handed to the CMS with
  *   `addFile`, saved next to index.md with the entry, and inserted as `{{ img(...) }}`.
  *
@@ -19,6 +22,12 @@
 import { IMAGE_SNIPPET, SNIPPETS, buildSnippet, finishSnippetText, surroundings, syntaxOf } from './snippets.js';
 
 const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+/** The key for /api/admin, saved by the hero image field (hero-field.js). */
+const ADMIN_KEY_STORAGE = 'blog-admin-api-key';
+/** Fields filled from the linked page, per notation. */
+const AUTO_FILL = { link: ['title', 'desc'], ref: ['title'] };
+const FIELD_NAMES = { title: 'タイトル', desc: '説明' };
+const WEB_URL = /^https?:\/\/[^\s"<>]+$/i;
 const IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 const PALETTE_KEY = IS_MAC ? '⌘/' : 'Ctrl+/';
 
@@ -52,6 +61,47 @@ function keepScroll(node) {
       if (ancestor.scrollTop !== top) ancestor.scrollTop = top;
     });
 }
+
+/** Answers of /api/admin/link-meta by URL: `{ title, description }` or `{ error }`. */
+const linkMetaRequests = new Map();
+
+function fetchLinkMeta(url) {
+  if (linkMetaRequests.has(url)) return linkMetaRequests.get(url);
+
+  let key = '';
+
+  try {
+    key = localStorage.getItem(ADMIN_KEY_STORAGE) || '';
+  } catch {
+    // Storage blocked: same as no key.
+  }
+
+  const request = key
+    ? fetch(`/api/admin/link-meta?url=${encodeURIComponent(url)}`, { headers: { Authorization: `Bearer ${key}` } })
+        .then(async (response) => (response.ok ? response.json() : { error: response.status }))
+        .catch(() => ({ error: 'network' }))
+    : Promise.resolve({ error: 'no-key' });
+
+  linkMetaRequests.set(url, request);
+  // Keep answers only: a lookup that failed may work next time.
+  request.then((meta) => {
+    if (meta.error) linkMetaRequests.delete(url);
+  });
+
+  return request;
+}
+
+/** Text for a shortcode string: one line without `"`, as Zola strings have no escapes. */
+function argText(text) {
+  let quotes = 0;
+
+  return String(text ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/"/g, () => (quotes++ % 2 ? '”' : '“'));
+}
+
+const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** Element → handler that returns true when it consumed an Escape key press. */
 const escapeHandlers = new WeakMap();
@@ -100,7 +150,12 @@ const BodyEditorControl = createClass({
       busy: false,
       message: '',
       error: false,
+      notice: '',
     };
+  },
+
+  componentWillUnmount: function () {
+    clearTimeout(this.noticeTimer);
   },
 
   componentDidMount: function () {
@@ -228,6 +283,10 @@ const BodyEditorControl = createClass({
   selectField: function (index) {
     const field = this.session.fields[index];
 
+    if (index !== this.session.index && this.session.fields[this.session.index]?.name === 'url') {
+      this.requestLinkMeta(this.session);
+    }
+
     this.setField(index);
     this.textarea.setSelectionRange(field.start, field.end);
   },
@@ -251,7 +310,11 @@ const BodyEditorControl = createClass({
 
     const index = this.fieldAtCaret();
 
-    if (index >= 0 && index !== session.index) this.setField(index);
+    if (index >= 0 && index !== session.index) {
+      if (session.fields[session.index]?.name === 'url') this.requestLinkMeta(session);
+
+      this.setField(index);
+    }
   },
 
   endSession: function () {
@@ -271,6 +334,9 @@ const BodyEditorControl = createClass({
     const textarea = this.textarea;
 
     if (!session) return;
+
+    // The lookup fills the finished text later if the fields to fill are dropped now.
+    if (cleanup) this.requestLinkMeta(session);
 
     this.endSession();
 
@@ -336,6 +402,162 @@ const BodyEditorControl = createClass({
     } else {
       this.finishSession(true);
     }
+  },
+
+  /* ------------------------------------------------------------ title and description from the linked page */
+
+  /** Once the URL of a link card or a ref is in, look up the linked page (once per URL). */
+  requestLinkMeta: function (session) {
+    const names = AUTO_FILL[session.snippet.id];
+    const urlField = session.fields.find((f) => f.name === 'url');
+
+    if (!names || !urlField) return;
+
+    const url = this.textarea.value.slice(urlField.start, urlField.end).trim();
+
+    if (!WEB_URL.test(url) || url === urlField.sample || session.metaRequested === url) return;
+    if (!session.fields.some((f) => names.includes(f.name) && !f.touched)) return;
+
+    session.metaRequested = url;
+    this.setNotice('リンク先のタイトルを取得しています…', true);
+    fetchLinkMeta(url).then((meta) => this.applyLinkMeta(session, url, meta));
+  },
+
+  applyLinkMeta: function (session, url, meta) {
+    if (!this.textarea) return;
+
+    if (this.composing) {
+      // Changing the text now would break the conversion in progress.
+      this.afterComposition = () => this.applyLinkMeta(session, url, meta);
+
+      return;
+    }
+
+    if (meta.error) {
+      this.setNotice(
+        meta.error === 'no-key' || meta.error === 401
+          ? 'タイトルの自動入力には管理 API キーが要ります (ヒーロー画像の欄で保存)'
+          : 'リンク先のタイトルを取得できませんでした',
+      );
+
+      return;
+    }
+
+    const values = { title: argText(meta.title), desc: argText(meta.description) };
+    const names = AUTO_FILL[session.snippet.id].filter((name) => values[name]);
+    const filled =
+      this.session === session
+        ? this.fillFields(session, url, names, values)
+        : this.fillFinished(session.snippet, url, names, values);
+
+    this.setNotice(filled.length ? `リンク先の${filled.map((name) => FIELD_NAMES[name]).join('と')}を入れました` : '');
+  },
+
+  /** Fill the open notation's fields that still hold their example (or are empty). */
+  fillFields: function (session, url, names, values) {
+    const urlField = session.fields.find((f) => f.name === 'url');
+
+    // The URL changed while the page was being read.
+    if (this.textarea.value.slice(urlField.start, urlField.end).trim() !== url) return [];
+
+    const filled = [];
+
+    for (const name of names) {
+      const field = session.fields.find((f) => f.name === name);
+
+      if (!field || field.touched || this.session !== session) continue;
+
+      this.replaceField(field, values[name]);
+      filled.push(name);
+    }
+
+    return filled;
+  },
+
+  /** Replace a field's text, keeping the current field and the user's selection. */
+  replaceField: function (field, text) {
+    const textarea = this.textarea;
+    const session = this.session;
+    const index = session.index;
+    const [from, to] = [textarea.selectionStart, textarea.selectionEnd];
+    const selected = from === field.start && to === field.end;
+    const oldEnd = field.end;
+
+    // trackEdit (through the input event) moves the later fields and marks this one as edited.
+    this.replaceRange(field.start, field.end, text);
+
+    if (this.session !== session) return;
+
+    const delta = field.end - oldEnd;
+
+    if (session.index !== index) this.setField(index);
+
+    if (selected) textarea.setSelectionRange(field.start, field.end);
+    else textarea.setSelectionRange(from >= oldEnd ? from + delta : from, to >= oldEnd ? to + delta : to);
+  },
+
+  /**
+   * Fill a notation that was finished before the answer came: its text must be found once, with
+   * the URL, and lack the argument or still have the example.
+   */
+  fillFinished: function (snippet, url, names, values) {
+    const textarea = this.textarea;
+    const [open, close] = snippet.id === 'link' ? ['\\{\\{\\s*link\\(', '\\)\\s*\\}\\}'] : ['\\{%\\s*ref\\(', '\\)\\s*%\\}'];
+    const pattern = new RegExp(`${open}(\\s*url="${escapeRegExp(url)}"(?:\\s*,\\s*\\w+="[^"]*")*\\s*)${close}`, 'g');
+    const matches = [...textarea.value.matchAll(pattern)];
+
+    if (matches.length !== 1) return [];
+
+    const [match] = matches;
+    const args = {};
+
+    for (const arg of match[1].matchAll(/(\w+)="([^"]*)"/g)) args[arg[1]] = arg[2];
+
+    const filled = names.filter((name) => !args[name] || args[name] === snippet.samples?.[name]);
+
+    if (!filled.length) return [];
+
+    filled.forEach((name) => {
+      args[name] = values[name];
+    });
+
+    const order = [...new Set(['url', ...AUTO_FILL[snippet.id], ...Object.keys(args)])];
+    const inner = order.filter((key) => args[key] !== undefined).map((key) => `${key}="${args[key]}"`).join(', ');
+    const text = snippet.id === 'link' ? `{{ link(${inner}) }}` : `{% ref(${inner}) %}`;
+    const start = match.index;
+    const end = start + match[0].length;
+    const delta = text.length - match[0].length;
+    const [from, to] = [textarea.selectionStart, textarea.selectionEnd];
+    const move = (position) => (position >= end ? position + delta : Math.min(position, start + text.length));
+
+    this.replaceRange(start, end, text);
+    textarea.setSelectionRange(move(from), move(to));
+
+    return filled;
+  },
+
+  /** Replace a range of the text: undoably while the textarea has the focus, else without taking it. */
+  replaceRange: function (start, end, text) {
+    const textarea = this.textarea;
+    const restoreScroll = keepScroll(textarea);
+
+    if (document.activeElement === textarea) {
+      textarea.setSelectionRange(start, end);
+      insertText(textarea, text);
+    } else {
+      textarea.setRangeText(text, start, end, 'end');
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    restoreScroll();
+  },
+
+  /** A short note after the status line; `sticky` keeps it until the next one. */
+  setNotice: function (text, sticky = false) {
+    clearTimeout(this.noticeTimer);
+    this.setState({ notice: text });
+
+    if (text && !sticky) this.noticeTimer = setTimeout(() => this.setState({ notice: '' }), 6000);
   },
 
   /* ------------------------------------------------------------ insertion */
@@ -585,15 +807,14 @@ const BodyEditorControl = createClass({
 
   render: function () {
     const { forID } = this.props;
-    const { paletteOpen, sessionActive, field, busy, message, error } = this.state;
+    const { paletteOpen, sessionActive, field, busy, message, error, notice } = this.state;
+    const keys = '　Tab: 次の欄　Shift+Tab: 前の欄　Esc: 確定';
+    const fieldHint = field?.hint ? `（${field.hint}）` : '';
     const status =
       sessionActive && field
-        ? [
-            h('strong', { key: 'field', className: 'be-status-field' }, `入力中: ${field.label}`),
-            field.hint ? `（${field.hint}）` : '',
-            '　Tab: 次の欄　Shift+Tab: 前の欄　Esc: 確定',
-          ]
+        ? [h('strong', { key: 'field', className: 'be-status-field' }, `入力中: ${field.label}`), fieldHint, keys]
         : [message || `記法はボタンか ${PALETTE_KEY} で挿入。画像は貼り付けかドロップでも追加できます`];
+    const statusText = status.map((part) => (typeof part === 'string' ? part : `入力中: ${field.label}`)).join('');
 
     return h(
       'div',
@@ -630,7 +851,13 @@ const BodyEditorControl = createClass({
         ),
         paletteOpen ? this.renderPalette() : null,
       ),
-      h('div', { className: error ? 'be-status be-error' : 'be-status', 'aria-live': 'polite' }, ...status),
+      // Two lines of fixed height: text that wraps or appears would push the body down.
+      h(
+        'div',
+        { className: 'be-status', 'aria-live': 'polite' },
+        h('div', { className: error ? 'be-status-main be-error' : 'be-status-main', title: statusText }, ...status),
+        h('div', { className: 'be-status-notice', title: notice }, notice || '\u00a0'),
+      ),
       h('textarea', {
         id: forID,
         className: 'be-textarea',
@@ -643,6 +870,17 @@ const BodyEditorControl = createClass({
         onKeyDown: this.onKeyDown,
         onKeyUp: this.onCaretMove,
         onMouseUp: this.onCaretMove,
+        onCompositionStart: () => {
+          this.composing = true;
+        },
+        onCompositionEnd: () => {
+          const pending = this.afterComposition;
+
+          this.composing = false;
+          this.afterComposition = null;
+
+          if (pending) setTimeout(pending, 0);
+        },
         onPaste: this.onPaste,
         onDragOver: this.onDragOver,
         onDragLeave: this.onDragLeave,

@@ -17,12 +17,13 @@
 
 {# derive host/domain #}
 {%- set _raw = _url | replace(from="https://", to="") | replace(from="http://", to="") -%}
-{%- set _derived_host = _raw | split(pat="/") | first -%}
+{%- set _derived_host = _raw | split(pat="/") | first | split(pat="?") | first | split(pat="#") | first -%}
 {%- set _host = host | default(value=_derived_host) -%}
 {%- set _site_name = _site | default(value=_host) -%}
 {%- set _favicon = _icon -%}
 {%- if not _favicon and _host -%}
-  {%- set _favicon = "https://icons.duckduckgo.com/ip3/" ~ _host ~ ".ico" -%}
+  {#- Served from this origin by functions/favicon/[host].ts: the site's CSP blocks other origins. -#}
+  {%- set _favicon = "/favicon/" ~ _host -%}
 {%- endif -%}
 {%- set _display_host = _host | lower -%}
 

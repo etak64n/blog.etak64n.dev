@@ -26,11 +26,11 @@ export const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (c)
 /** Escape text that will sit inside inline HTML within a paragraph. */
 export const mdText = (value) => String(value ?? '').replace(/[&<>"'*_`[\]~\\]/g, (c) => MD_ESCAPES[c]);
 
-// Remote favicons are blocked by the admin page's CSP, so previews use an inline globe icon.
-export const GLOBE_ICON = `data:image/svg+xml,${encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.8">' +
-    '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',
-)}`;
+/**
+ * Favicon URL for a host, like the site templates: served from this origin by
+ * functions/favicon/[host].ts, because both the site and the admin CSP block remote images.
+ */
+export const faviconOf = (host = '') => (host ? `/favicon/${encodeURIComponent(host)}` : '');
 
 /* ---------------------------------------------------------------- shortcode syntax */
 
@@ -95,7 +95,7 @@ export const hostOf = (url = '') => {
   try {
     return new URL(url).host;
   } catch {
-    return String(url).replace(/^https?:\/\//, '').split('/')[0];
+    return String(url).replace(/^https?:\/\//, '').split(/[/?#]/)[0];
   }
 };
 
@@ -193,6 +193,7 @@ export const renderers = {
   link(args = {}) {
     const url = String(args.url ?? '');
     const host = String(args.site || hostOf(url));
+    const favicon = String(args.favicon || faviconOf(hostOf(url)));
     const title = String(args.title || url);
     const desc = args.desc ? `<div class="link-card-desc">${escapeHtml(args.desc)}</div>` : '';
     const thumb = args.image ? `<div class="link-card-thumb"><img src="${escapeHtml(args.image)}" alt="" loading="lazy"></div>` : '';
@@ -201,7 +202,7 @@ export const renderers = {
     return (
       `<figure class="link-card${args.image ? ' has-image' : ''}"><a href="${escapeHtml(url)}" target="_blank" rel="noopener">` +
       `<div class="link-card-body"><div class="link-card-text"><div class="link-card-title">${escapeHtml(title)}</div>${desc}` +
-      `<div class="link-card-meta"><img class="link-card-favicon" src="${GLOBE_ICON}" alt="" width="16" height="16">` +
+      `<div class="link-card-meta"><img class="link-card-favicon" src="${escapeHtml(favicon)}" alt="" width="16" height="16">` +
       `<span class="link-card-host">${escapeHtml(host)}</span></div></div>${thumb}</div></a>${caption}</figure>`
     );
   },
@@ -215,7 +216,8 @@ export const renderers = {
     const excerpt = String(args.excerpt || body || '').trim();
     const lines = excerpt ? excerpt.split('\n').map((line) => line.trim()).filter(Boolean) : [];
     const id = String(args.id || slugId(`ref-${args.site || host}-${title}`));
-    const icon = (cls) => `<img src="${GLOBE_ICON}" alt="" class="${cls}" width="18" height="18">`;
+    const favicon = String(args.icon || faviconOf(host));
+    const icon = (cls) => (favicon ? `<img src="${escapeHtml(favicon)}" alt="" class="${cls}" width="18" height="18">` : '');
     const hostSpan = (cls) => (host ? `<span class="${cls}">${mdText(host)}</span>` : '');
     const badge = args.badge ? `<span class="ref-trigger-badge" role="link" tabindex="0">${mdText(args.badge)}</span>` : '';
     const subtitle = args.subtitle ? `<span class="ref-panel-subtitle">${mdText(args.subtitle)}</span>` : '';

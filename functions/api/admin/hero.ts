@@ -35,10 +35,10 @@ const DEFAULT_IMAGE_MODEL = '@cf/black-forest-labs/flux-1-schnell';
 
 /** Visual style shared by every hero image, matching the site's light blue design. */
 const STYLE =
-  'flat vector illustration, clean minimal composition, soft light background, ' +
+  'flat vector illustration, clean minimal composition, plain soft light background, ' +
   'blue accent palette (navy, royal blue, pale blue), a few simple geometric objects that ' +
-  'represent the topic, generous margins, wide landscape composition, no text, no letters, ' +
-  'no logos, no watermark';
+  'represent the topic, subject centered with generous empty space on all sides, nothing ' +
+  'touching or cut off at the image edges, no text, no letters, no logos, no watermark';
 const NEGATIVE =
   'text, letters, words, typography, watermark, logo, signature, photo, photorealistic, ' +
   'blurry, low quality, deformed, cluttered';

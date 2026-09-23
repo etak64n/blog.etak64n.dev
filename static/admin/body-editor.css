@@ -59,6 +59,11 @@
   color: #dc2626;
 }
 
+.be-status-field {
+  color: var(--sui-primary-foreground-color, inherit);
+  font-weight: 600;
+}
+
 .be-textarea {
   display: block;
   box-sizing: border-box;

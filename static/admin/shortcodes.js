@@ -3,8 +3,8 @@
  *
  * The site renders these with the Tera templates in `templates/shortcodes/`. This module mirrors
  * their HTML so that the preview pane looks like the published article. The output is Markdown
- * with embedded HTML, meant for `CMS.renderRichText()` or an editor component's `toPreview`,
- * both of which parse the Markdown and sanitize the result.
+ * with embedded HTML, meant for the preview template (marked + DOMPurify) or an editor
+ * component's `toPreview`, both of which parse the Markdown and sanitize the result.
  *
  * Supported: `{% ref %}`, `{% note %}`, `{% code %}`, `{% codebox %}`, `{{ img() }}`, `{{ link() }}`.
  */

@@ -107,12 +107,18 @@ async function highlightCode(root) {
   });
 }
 
+/**
+ * URLs DOMPurify may keep. Its default list drops `blob:`, which images pasted into the body use
+ * until the entry is saved; this is the list Sveltia CMS uses for its own preview.
+ */
+const SAFE_URI = /^(?:(?:(?:f|ht)tps?|mailto|tel|blob):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i;
+
 /** Markdown → sanitized HTML with the CMS-provided parser, matching the site's newline handling. */
 function renderMarkdown(markdown) {
   // `breaks: false` like Zola; the site's `.content p { white-space: pre-line }` shows newlines.
   const html = marked.parse(transformShortcodes(markdown), { gfm: true, breaks: false });
 
-  return DOMPurify.sanitize(html, { ADD_ATTR: ['target'] });
+  return DOMPurify.sanitize(html, { ADD_ATTR: ['target'], ALLOWED_URI_REGEXP: SAFE_URI });
 }
 
 const ArticlePreview = createClass({

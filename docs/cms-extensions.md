@@ -5,9 +5,10 @@ CMS 本体はフォークせず、`static/admin/*.js` と `functions/` だけで
 
 | 機能 | 実装 | Sveltia の API |
 |---|---|---|
-| ショートコードのプレビュー | `static/admin/shortcodes.js` + `preview-template.js` | `registerPreviewTemplate`, `renderRichText`, `registerPreviewStyle` |
-| 挿入メニューからのショートコード入力 | `static/admin/editor-components.js` | `registerEditorComponent` |
+| ショートコードのプレビュー | `static/admin/shortcodes.js` + `preview-template.js` | `registerPreviewTemplate`, `registerPreviewStyle` |
+| 本文エディタ (記法の挿入、画像の貼り付け) | `static/admin/body-editor.js` + `snippets.js` | `registerFieldType` (`addFile`) |
 | AI ヒーロー画像 | `static/admin/hero-field.js` + `functions/api/admin/hero.ts` | `registerFieldType` (`addFile`, `pickFile`) |
+| 標準エディタ用の挿入フォーム (予備) | `static/admin/editor-components.js` | `registerEditorComponent` |
 
 Sveltia CMS の版は `static/admin/index.html` で **固定** している (`@sveltia/cms@0.218.3`)。
 上の API は 2026 年 3 月〜9 月に入ったばかりなので、上げるときは動作確認してから。
@@ -21,8 +22,10 @@ static/admin/
   cms.js                エントリ。プレビュー CSS 登録、各拡張の登録、CMS.init()
   csp-compat.js         本番 CSP 下でプレビュー iframe を動かす互換処理 (blob: → srcdoc)
   shortcodes.js         Zola ショートコード → プレビュー用 HTML (templates/shortcodes/ の移植)
+  snippets.js           本文エディタで挿入する記法の定義 (テンプレートと Tab で移る欄)
+  body-editor.js/.css   本文エディタ (widget: body-editor)
   preview-template.js   記事プレビュー (single.html 相当: ヒーロー / タイトル / 日付 / タグ / 本文)
-  editor-components.js  note / code / img / link の挿入フォーム
+  editor-components.js  note / code / img / link の挿入フォーム (本文を widget: markdown に戻したとき用)
   hero-field.js         ヒーロー画像フィールド (AI 生成 / 既存から選択 / プレースホルダー)
   hero-image.js         生成画像を 1200×630 の WebP に収める処理
   preview.css           プレビュー iframe 専用の補正 (main.css の後に読む)
@@ -35,7 +38,8 @@ functions/api/admin/
 
 対応: `{% ref %}`, `{% note %}`, `{% code %}`, `{% codebox %}`, `{{ img() }}`, `{{ link() }}`。
 `shortcodes.js` の `transformShortcodes()` が本文の Markdown 中のショートコードを、
-サイトのテンプレートと同じクラス構造の HTML に置き換え、`CMS.renderRichText()` に渡す。
+サイトのテンプレートと同じクラス構造の HTML に置き換え、Sveltia が公開している `marked` と
+`DOMPurify` で HTML にする。記事フォルダの画像は `getAsset()` で、コードは highlight.js で描く。
 プレビュー iframe にはサイトの `/main.css` を読み込むので見た目が本番に揃う。
 
 - コードブロックとインラインコードの中は変換しない
@@ -43,10 +47,28 @@ functions/api/admin/
 - `ref` のホバーは本番では JS 制御だが、プレビューでは CSS の `:hover` で開く
 - favicon は CSP で外部画像を読めないため地球アイコンで代用
 
-本文フィールドは `modes: [raw, rich_text]` で **raw (Markdown) モードが既定**。
-ショートコードを手書きする前提のため。リッチテキストに切り替えると、挿入メニューから
-note / code / img / link をフォーム入力できる。`ref` は文中(インライン)で使うため
-コンポーネント化していない (ブロックとして扱われ段落が割れるのを避ける)。
+## 本文エディタ
+
+本文は Markdown をそのまま書く独自エディタ (`widget: body-editor`)。独自記法をすぐ挿入できる。
+
+- **挿入**: ツールバーの 参照 / 補足 / 注意 / 警告 / コード / コード枠 / リンクカード / 画像、
+  または ⌘/ (Windows は Ctrl+/) の一覧から。一覧は「ref」「注意」「code」などで絞り込める
+- **包む**: 文字を選んでから挿入すると、その文字が中身になる (ref の引用文、note の本文、
+  code のコード、リンクカードの URL)
+- **欄の移動**: 挿入後は url → title → 本文のように Tab / Shift+Tab で欄を移る。1 行の欄では
+  Enter でも次へ進む。最後の欄で Tab か Esc を押すと確定し、空のまま残した任意項目
+  (title / desc / file / lang / alt) は引数ごと消える
+- **画像**: 貼り付け・ドロップ・画像ボタンで追加すると記事フォルダ (index.md の隣) に保存され、
+  `{{ img(src="…") }}` が入る。保存前は一時 URL で、保存時にファイル名に置き換わる
+- **Escape**: Sveltia では Esc が「編集をやめる」。記法の入力中・一覧の表示中・日本語変換中の
+  Esc は本文エディタが受け取り、編集画面は閉じない (Sveltia のショートカットより先に
+  window の捕捉段階で処理している)
+- 入力は非制御の textarea で、キャレット位置・元に戻す (⌘Z)・日本語変換を CMS の再描画が
+  邪魔しない
+
+記法を増やすときは `snippets.js` にテンプレートを足し、プレビュー用の描画を `shortcodes.js` の
+`renderers` に足す。標準の Markdown エディタに戻すときは `config.yml` の本文を
+`widget: markdown` にする (リッチテキストの挿入メニューで note / code / img / link が使える)。
 
 ## AI ヒーロー画像
 
@@ -122,6 +144,11 @@ wrangler.toml の Workers AI バインディングは外して起動するので
 
 ## ハマりどころ (2026-09-23 時点、Sveltia 0.218.3)
 
+- Sveltia のキーボードショートカットは window の捕捉段階で処理され、Esc は編集画面の
+  「閉じる」ボタンを押す。しかもキーの物理位置 (code) だけで判定し、日本語変換中かを見ない。
+  Esc を使う入力部品は、`CMS.init()` より前に window の捕捉段階へリスナーを登録して先に受け取る。
+- DOMPurify の既定は `blob:` の URL を消す。貼り付け直後の画像を見せるプレビューでは、
+  Sveltia と同じ `ALLOWED_URI_REGEXP` を渡している。
 - 本番だけ壊れる場合はまず CSP を疑う。ブラウザのコンソールに `violates the following
   Content Security Policy directive` が出る。`npm run admin` は本番の CSP を適用して起動する。
 

@@ -4,6 +4,8 @@
  * Loaded as an ES module after the pinned Sveltia CMS bundle (see index.html), which exposes
  * the global `CMS` object plus `h` / `createClass` for React components without a build step.
  */
+// Must run first: adapts the preview pane to the /admin Content-Security-Policy.
+import './csp-compat.js';
 import { registerEditorComponents } from './editor-components.js';
 import { registerHeroField } from './hero-field.js';
 import { registerPreviewTemplate } from './preview-template.js';

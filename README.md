@@ -130,9 +130,20 @@ The Sveltia CMS version is pinned in `static/admin/index.html`.
 
 ```bash
 cp .dev.vars.example .dev.vars   # ADMIN_KEY + DEV_FAKE_AI=true (no Workers AI call)
-npm run admin                    # zola build + wrangler pages dev on :8788
+npm run admin                    # scripts/admin-dev.sh: zola build + wrangler pages dev on :8788
 open http://127.0.0.1:8788/admin/?backend=test   # in-browser Test backend, no GitHub login
 ```
+
+`npm run admin` serves `/admin` with the production Content-Security-Policy (fetched from the live
+site) and needs no Cloudflare login: the dev server runs without the Workers AI binding.
+
+### Content-Security-Policy
+
+Production `/admin` gets its CSP from a Cloudflare Transform Rule on the zone, outside this repo.
+Two small adaptations keep Sveltia CMS working under it; see
+[docs/cms-extensions.md](docs/cms-extensions.md#admin-の-csp-との関係):
+an import map in `static/admin/index.html` (unpkg.com → jsDelivr) and
+`static/admin/csp-compat.js` (preview iframe via `srcdoc` instead of a `blob:` URL).
 
 ### Secrets
 

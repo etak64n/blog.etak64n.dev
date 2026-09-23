@@ -8,12 +8,13 @@ resource "aws_s3_bucket" "example" {
 {% end %}
 
 Params:
-- title (or filename): optional string shown in a tab when it looks like a file name
-- language: optional language hint (adds class `language-<language>`). Zola reserves `lang`
-  for the page language, so a `lang` argument is not seen here.
+- title (or filename): optional string shown in a tab above the code when it looks like a file name
+- language: optional highlight language. Zola reserves `lang` for the page language, so a `lang`
+  argument is not seen here.
 - theme: "dark" (default) or "light"
 
-The body is plain code and is HTML-escaped. See code.html for the Zola 0.22 notes.
+The body is plain code, highlighted by Zola at build time as in code.html, which also explains
+when it stays plain and the Zola 0.22 notes.
 #}
 {%- set _title = title | default(value="") -%}
 {%- if _title == "" %}{% set _title = filename | default(value="") %}{% endif -%}
@@ -21,4 +22,16 @@ The body is plain code and is HTML-escaped. See code.html for the Zola 0.22 note
 {%- set _lang = language | default(value="") | lower -%}
 {%- set _code = body | regex_replace(pattern="^\n+|\n+$", rep="") -%}
 {%- set show_tab = _title != "" and _title is matching("(\.|^)([^/\s]+)\.[A-Za-z0-9]+$") -%}
-<div class="codebox{% if _theme == "dark" %} dark{% endif %}"><div class="codebox-bar"></div><pre class="codebox-pre{% if show_tab %} has-title{% endif %}">{% if show_tab %}<div class="codebox-title-inside">{{ _title }}</div>{% endif %}<code{% if _lang %} class="language-{{ _lang }}"{% endif %}>{{ _code }}</code></pre></div>
+{%- set _highlight = _theme == "dark" and not _code is matching("\{[{%]\s*[A-Za-z_][A-Za-z0-9_]*\s*\(") and not _code is matching("\{%\s*end\s*%\}") -%}
+<div class="codebox{% if _theme == "dark" %} dark{% endif %}{% if show_tab %} has-title{% endif %}"><div class="codebox-bar"></div>
+{%- if show_tab %}<div class="codebox-header"><span class="codebox-filename">{{ _title }}</span></div>{% endif -%}
+{%- if _highlight %}
+{% filter markdown %}
+~~~~~{{ _lang }}
+{{ _code | safe }}
+~~~~~
+{% endfilter %}
+{%- else -%}
+<pre><code{% if _lang %} class="language-{{ _lang }}"{% endif %}>{{ _code }}</code></pre>
+{%- endif -%}
+</div>

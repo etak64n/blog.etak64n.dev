@@ -5,9 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
     <title>Content Manager</title>
+    <script>
+      // Defer initialization so that the blog-specific extensions can register first.
+      window.CMS_MANUAL_INIT = true;
+    </script>
   </head>
   <body>
-    <!-- Sveltia CMS (Decap CMS 互換の Git ベース CMS) -->
-    <script src="https://cdn.jsdelivr.net/npm/@sveltia/cms/dist/sveltia-cms.js"></script>
+    <!--
+      Sveltia CMS (Git-based, Decap CMS compatible). The version is pinned on purpose:
+      the JavaScript API used by /admin/*.js is young, so upgrades must be deliberate.
+    -->
+    <script src="https://cdn.jsdelivr.net/npm/@sveltia/cms@0.218.3/dist/sveltia-cms.js"></script>
+    <!-- Blog extensions: shortcode preview, article preview template, AI hero image field. -->
+    <script type="module" src="/admin/cms.js"></script>
   </body>
 </html>

@@ -72,7 +72,8 @@ Notes
 
 CMS 本体は CDN から読み込むだけでビルド不要:
 - `static/admin/index.html` — 管理画面のエントリ（`@sveltia/cms` を CDN ロード）
-- `static/admin/config.yml` — コレクション定義（カテゴリごとに 1 コレクション）
+- `static/admin/config.yml` — コレクション定義（`articles` の 1 コレクション、タグのみ）
+- `static/admin/*.js`, `preview.css` — ブログ固有の拡張（下の CMS extensions を参照）
 
 ### 記事フォーマットとの対応
 - 各記事は `content/articles/{Category}/{slug}/index.md`（page bundle）として保存される。
@@ -109,6 +110,35 @@ Sveltia はプロキシサーバ不要。Chromium 系ブラウザのファイル
 2. Chrome/Edge で `http://localhost:8788/admin/` を開く。
 3. 「Work with Local Repository」を選び、このリポジトリのフォルダへのアクセスを許可する。
 4. 編集 → 保存はローカルファイルに反映される（コミットは手動）。
+
+## CMS extensions
+
+The Sveltia CMS at `/admin/` is extended through its JavaScript API (no fork). See
+[docs/cms-extensions.md](docs/cms-extensions.md) for details.
+
+- **Shortcode preview** — `{% ref %}`, `{% note %}`, `{% code %}`, `{% codebox %}`, `{{ img() }}`
+  and `{{ link() }}` are rendered in the preview pane with the site's own stylesheet
+  (`static/admin/shortcodes.js`, `preview-template.js`).
+- **Insert forms** — `note`, `code`, `img` and `link` are available from the rich text editor's
+  Insert menu (`static/admin/editor-components.js`).
+- **AI hero image** — the `hero-ai` field generates a 1200×630 hero with Workers AI through
+  `POST /api/admin/hero` (`functions/api/admin/hero.ts`) and commits it with the entry.
+
+The Sveltia CMS version is pinned in `static/admin/index.html`.
+
+### Local admin
+
+```bash
+cp .dev.vars.example .dev.vars   # ADMIN_KEY + DEV_FAKE_AI=true (no Workers AI call)
+npm run admin                    # zola build + wrangler pages dev on :8788
+open http://127.0.0.1:8788/admin/?backend=test   # in-browser Test backend, no GitHub login
+```
+
+### Secrets
+
+`/api/admin/*` requires the `ADMIN_KEY` bearer token. It lives in GitHub Secrets and is copied to
+the Pages project by `deploy.yml` on every push to `main`. Rotate it with
+`gh secret set ADMIN_KEY -R etak64n/blog.etak64n.dev` and push.
 
 ## Deployment (Cloudflare Pages)
 - Build command: `zola build -u "${CF_PAGES_URL:-https://blog.etak64n.dev/}"`

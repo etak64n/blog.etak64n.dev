@@ -4,6 +4,9 @@
 # 記事は content/articles/{slug}/index.md のフラットな page bundle 構成。
 # 画像は各記事フォルダに co-located でアップロードされる (media_folder: '')。
 # frontmatter は Zola 互換の TOML (+++)。分類はタグのみ (categories は廃止)。
+#
+# 管理画面の拡張 (ショートコードのプレビュー、AI ヒーロー画像) は static/admin/*.js。
+# 詳細は docs/cms-extensions.md を参照。
 
 backend:
   name: github
@@ -12,9 +15,6 @@ backend:
   # GitHub OAuth ログイン (sveltia-cms-auth Worker 経由)。
   # ALLOWED_DOMAINS=blog.etak64n.dev で発行元を制限済み。
   base_url: https://sveltia-cms-auth.etak64n.workers.dev
-
-# 日本語 UI
-locale: ja
 
 # グローバルなメディア既定値 (ヒーロー画像のアップロード先など)。
 # 各記事の本文画像はコレクション側の media_folder: '' で co-located になる。
@@ -57,6 +57,16 @@ collections:
         widget: object
         fields:
           - { name: author, label: 著者, widget: string, default: "etak64n" }
-          - { name: hero, label: ヒーロー画像パス, widget: string, default: "/images/hero/placeholder.svg" }
+          # AI で生成 / 既存画像から選択できる独自フィールド (static/admin/hero-field.js)。
+          # 生成した画像は static/images/hero に記事と同じコミットで保存され、
+          # 値は従来どおり "/images/hero/xxx.webp" のパス文字列になる。
+          - name: hero
+            label: ヒーロー画像
+            widget: hero-ai
+            default: "/images/hero/placeholder.svg"
+            media_folder: /static/images/hero
+            public_folder: /images/hero
           - { name: toc, label: 目次, widget: boolean, default: true }
-      - { name: body, label: 本文, widget: markdown }
+      # ショートコードを手書きするため raw (Markdown) モードを既定にする。
+      # リッチテキストに切り替えると note / code / img / link を挿入メニューから入れられる。
+      - { name: body, label: 本文, widget: markdown, modes: [raw, rich_text] }

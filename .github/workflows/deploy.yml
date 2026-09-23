@@ -56,11 +56,29 @@ jobs:
       deployments: write
     timeout-minutes: 10
     steps:
+      # functions/ and wrangler.toml must sit next to the build output for Pages Functions.
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: zola-public
           path: ${{ env.BUILD_DIR }}
+
+      # Shared key for /api/admin/* (entered once in the CMS). Kept in GitHub Secrets so that
+      # rotating it is `gh secret set ADMIN_KEY` followed by a deploy.
+      - name: Set Pages secret ADMIN_KEY
+        if: ${{ github.event_name == 'push' }}
+        env:
+          ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ADMIN_KEY:-}" ]; then
+            echo "::warning::ADMIN_KEY secret is not set; /api/admin/* will answer 503 until it is."
+            exit 0
+          fi
+          printf '%s' "$ADMIN_KEY" | npx --yes wrangler@4 pages secret put ADMIN_KEY --project-name "$CF_PAGES_PROJECT"
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3

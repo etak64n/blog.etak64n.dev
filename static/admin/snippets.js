@@ -5,6 +5,8 @@
  * start empty unless prefilled (the selected text goes into the `wrap` field). Fields listed in
  * `optional` that are still empty when the snippet is finished are removed together with their
  * argument, e.g. a link card without a title falls back to showing the URL instead of nothing.
+ * Only list arguments that the Tera template also handles when they are missing: code.html and
+ * codebox.html fail the Zola build without `file` / `title`, while an empty string is fine.
  * Fields in `multiline` take several lines, so Enter inserts a newline there instead of moving on.
  */
 export const SNIPPETS = [
@@ -54,17 +56,16 @@ export const SNIPPETS = [
     template: '{% code(file="${file}") %}\n```${lang}\n${code}\n```\n{% end %}',
     wrap: 'code',
     multiline: ['code'],
-    optional: ['file'],
   },
   {
     id: 'codebox',
     label: 'コード枠',
     description: 'タイトルと言語を指定するコード枠',
     keywords: 'codebox コード枠 box',
-    template: '{% codebox(title="${title}", lang="${lang}") %}\n${code}\n{% end %}',
+    template: '{% codebox(title="${title}", language="${language}") %}\n${code}\n{% end %}',
     wrap: 'code',
     multiline: ['code'],
-    optional: ['title', 'lang'],
+    optional: ['language'],
   },
   {
     id: 'link',

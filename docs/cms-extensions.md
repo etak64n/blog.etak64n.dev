@@ -66,6 +66,9 @@ functions/api/admin/
 - 入力は非制御の textarea で、キャレット位置・元に戻す (⌘Z)・日本語変換を CMS の再描画が
   邪魔しない
 
+code / codebox のコードは公開サイトで色付けされない (Zola が色を付けるのは普通の ``` だけ)。
+プレビューもそれに合わせ、色付けは普通の ``` にだけ行う。言語の指定は `language` 引数か ``` の言語で書く。
+
 記法を増やすときは `snippets.js` にテンプレートを足し、プレビュー用の描画を `shortcodes.js` の
 `renderers` に足す。標準の Markdown エディタに戻すときは `config.yml` の本文を
 `widget: markdown` にする (リッチテキストの挿入メニューで note / code / img / link が使える)。
@@ -144,6 +147,11 @@ wrangler.toml の Workers AI バインディングは外して起動するので
 
 ## ハマりどころ (2026-09-23 時点、Sveltia 0.218.3)
 
+- Zola 0.22 の記法テンプレートで踏んだもの (templates/shortcodes/code.html と codebox.html を修正済み):
+  - `lang` は予約名。記法の中では常にページの言語 (`ja`) で、同名の引数は読めない。言語は `language` で渡す
+  - Tera の文字列はバックスラッシュをそのまま残す。正規表現のバックスラッシュは 1 本で書く (`\\.` と書くと 2 本のまま渡る)
+  - `regex_replace` の置換引数は `rep`。`default(value=未定義の変数)` は既定値側の評価でエラーになる
+  - プレビューは JavaScript で描くので、こうした不整合に気づけない。記法を足したら `zola build` で確かめる
 - Sveltia のキーボードショートカットは window の捕捉段階で処理され、Esc は編集画面の
   「閉じる」ボタンを押す。しかもキーの物理位置 (code) だけで判定し、日本語変換中かを見ない。
   Esc を使う入力部品は、`CMS.init()` より前に window の捕捉段階へリスナーを登録して先に受け取る。

@@ -90,7 +90,9 @@ function applyImageOptions(root) {
 }
 
 async function highlightCode(root) {
-  const blocks = root.querySelectorAll('pre code');
+  // Only plain fences: Zola highlights those at build time, but not the code of the code /
+  // codebox shortcodes, which the site shows as plain text.
+  const blocks = [...root.querySelectorAll('pre code')].filter((block) => !block.closest('.codebox'));
 
   if (!blocks.length) return;
 

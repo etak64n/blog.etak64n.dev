@@ -1,58 +1,48 @@
 {#
 Usage:
 
-{% code file="main.cpp" %}
+{% code(file="main.cpp") %}
 ```cpp
 int main() {}
 ```
 {% end %}
 
 Optional params:
-- file / title : label shown in tab when it looks like a filename
-- lang / language : highlight hint (overrides fence hint)
-- theme : "dark" (default) or "light" to reuse existing codebox styling
+- file / title : label shown in a tab when it looks like a file name
+- language : highlight hint (overrides the fence hint and the file extension)
+- theme : "dark" (default) or "light"
+
+Zola 0.22 notes:
+- `lang` is reserved: it always holds the page language in a shortcode's context and hides a
+  `lang` argument. Use `language`, or the language of the fence.
+- Tera keeps backslashes in string literals as written, so the regexes use single backslashes.
+- `regex_replace` takes `pattern` and `rep`.
 #}
-{% set _raw = body | trim %}
-{% set _title = file | default(value=title) | default(value="") %}
-{% set _theme = theme | default(value="dark") %}
-{% set _lang = lang | default(value=language) | default(value="") %}
-{% set _code = _raw %}
-
-{% if _raw | regex_match(pattern="^```") %}
-  {% set _fence = _raw | regex_replace(pattern="(?s)^```([^\n]*)\n.*$", replace="$1") | trim %}
-  {% if _lang == "" and _fence != "" %}
-    {% set _lang = _fence | regex_replace(pattern="^([\S]+).*$", replace="$1") | trim %}
-  {% endif %}
-  {% set _code = _raw | regex_replace(pattern="(?s)^```[^\n]*\n", replace="") %}
-  {% set _code = _code | regex_replace(pattern="\n```$", replace="") %}
-{% endif %}
-
-{% if _lang == "" and _title is matching("\\.") %}
-  {% set ext = _title | split(pat=".") | last | lower %}
-  {% if ext == "c++" %}{% set ext = "cpp" %}{% endif %}
-  {% if ext == "ts" %}{% set ext = "typescript" %}{% endif %}
-  {% if ext == "tsx" %}{% set ext = "tsx" %}{% endif %}
-  {% if ext == "js" %}{% set ext = "javascript" %}{% endif %}
-  {% if ext == "jsx" %}{% set ext = "jsx" %}{% endif %}
-  {% if ext == "c" %}{% set ext = "c" %}{% endif %}
-  {% if ext == "rs" %}{% set ext = "rust" %}{% endif %}
-  {% if ext == "py" %}{% set ext = "python" %}{% endif %}
-  {% if ext == "sh" %}{% set ext = "bash" %}{% endif %}
-  {% if ext == "yml" or ext == "yaml" %}{% set ext = "yaml" %}{% endif %}
-  {% if ext == "json" %}{% set ext = "json" %}{% endif %}
-  {% if ext == "md" or ext == "markdown" %}{% set ext = "markdown" %}{% endif %}
-  {% set _lang = ext %}
-{% endif %}
-
-{% set _lang = _lang | lower %}
-{% if _lang == "c++" %}{% set _lang = "cpp" %}{% endif %}
-
-{% set show_tab = _title and _title is matching("(\\.|^)([^/\\s]+)\\.[A-Za-z0-9]+$") %}
-
-<div class="codebox{% if _theme == "dark" %} dark{% endif %}">
-  <div class="codebox-bar"></div>
-  <pre class="codebox-pre{% if show_tab %} has-title{% endif %}">
-    {% if show_tab %}<div class="codebox-title-inside">{{ _title }}</div>{% endif %}
-    <code{% if _lang %} class="language-{{ _lang }}"{% endif %}>{{ _code }}</code>
-  </pre>
-</div>
+{%- set _raw = body | trim -%}
+{%- set _title = file | default(value="") -%}
+{%- if _title == "" %}{% set _title = title | default(value="") %}{% endif -%}
+{%- set _theme = theme | default(value="dark") -%}
+{%- set _lang = language | default(value="") -%}
+{%- set _code = _raw -%}
+{%- if _raw is starting_with("```") -%}
+  {%- set _fence = _raw | regex_replace(pattern="(?s)^`{3,}([^\n]*)\n.*$", rep="$1") | trim -%}
+  {%- if _lang == "" and _fence != "" %}{% set _lang = _fence | split(pat=" ") | first %}{% endif -%}
+  {%- set _code = _raw | regex_replace(pattern="(?s)^`{3,}[^\n]*\n", rep="") | regex_replace(pattern="\n`{3,}$", rep="") -%}
+{%- endif -%}
+{%- if _lang == "" and _title is matching("\.[A-Za-z0-9+]+$") -%}
+  {%- set _ext = _title | split(pat=".") | last | lower -%}
+  {%- set _lang = _ext -%}
+  {%- if _ext == "c++" %}{% set _lang = "cpp" %}
+  {%- elif _ext == "ts" %}{% set _lang = "typescript" %}
+  {%- elif _ext == "js" %}{% set _lang = "javascript" %}
+  {%- elif _ext == "rs" %}{% set _lang = "rust" %}
+  {%- elif _ext == "py" %}{% set _lang = "python" %}
+  {%- elif _ext == "sh" %}{% set _lang = "bash" %}
+  {%- elif _ext == "yml" %}{% set _lang = "yaml" %}
+  {%- elif _ext == "md" %}{% set _lang = "markdown" %}
+  {%- endif -%}
+{%- endif -%}
+{%- set _lang = _lang | lower -%}
+{%- if _lang == "c++" %}{% set _lang = "cpp" %}{% endif -%}
+{%- set show_tab = _title != "" and _title is matching("(\.|^)([^/\s]+)\.[A-Za-z0-9]+$") -%}
+<div class="codebox{% if _theme == "dark" %} dark{% endif %}"><div class="codebox-bar"></div><pre class="codebox-pre{% if show_tab %} has-title{% endif %}">{% if show_tab %}<div class="codebox-title-inside">{{ _title }}</div>{% endif %}<code{% if _lang %} class="language-{{ _lang }}"{% endif %}>{{ _code }}</code></pre></div>

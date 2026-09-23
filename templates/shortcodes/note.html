@@ -1,16 +1,24 @@
 {#
-  Usage:
-  :::note info
-  Content...
-  :::
-  - type defaults to "info". Supported: info, warn, alert.
-#}
-{% set _type = type | default(value="info") | lower %}
-{% if _type not in ["info", "warn", "alert"] %}{% set _type = "info" %}{% endif %}
+Usage:
 
+{% note(type="warn") %}
+Content in **Markdown**, over several paragraphs if needed. Shortcodes such as ref, link or img
+may be used inside.
+{% end %}
+
+- type defaults to "info". Supported: info, warn, alert.
+- The body is rendered as Markdown, as in the CMS preview. Zola renders the shortcodes inside it
+  first; ref, link and img print their HTML on one line so that Markdown leaves it intact.
+- A body that looks like a shortcode call (an escaped {{/* name(...) */}}) is printed as it is,
+  since the `markdown` filter would parse it again and fail.
+#}
+{%- set _type = type | default(value="info") | lower -%}
+{%- if _type not in ["info", "warn", "alert"] %}{% set _type = "info" %}{% endif -%}
+{%- set _body = body | trim -%}
+{%- set _markdown = not _body is matching("\{[{%]\s*[A-Za-z_][A-Za-z0-9_]*\s*\(") and not _body is matching("\{%\s*end\s*%\}") -%}
 <div class="note note-{{ _type }}">
   <div class="note-icon" aria-hidden="true"></div>
   <div class="note-body">
-    {{ body | safe }}
+    {% if _markdown %}{{ _body | markdown | safe }}{% else %}{{ _body | safe }}{% endif %}
   </div>
 </div>

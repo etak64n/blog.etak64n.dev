@@ -141,6 +141,45 @@
     panel.addEventListener('click', function(e){ const target = e.target; if (target && target.tagName==='A') setOpen(false); });
   })();
 
+  // Copy button of a code box: fenced code wrapped below, and the code / codebox shortcodes.
+  function addCopyButton(box, code) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'codebox-copy';
+    btn.setAttribute('aria-label', 'Copy code');
+    const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+    const checkIcon = '<svg viewBox="2 4 20 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+    btn.innerHTML = copyIcon;
+    btn.addEventListener('click', async () => {
+      const text = code.innerText;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+        }
+        btn.innerHTML = checkIcon;
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.classList.remove('copied');
+          setTimeout(() => {
+            btn.innerHTML = copyIcon;
+          }, 200);
+        }, 1200);
+      } catch (e) {
+        setTimeout(() => { btn.innerHTML = copyIcon; }, 1200);
+      }
+    });
+    box.appendChild(btn);
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     const blocks = document.querySelectorAll('.content pre > code');
     blocks.forEach(code => {
@@ -182,46 +221,15 @@
         wrapper.appendChild(header);
       }
 
-      // Add copy button with icon
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'codebox-copy';
-      btn.setAttribute('aria-label', 'Copy code');
-      const copyIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
-      const checkIcon = '<svg viewBox="2 4 20 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-      btn.innerHTML = copyIcon;
-      const codeInClone = preClone.querySelector('code');
-      btn.addEventListener('click', async () => {
-        const text = codeInClone ? codeInClone.innerText : '';
-        try {
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            await navigator.clipboard.writeText(text);
-          } else {
-            const ta = document.createElement('textarea');
-            ta.value = text;
-            ta.style.position = 'fixed';
-            ta.style.opacity = '0';
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            document.body.removeChild(ta);
-          }
-          btn.innerHTML = checkIcon;
-          btn.classList.add('copied');
-          setTimeout(() => {
-            btn.classList.remove('copied');
-            setTimeout(() => {
-              btn.innerHTML = copyIcon;
-            }, 200);
-          }, 1200);
-        } catch (e) {
-          setTimeout(() => { btn.innerHTML = copyIcon; }, 1200);
-        }
-      });
-
       wrapper.appendChild(preClone);
-      wrapper.appendChild(btn);
+      addCopyButton(wrapper, preClone.querySelector('code'));
       pre.replaceWith(wrapper);
+    });
+
+    // The code / codebox shortcodes render their own box; give it the same button.
+    document.querySelectorAll('.content .codebox').forEach(box => {
+      const code = box.querySelector(':scope > pre > code');
+      if (code && !box.querySelector(':scope > .codebox-copy')) addCopyButton(box, code);
     });
 
     // Make ref badges open their referenced link directly

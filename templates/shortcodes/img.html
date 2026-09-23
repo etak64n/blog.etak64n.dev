@@ -6,6 +6,9 @@
   - Never upscales; always outputs width/height.
   - `percent` optional, defaults to 0.6.
 #}
+{#- One line of HTML: inside a note the body goes through Markdown, which would break
+    HTML spread over indented lines and blank lines. -#}
+{%- filter regex_replace(pattern="\s*\n\s*", rep=" ") -%}
 {% set _percent = percent | default(value=0.6) %}
 {% set _link = link | default(value=false) %}
 {% set _alt = alt | default(value="") %}
@@ -67,3 +70,4 @@
     {% if caption %}<figcaption class="muted">{{ caption }}</figcaption>{% endif %}
   </figure>
 {% endif %}
+{%- endfilter -%}

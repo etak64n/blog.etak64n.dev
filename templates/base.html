@@ -416,11 +416,12 @@
     if (typeof renderMathInElement !== 'function') return;
     const root = document.querySelector('.content') || document.body;
     renderMathInElement(root, {
+      // No single `$`: articles write hexadecimal as $0000 (6502 and friends). The backslashes
+      // are doubled so that the delimiters are \( \) and \[ \], not bare brackets.
       delimiters: [
         {left: '$$', right: '$$', display: true},
-        {left: '$', right: '$', display: false},
-        {left: '\(', right: '\)', display: false},
-        {left: '\[', right: '\]', display: true}
+        {left: '\\(', right: '\\)', display: false},
+        {left: '\\[', right: '\\]', display: true}
       ],
       throwOnError: false
     });

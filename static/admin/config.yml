@@ -51,7 +51,6 @@ collections:
         widget: object
         fields:
           - { name: tags, label: タグ, widget: list, required: false, default: [] }
-      - { name: math, label: "数式 (KaTeX)", widget: boolean, default: false }
       - name: extra
         label: Extra
         widget: object
@@ -67,6 +66,12 @@ collections:
             media_folder: /static/images/hero
             public_folder: /images/hero
           - { name: toc, label: 目次, widget: boolean, default: true }
+          # base.html reads `extra.math`: a top-level `math` has no effect.
+          - name: math
+            label: "数式 (KaTeX)"
+            widget: boolean
+            default: false
+            hint: 'オンにすると $$ … $$ の数式を表示する。文中の数式は \\( … \\) と書く (Markdown が \ を一つ消すため)。$ 一つでは囲まない ($0000 などの 16 進表記と区別するため)'
       # 本文: 独自記法 (ref / note / code / codebox / link / img) をボタンと ⌘/ ですぐ挿入できる
       # Markdown エディタ (static/admin/body-editor.js)。標準エディタに戻すときは
       # widget: markdown にする (リッチテキストの挿入メニューで note / code / img / link が使える)。

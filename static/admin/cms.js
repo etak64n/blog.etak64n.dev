@@ -16,6 +16,8 @@ CMS.registerPreviewStyle('/main.css');
 // Theme for the highlight.js output used by the preview template (loaded from jsDelivr): Nord,
 // the theme Zola uses for the site's code (config.toml).
 CMS.registerPreviewStyle('https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/nord.min.css');
+// Formulas of articles with `extra.math` (preview-template.js), as on the site.
+CMS.registerPreviewStyle('https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css');
 CMS.registerPreviewStyle('/admin/preview.css');
 
 // Used by the built-in Markdown widget only, i.e. if `body` is switched back to `widget: markdown`.

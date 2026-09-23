@@ -4,9 +4,11 @@
  *
  * - The toolbar and a palette (⌘/ on macOS, Ctrl+/ elsewhere) insert a notation at the caret. The
  *   selected text, if any, becomes its content, e.g. the quote of a ref.
- * - After insertion, Tab / Shift+Tab move between the notation's fields (url, title, body…), and
- *   Enter does the same in one-line fields. Tab after the last field, or Escape, finishes the
- *   notation and drops optional arguments that were left empty.
+ * - A notation is inserted with example values in its fields, and the first one to fill in is
+ *   selected, so typing replaces it. Tab / Shift+Tab move between the fields (url, title, body…),
+ *   Enter does the same in one-line fields, and the status line names the current field.
+ * - Tab after the last field, Escape, or moving the caret out of the notation finishes it: optional
+ *   fields that still hold their example, or are empty, are dropped (see `finishSnippetText`).
  * - Images that are pasted, dropped or chosen with the 画像 button are handed to the CMS with
  *   `addFile`, saved next to index.md with the entry, and inserted as `{{ img(...) }}`.
  *
@@ -14,7 +16,7 @@
  * keeps the caret, undo history and IME composition intact. A value that comes from outside
  * (revert, restored draft) is written back only when it differs from what the editor reported.
  */
-import { IMAGE_SNIPPET, SNIPPETS, buildSnippet, removeEmptyOptionalArgs, surroundings, syntaxOf } from './snippets.js';
+import { IMAGE_SNIPPET, SNIPPETS, buildSnippet, finishSnippetText, surroundings, syntaxOf } from './snippets.js';
 
 const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
 const IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
@@ -31,6 +33,24 @@ function insertText(textarea, text) {
     textarea.setRangeText(text, selectionStart, selectionEnd, 'end');
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
   }
+}
+
+/**
+ * Remember the scroll position of the node's ancestors; the returned function puts them back.
+ * Editing the textarea can scroll them: the browser reveals the caret after an edit, and clamps
+ * the scroll position while the textarea is collapsed for measuring.
+ */
+function keepScroll(node) {
+  const saved = [];
+
+  for (let ancestor = node.parentElement; ancestor; ancestor = ancestor.parentElement) {
+    saved.push([ancestor, ancestor.scrollTop]);
+  }
+
+  return () =>
+    saved.forEach(([ancestor, top]) => {
+      if (ancestor.scrollTop !== top) ancestor.scrollTop = top;
+    });
 }
 
 /** Element → handler that returns true when it consumed an Escape key press. */
@@ -71,7 +91,16 @@ const matches = (snippet, query) => {
 
 const BodyEditorControl = createClass({
   getInitialState: function () {
-    return { paletteOpen: false, query: '', active: 0, sessionActive: false, busy: false, message: '', error: false };
+    return {
+      paletteOpen: false,
+      query: '',
+      active: 0,
+      sessionActive: false,
+      field: null,
+      busy: false,
+      message: '',
+      error: false,
+    };
   },
 
   componentDidMount: function () {
@@ -111,26 +140,19 @@ const BodyEditorControl = createClass({
 
   /**
    * Fit the textarea's height to its content. Measuring needs a collapsed textarea, which makes
-   * the page shorter for a moment, and the browser clamps the edit pane's scroll position when
-   * that happens. Remember every scrolled ancestor and put it back, or the view would jump up
-   * whenever a long body is edited below the first screen.
+   * the page shorter for a moment, so the edit pane's scroll position is kept, or the view would
+   * jump up whenever a long body is edited below the first screen.
    */
   resize: function () {
     const textarea = this.textarea;
 
     if (!textarea) return;
 
-    const scrolled = [];
-
-    for (let node = textarea.parentElement; node; node = node.parentElement) {
-      if (node.scrollTop > 0) scrolled.push([node, node.scrollTop]);
-    }
+    const restoreScroll = keepScroll(textarea);
 
     textarea.style.height = 'auto';
     textarea.style.height = `${textarea.scrollHeight + 2}px`;
-    scrolled.forEach(([node, top]) => {
-      node.scrollTop = top;
-    });
+    restoreScroll();
   },
 
   onInput: function () {
@@ -152,7 +174,6 @@ const BodyEditorControl = createClass({
   /** Keep the open notation's field ranges in step with an edit, or close it if the edit is elsewhere. */
   trackEdit: function (before, after) {
     const session = this.session;
-    const field = session.fields[session.index];
     const delta = after.length - before.length;
     const caret = this.textarea.selectionStart;
     let prefix = 0;
@@ -162,20 +183,27 @@ const BodyEditorControl = createClass({
     // Typing, pasting and IME composition all end at the caret.
     const oldEnd = caret - delta;
     const oldStart = Math.min(prefix, oldEnd);
+    // Usually the current field, but a field can also be clicked and typed into.
+    const index = session.fields.findIndex((f) => oldStart >= f.start && oldEnd <= f.end);
 
-    if (oldStart < field.start || oldEnd > field.end) {
+    if (index < 0) {
       this.endSession();
 
       return;
     }
 
+    const field = session.fields[index];
+
     field.end += delta;
-    session.fields.slice(session.index + 1).forEach((f) => {
+    field.touched = true;
+    session.fields.slice(index + 1).forEach((f) => {
       f.start += delta;
       f.end += delta;
     });
     session.end += delta;
     session.exit += delta;
+
+    if (index !== session.index) this.setField(index);
   },
 
   fieldAtCaret: function () {
@@ -188,22 +216,57 @@ const BodyEditorControl = createClass({
     return session.fields.findIndex((f) => caret >= f.start && caret <= f.end);
   },
 
+  /** Make a field the current one, which the status line names. */
+  setField: function (index) {
+    const { label, hint } = this.session.fields[index];
+
+    this.session.index = index;
+    this.setState({ field: { label, hint } });
+  },
+
+  /** Select a field's text, e.g. its example value, so that typing replaces it. */
   selectField: function (index) {
     const field = this.session.fields[index];
 
-    this.session.index = index;
+    this.setField(index);
     this.textarea.setSelectionRange(field.start, field.end);
+  },
+
+  /**
+   * After a click or a key press in the textarea: follow the caret to another field of the open
+   * notation, or finish the notation when the caret has left it, keeping the caret where it is.
+   */
+  onCaretMove: function (event) {
+    const session = this.session;
+
+    if (!session || event.nativeEvent?.isComposing || event.keyCode === 229) return;
+
+    const { selectionStart, selectionEnd } = this.textarea;
+
+    if (selectionStart <= session.start || selectionEnd >= session.end) {
+      this.finishSession(true, true);
+
+      return;
+    }
+
+    const index = this.fieldAtCaret();
+
+    if (index >= 0 && index !== session.index) this.setField(index);
   },
 
   endSession: function () {
     if (!this.session) return;
 
     this.session = null;
-    this.setState({ sessionActive: false });
+    this.setState({ sessionActive: false, field: null });
   },
 
-  /** Close the open notation; with `cleanup`, drop empty optional arguments and move past it. */
-  finishSession: function (cleanup) {
+  /**
+   * Close the open notation. With `cleanup`, drop the examples left in optional fields and empty
+   * optional arguments. The caret then moves past the notation, or with `keepSelection` stays
+   * where the user put it.
+   */
+  finishSession: function (cleanup, keepSelection = false) {
     const session = this.session;
     const textarea = this.textarea;
 
@@ -211,21 +274,30 @@ const BodyEditorControl = createClass({
 
     this.endSession();
 
-    let exit = session.exit;
+    const selection = [textarea.selectionStart, textarea.selectionEnd];
+    let delta = 0;
 
-    if (cleanup && session.optional.length) {
+    if (cleanup) {
       const original = textarea.value.slice(session.start, session.end);
-      const cleaned = removeEmptyOptionalArgs(original, session.optional);
+      const fields = session.fields.map((f) => ({ ...f, start: f.start - session.start, end: f.end - session.start }));
+      const cleaned = finishSnippetText(session.snippet, original, fields);
 
       if (cleaned !== original) {
+        const restoreScroll = keepScroll(textarea);
+
         textarea.setSelectionRange(session.start, session.end);
         insertText(textarea, cleaned);
-        exit += cleaned.length - original.length;
+        restoreScroll();
+        delta = cleaned.length - original.length;
       }
     }
 
+    // Positions after the notation move with the cleanup; positions inside it stay inside.
+    const move = (position) => (position >= session.end ? position + delta : Math.min(position, session.end + delta));
+    const [from, to] = keepSelection ? selection.map(move) : [session.exit + delta, session.exit + delta];
+
     textarea.focus({ preventScroll: true });
-    textarea.setSelectionRange(exit, exit);
+    textarea.setSelectionRange(from, to);
   },
 
   onKeyDown: function (event) {
@@ -306,18 +378,19 @@ const BodyEditorControl = createClass({
     }
 
     this.session = {
+      snippet,
       fields: fields.map((f) => ({ ...f, start: base + f.start, end: base + f.end })),
       index: 0,
       start: base,
       end: base + text.length,
       exit,
-      optional: snippet.optional ?? [],
     };
     this.setState({ sessionActive: true, message: '', error: false });
 
-    const firstEmpty = this.session.fields.findIndex((f) => f.start === f.end);
+    // Start at the first field that holds an example rather than the selected text.
+    const first = this.session.fields.findIndex((f) => f.sample !== null);
 
-    this.selectField(firstEmpty >= 0 ? firstEmpty : 0);
+    this.selectField(first >= 0 ? first : 0);
   },
 
   insertImages: async function (files) {
@@ -512,10 +585,15 @@ const BodyEditorControl = createClass({
 
   render: function () {
     const { forID } = this.props;
-    const { paletteOpen, sessionActive, busy, message, error } = this.state;
-    const status = sessionActive
-      ? 'Tab: 次の欄　Shift+Tab: 前の欄　Esc: 確定 (空の任意項目は消えます)'
-      : message || `記法はボタンか ${PALETTE_KEY} で挿入。画像は貼り付けかドロップでも追加できます`;
+    const { paletteOpen, sessionActive, field, busy, message, error } = this.state;
+    const status =
+      sessionActive && field
+        ? [
+            h('strong', { key: 'field', className: 'be-status-field' }, `入力中: ${field.label}`),
+            field.hint ? `（${field.hint}）` : '',
+            '　Tab: 次の欄　Shift+Tab: 前の欄　Esc: 確定',
+          ]
+        : [message || `記法はボタンか ${PALETTE_KEY} で挿入。画像は貼り付けかドロップでも追加できます`];
 
     return h(
       'div',
@@ -552,7 +630,7 @@ const BodyEditorControl = createClass({
         ),
         paletteOpen ? this.renderPalette() : null,
       ),
-      h('div', { className: error ? 'be-status be-error' : 'be-status', 'aria-live': 'polite' }, status),
+      h('div', { className: error ? 'be-status be-error' : 'be-status', 'aria-live': 'polite' }, ...status),
       h('textarea', {
         id: forID,
         className: 'be-textarea',
@@ -563,6 +641,8 @@ const BodyEditorControl = createClass({
         },
         onInput: this.onInput,
         onKeyDown: this.onKeyDown,
+        onKeyUp: this.onCaretMove,
+        onMouseUp: this.onCaretMove,
         onPaste: this.onPaste,
         onDragOver: this.onDragOver,
         onDragLeave: this.onDragLeave,

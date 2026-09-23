@@ -22,7 +22,7 @@ static/admin/
   cms.js                エントリ。プレビュー CSS 登録、各拡張の登録、CMS.init()
   csp-compat.js         本番 CSP 下でプレビュー iframe を動かす互換処理 (blob: → srcdoc)
   shortcodes.js         Zola ショートコード → プレビュー用 HTML (templates/shortcodes/ の移植)
-  snippets.js           本文エディタで挿入する記法の定義 (テンプレートと Tab で移る欄)
+  snippets.js           本文エディタで挿入する記法の定義 (テンプレート、欄の例と名前、確定時の扱い)
   body-editor.js/.css   本文エディタ (widget: body-editor)
   preview-template.js   記事プレビュー (single.html 相当: ヒーロー / タイトル / 日付 / タグ / 本文)
   editor-components.js  note / code / img / link の挿入フォーム (本文を widget: markdown に戻したとき用)
@@ -49,7 +49,7 @@ functions/lib/
 - コードブロックとインラインコードの中は変換しない
 - 未対応のショートコードはそのまま表示される
 - `ref` のホバーは本番では JS 制御だが、プレビューでは CSS の `:hover` で開く
-- favicon は CSP で外部画像を読めないため地球アイコンで代用
+- favicon は公開ページと同じ `/favicon/<ホスト名>` から読む ([/admin の CSP との関係](#admin-の-csp-との関係))
 
 ## 本文エディタ
 
@@ -59,9 +59,23 @@ functions/lib/
   または ⌘/ (Windows は Ctrl+/) の一覧から。一覧は「ref」「注意」「code」などで絞り込める
 - **包む**: 文字を選んでから挿入すると、その文字が中身になる (ref の引用文、note の本文、
   code のコード、リンクカードの URL)
-- **欄の移動**: 挿入後は url → title → 本文のように Tab / Shift+Tab で欄を移る。1 行の欄では
-  Enter でも次へ進む。最後の欄で Tab か Esc を押すと確定し、空のまま残した任意項目
-  (title / desc / file / lang / alt) は引数ごと消える
+- **例の値**: 挿入すると各欄に例が入る (リンクカードなら `https://example.com/article`・
+  「ページのタイトル」・「ページの説明」)。最初に埋める欄の例が選択された状態なので、そのまま
+  打てば置き換わる。ボタンのツールチップと一覧にも、例を入れた形の記法が出る
+- **欄の移動**: url → title → 本文のように Tab / Shift+Tab で欄を移り、移った先の例が選択
+  される。1 行の欄では Enter でも次へ進む。クリックで別の欄に移ってもよい。案内行に入力中の
+  欄の名前が出て、省略できる欄には「省略可。例のままなら消えます」と添える
+- **確定**: 最後の欄で Tab、Esc、または記法の外へキャレットを動かす (クリック・矢印キー) と
+  確定する。書き換えなかった例と空の欄は次のように片付ける。⌘Z で片付ける前に戻せる
+
+  | 欄 | 例のまま・空のとき |
+  |---|---|
+  | ref / link の title、link の desc、code の file、codebox の title と language、img の alt | 引数ごと消す |
+  | code の ``` の言語 | 空にする (ファイル名の拡張子から推定される) |
+  | URL、ref の引用文、note の本文、コード | 例のまま残す (プレビューで気付ける) |
+
+  一度でも打ち直した欄は、例と同じ文字でも残す。記法の外で打ち始めたときや、欄の外の文字を
+  書き換えたときは片付けずに確定する
 - **画像**: 貼り付け・ドロップ・画像ボタンで追加すると記事フォルダ (index.md の隣) に保存され、
   `{{ img(src="…") }}` が入る。保存前は一時 URL で、保存時にファイル名に置き換わる
 - **Escape**: Sveltia では Esc が「編集をやめる」。記法の入力中・一覧の表示中・日本語変換中の
@@ -73,8 +87,9 @@ functions/lib/
 code / codebox のコードは公開サイトで色付けされない (Zola が色を付けるのは普通の ``` だけ)。
 プレビューもそれに合わせ、色付けは普通の ``` にだけ行う。言語の指定は `language` 引数か ``` の言語で書く。
 
-記法を増やすときは `snippets.js` にテンプレートを足し、プレビュー用の描画を `shortcodes.js` の
-`renderers` に足す。標準の Markdown エディタに戻すときは `config.yml` の本文を
+記法を増やすときは `snippets.js` にテンプレート・欄の例 (`samples`)・欄の名前 (`labels`)・
+確定時の扱い (`optional` は引数ごと消す、`clear` は空にする) を足し、プレビュー用の描画を
+`shortcodes.js` の `renderers` に足す。標準の Markdown エディタに戻すときは `config.yml` の本文を
 `widget: markdown` にする (リッチテキストの挿入メニューで note / code / img / link が使える)。
 
 ## AI ヒーロー画像

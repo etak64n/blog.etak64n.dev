@@ -1,14 +1,22 @@
 /**
  * The blog's special notations (Zola shortcodes) as snippets for the body editor.
  *
- * `${name}` marks a field. After insertion the editor visits the fields in order with Tab. They
- * start empty unless prefilled (the selected text goes into the `wrap` field). Fields listed in
- * `optional` that are still empty when the snippet is finished are removed together with their
- * argument, e.g. a link card without a title falls back to showing the URL instead of nothing.
- * Only list arguments that the Tera template also handles when they are missing: code.html and
- * codebox.html fail the Zola build without `file` / `title`, while an empty string is fine.
- * Fields in `multiline` take several lines, so Enter inserts a newline there instead of moving on.
+ * `${name}` marks a field. After insertion the editor visits the fields in order with Tab and
+ * selects each one, so typing replaces it. A field starts with its `samples` entry, an example of
+ * what goes there (the selected text goes into the `wrap` field instead), and `labels` names it
+ * in the status line, where `optional` and `clear` fields are marked as optional (`hints`
+ * overrides that text).
+ *
+ * When the snippet is finished, a field that still holds its example is dropped together with its
+ * argument if listed in `optional`, emptied if listed in `clear` (for fields that are not
+ * arguments, such as the language of a code fence), and kept otherwise: a URL or a body left as
+ * the example stays visible in the preview. Empty `optional` arguments are dropped as well, so
+ * list only arguments that the Tera template handles when they are missing. Fields in `multiline`
+ * take several lines, and Enter inserts a newline there instead of moving on.
  */
+const NOTE_LABELS = { body: '本文' };
+const OPTIONAL_HINT = '省略可。例のままなら消えます';
+
 export const SNIPPETS = [
   {
     id: 'ref',
@@ -17,6 +25,8 @@ export const SNIPPETS = [
     keywords: 'ref reference 参照 出典 引用 さんしょう',
     inline: true,
     template: '{% ref(url="${url}", title="${title}") %}\n${body}\n{% end %}',
+    samples: { url: 'https://example.com/source', title: '出典のタイトル', body: '引用する一文' },
+    labels: { url: '出典の URL', title: '出典のタイトル', body: '引用文' },
     wrap: 'body',
     multiline: ['body'],
     optional: ['title'],
@@ -27,6 +37,8 @@ export const SNIPPETS = [
     description: '青い注記ボックス',
     keywords: 'note info 補足 メモ ほそく',
     template: '{% note(type="info") %}\n${body}\n{% end %}',
+    samples: { body: '補足の内容' },
+    labels: NOTE_LABELS,
     wrap: 'body',
     multiline: ['body'],
   },
@@ -36,6 +48,8 @@ export const SNIPPETS = [
     description: '黄色い注記ボックス',
     keywords: 'note warn warning 注意 ちゅうい',
     template: '{% note(type="warn") %}\n${body}\n{% end %}',
+    samples: { body: '注意してほしいこと' },
+    labels: NOTE_LABELS,
     wrap: 'body',
     multiline: ['body'],
   },
@@ -45,6 +59,8 @@ export const SNIPPETS = [
     description: '赤い注記ボックス',
     keywords: 'note alert danger 警告 けいこく',
     template: '{% note(type="alert") %}\n${body}\n{% end %}',
+    samples: { body: '警告の内容' },
+    labels: NOTE_LABELS,
     wrap: 'body',
     multiline: ['body'],
   },
@@ -54,8 +70,13 @@ export const SNIPPETS = [
     description: 'ファイル名のタブ付きコード。言語は拡張子から推定',
     keywords: 'code コード ファイル file',
     template: '{% code(file="${file}") %}\n```${lang}\n${code}\n```\n{% end %}',
+    samples: { file: 'main.py', lang: 'python', code: 'print("Hello, world!")' },
+    labels: { file: 'ファイル名', lang: '言語', code: 'コード' },
+    hints: { lang: '省略可。例のままなら消え、ファイル名の拡張子から推定します' },
     wrap: 'code',
     multiline: ['code'],
+    optional: ['file'],
+    clear: ['lang'],
   },
   {
     id: 'codebox',
@@ -63,9 +84,11 @@ export const SNIPPETS = [
     description: 'タイトルと言語を指定するコード枠',
     keywords: 'codebox コード枠 box',
     template: '{% codebox(title="${title}", language="${language}") %}\n${code}\n{% end %}',
+    samples: { title: 'main.tf', language: 'hcl', code: 'resource "aws_s3_bucket" "example" {}' },
+    labels: { title: 'タイトル (ファイル名ならタブに表示)', language: '言語', code: 'コード' },
     wrap: 'code',
     multiline: ['code'],
-    optional: ['language'],
+    optional: ['title', 'language'],
   },
   {
     id: 'link',
@@ -73,6 +96,8 @@ export const SNIPPETS = [
     description: 'URL をカードで表示。選択中の URL はそのまま使う',
     keywords: 'link card リンク カード url',
     template: '{{ link(url="${url}", title="${title}", desc="${desc}") }}',
+    samples: { url: 'https://example.com/article', title: 'ページのタイトル', desc: 'ページの説明' },
+    labels: { url: 'リンク先の URL', title: 'タイトル', desc: '説明' },
     wrap: 'url',
     optional: ['title', 'desc'],
   },
@@ -89,20 +114,24 @@ export const SNIPPETS = [
 export const IMAGE_SNIPPET = {
   id: 'img-inline',
   template: '{{ img(src="${src}", alt="${alt}") }}',
+  samples: { alt: '画像の説明' },
+  labels: { src: '画像', alt: '代替テキスト' },
   optional: ['alt'],
 };
 
-/** A short, readable form of the syntax for tooltips and the palette. */
+/** A short, readable form of the syntax, with the sample values, for tooltips and the palette. */
 export const syntaxOf = (snippet) =>
   snippet.template
-    ? snippet.template.replace(/\$\{\w+\}/g, '').replace(/\n```\n\n```\n/, '\n```…```\n').replace(/\n\n?/g, ' … ')
-    : '{{ img(src="…") }}';
+    ? snippet.template.replace(/\$\{(\w+)\}/g, (_, name) => snippet.samples?.[name] ?? '').replace(/\n\n?/g, ' … ')
+    : '{{ img(src="photo.png", alt="画像の説明") }}';
 
 /**
  * Expand a snippet template. Returns the text and the field ranges relative to its start.
- * `values` prefills fields by name.
+ * `values` prefills fields by name; other fields get their sample, recorded as `sample` so that
+ * the editor can tell later whether it was replaced (`sample` is null for prefilled fields).
  */
 export function buildSnippet(snippet, values = {}) {
+  const omissible = [...(snippet.optional ?? []), ...(snippet.clear ?? [])];
   const fields = [];
   let text = '';
   let last = 0;
@@ -112,13 +141,47 @@ export function buildSnippet(snippet, values = {}) {
 
     const name = match[1];
     const start = text.length;
+    const prefilled = values[name];
+    const sample = prefilled === undefined ? snippet.samples?.[name] ?? '' : null;
 
-    text += values[name] ?? '';
-    fields.push({ name, start, end: text.length, multiline: (snippet.multiline ?? []).includes(name) });
+    text += prefilled ?? sample;
+    fields.push({
+      name,
+      start,
+      end: text.length,
+      sample,
+      label: snippet.labels?.[name] ?? name,
+      hint: snippet.hints?.[name] ?? (sample && omissible.includes(name) ? OPTIONAL_HINT : ''),
+      multiline: (snippet.multiline ?? []).includes(name),
+    });
     last = match.index + match[0].length;
   }
 
   return { text: text + snippet.template.slice(last), fields };
+}
+
+/**
+ * The final text of a snippet: fields still holding their sample are removed (`optional`) or
+ * emptied (`clear`), then empty `optional` arguments are dropped. `fields` hold positions
+ * relative to `text`.
+ */
+export function finishSnippetText(snippet, text, fields) {
+  const optional = snippet.optional ?? [];
+  const clear = snippet.clear ?? [];
+  let result = text;
+
+  // From the last field to the first, so that earlier positions stay valid.
+  for (const field of [...fields].sort((a, b) => b.start - a.start)) {
+    // `touched` is set by the editor for fields that were edited, even if the sample was typed back.
+    const untouched =
+      !field.touched && !!field.sample && result.slice(field.start, field.end) === field.sample;
+
+    if (untouched && (optional.includes(field.name) || clear.includes(field.name))) {
+      result = result.slice(0, field.start) + result.slice(field.end);
+    }
+  }
+
+  return removeEmptyOptionalArgs(result, optional);
 }
 
 /**

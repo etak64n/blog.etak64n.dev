@@ -2,6 +2,8 @@
 
 Blog built with Zola + Tera and deployed to Cloudflare Pages via GitHub Actions.
 
+How the pieces fit together (site, CMS, Pages Functions, CI, CSP, secrets): [docs/architecture.md](docs/architecture.md) (Japanese).
+
 Highlights
 - Grid cards for Latest/Indexes (large thumbnail + title + date)
 - Sticky Table of Contents (ToC) on the left of article pages

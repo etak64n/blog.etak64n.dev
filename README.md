@@ -148,6 +148,8 @@ Two small adaptations keep Sveltia CMS working under it; see
 [docs/cms-extensions.md](docs/cms-extensions.md#admin-の-csp-との関係):
 an import map in `static/admin/index.html` (unpkg.com → jsDelivr) and
 `static/admin/csp-compat.js` (preview iframe via `srcdoc` instead of a `blob:` URL).
+The public pages only allow same-origin images, so link cards and ref pills load favicons from
+`/favicon/<host>` (`functions/favicon/[host].ts`, which fetches them from DuckDuckGo).
 
 ### Secrets
 

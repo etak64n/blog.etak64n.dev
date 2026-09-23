@@ -32,6 +32,8 @@ static/admin/
 functions/api/admin/
   _middleware.ts        同一オリジン + Bearer ADMIN_KEY の検証
   hero.ts               Workers AI で画像生成 (プロンプト生成 → 画像生成)
+functions/favicon/
+  [host].ts             リンクカード・参照のファビコンを同一オリジンで返す (公開)
 ```
 
 ## ショートコードのプレビュー
@@ -122,6 +124,16 @@ flux-1-schnell は正方形 (1024×1024) しか出せない。`@cf/leonardo/phoe
 Transform Rule に `frame-src 'self' blob:` と `script-src` の `https://unpkg.com` を足せば、
 どちらの対処も不要になる。
 
+公開ページの CSP は画像を同一オリジン (と data:) にしか許可しない。リンクカードと参照の
+ファビコンは外部サービスの画像なので、`functions/favicon/[host].ts` が DuckDuckGo から取得して
+`/favicon/<ホスト名>` として同一オリジンで返す (テンプレートとプレビューはこの URL を使う)。
+
+- 取得先は DuckDuckGo だけで、ホスト名は検証してから使う
+- 中身は先頭バイトで PNG / ICO / GIF / JPEG / WebP を判定し、正しい型を付けて返す。
+  それ以外 (404・空・SVG など) は地球アイコンにするので、壊れた画像にはならない
+- ブラウザに 1 週間キャッシュさせる。他サイトからの直リンク (Sec-Fetch-Site が cross-site /
+  same-site) は 403
+
 次の 2 つは CSP に弾かれたままだが、動作には影響しない。
 
 - Sveltia が自分のロゴ (`data:` URL) を fetch する処理
@@ -135,8 +147,9 @@ npm run admin                    # scripts/admin-dev.sh
 open http://127.0.0.1:8788/admin/?backend=test
 ```
 
-`scripts/admin-dev.sh` は一時ディレクトリにビルドし、本番サイトから取得した `/admin` の CSP を
-`_headers` に書いてから `wrangler pages dev` を起動する。CSP 起因の不具合もローカルで再現できる。
+`scripts/admin-dev.sh` は一時ディレクトリにビルドし、本番サイトから取得した CSP を `_headers` に
+書いてから `wrangler pages dev` を起動する。`/admin` と公開ページ (`/`, `/articles/*`, `/tags/*`,
+`/page/*`) の両方に本番と同じ方針が付くので、CSP 起因の不具合もローカルで再現できる。
 wrangler.toml の Workers AI バインディングは外して起動するので、Cloudflare へのログインは要らない。
 
 `?backend=test` を付けると GitHub の代わりにブラウザ内 (OPFS) の Test backend を使うので、

@@ -149,7 +149,8 @@ Two small adaptations keep Sveltia CMS working under it; see
 an import map in `static/admin/index.html` (unpkg.com → jsDelivr) and
 `static/admin/csp-compat.js` (preview iframe via `srcdoc` instead of a `blob:` URL).
 The public pages only allow same-origin images, so link cards and ref pills load favicons from
-`/favicon/<host>` (`functions/favicon/[host].ts`, which fetches them from DuckDuckGo).
+`/favicon/<host>` (`functions/favicon/[host].ts`, which fetches each icon from the linked site
+itself on request; no third-party favicon service, nothing stored).
 
 ### Secrets
 

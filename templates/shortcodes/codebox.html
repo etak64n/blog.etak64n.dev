@@ -9,29 +9,16 @@ resource "aws_s3_bucket" "example" {
 
 Params:
 - title (or filename): optional string shown in a tab above the code when it looks like a file name
-- language: optional highlight language. Zola reserves `lang` for the page language, so a `lang`
-  argument is not seen here.
+- language: optional highlight language, else the file extension. Zola reserves `lang` for the
+  page language, so a `lang` argument is not seen here.
 - theme: "dark" (default) or "light"
 
-The body is plain code, highlighted by Zola at build time as in code.html, which also explains
-when it stays plain and the Zola 0.22 notes.
+Kept for existing text: the body editor inserts `code`, which renders the same box
+(templates/partials/codebox.html). The body here is plain code instead of a fence.
 #}
 {%- set _title = title | default(value="") -%}
 {%- if _title == "" %}{% set _title = filename | default(value="") %}{% endif -%}
 {%- set _theme = theme | default(value="dark") -%}
-{%- set _lang = language | default(value="") | lower -%}
+{%- set _lang = language | default(value="") -%}
 {%- set _code = body | regex_replace(pattern="^\n+|\n+$", rep="") -%}
-{%- set show_tab = _title != "" and _title is matching("(\.|^)([^/\s]+)\.[A-Za-z0-9]+$") -%}
-{%- set _highlight = _theme == "dark" and not _code is matching("\{[{%]\s*[A-Za-z_][A-Za-z0-9_]*\s*\(") and not _code is matching("\{%\s*end\s*%\}") -%}
-<div class="codebox{% if _theme == "dark" %} dark{% endif %}{% if show_tab %} has-title{% endif %}"><div class="codebox-bar"></div>
-{%- if show_tab %}<div class="codebox-header"><span class="codebox-filename">{{ _title }}</span></div>{% endif -%}
-{%- if _highlight %}
-{% filter markdown %}
-~~~~~{{ _lang }}
-{{ _code | safe }}
-~~~~~
-{% endfilter %}
-{%- else -%}
-<pre><code{% if _lang %} class="language-{{ _lang }}"{% endif %}>{{ _code }}</code></pre>
-{%- endif -%}
-</div>
+{% include "partials/codebox.html" %}

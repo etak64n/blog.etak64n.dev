@@ -3,6 +3,9 @@
   Usage example:
   {{ ref(url="https://example.com", title="Article title", excerpt="Quick summary") }}
 #}
+{#- One line of HTML: inside a note the body goes through Markdown, which would break
+    HTML spread over indented lines and blank lines. -#}
+{%- filter regex_replace(pattern="\s*\n\s*", rep=" ") -%}
 {%- set _id = id | default(value="") -%}
 {%- set _url = url | default(value="") -%}
 {%- set _title = title | default(value=_url) -%}
@@ -80,3 +83,4 @@
     {%- endif -%}
   </span>
 </span>{{- "" -}}
+{%- endfilter -%}

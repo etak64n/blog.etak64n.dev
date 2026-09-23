@@ -12,19 +12,10 @@ Optional params:
 - language : highlight language (overrides the fence hint and the file extension)
 - theme : "dark" (default) or "light"
 
-The code is highlighted by Zola at build time like fenced code in the page (Nord theme): the
-template passes a fence through the `markdown` filter. It stays plain in two cases:
-- the light theme, as the Nord colours are made for a dark background;
-- code that looks like a shortcode call, e.g. {{/* name(key="value") */}} written escaped in the
-  page: the `markdown` filter parses shortcodes again and would fail on it.
-
-Zola 0.22 notes:
-- `lang` is reserved: it always holds the page language in a shortcode's context and hides a
-  `lang` argument. Use `language`, or the language of the fence.
-- Tera keeps backslashes in string literals as written, so the regexes use single backslashes,
-  and a newline can only come from the template text itself, hence the `filter` section.
-- `regex_replace` takes `pattern` and `rep`.
-- Zola trims the body, including the indentation of its first line.
+The box itself, including the highlighting, is templates/partials/codebox.html, shared with
+codebox.html. Zola 0.22 reserves `lang`: in a shortcode's context it always holds the page
+language and hides a `lang` argument, so the language comes from `language` or the fence.
+`regex_replace` takes `pattern` and `rep`.
 #}
 {%- set _raw = body | trim -%}
 {%- set _title = file | default(value="") -%}
@@ -37,32 +28,4 @@ Zola 0.22 notes:
   {%- if _lang == "" and _fence != "" %}{% set _lang = _fence | split(pat=" ") | first %}{% endif -%}
   {%- set _code = _raw | regex_replace(pattern="(?s)^`{3,}[^\n]*\n", rep="") | regex_replace(pattern="\n`{3,}$", rep="") -%}
 {%- endif -%}
-{%- if _lang == "" and _title is matching("\.[A-Za-z0-9+]+$") -%}
-  {%- set _ext = _title | split(pat=".") | last | lower -%}
-  {%- set _lang = _ext -%}
-  {%- if _ext == "c++" %}{% set _lang = "cpp" %}
-  {%- elif _ext == "ts" %}{% set _lang = "typescript" %}
-  {%- elif _ext == "js" %}{% set _lang = "javascript" %}
-  {%- elif _ext == "rs" %}{% set _lang = "rust" %}
-  {%- elif _ext == "py" %}{% set _lang = "python" %}
-  {%- elif _ext == "sh" %}{% set _lang = "bash" %}
-  {%- elif _ext == "yml" %}{% set _lang = "yaml" %}
-  {%- elif _ext == "md" %}{% set _lang = "markdown" %}
-  {%- endif -%}
-{%- endif -%}
-{%- set _lang = _lang | lower -%}
-{%- if _lang == "c++" %}{% set _lang = "cpp" %}{% endif -%}
-{%- set show_tab = _title != "" and _title is matching("(\.|^)([^/\s]+)\.[A-Za-z0-9]+$") -%}
-{%- set _highlight = _theme == "dark" and not _code is matching("\{[{%]\s*[A-Za-z_][A-Za-z0-9_]*\s*\(") and not _code is matching("\{%\s*end\s*%\}") -%}
-<div class="codebox{% if _theme == "dark" %} dark{% endif %}{% if show_tab %} has-title{% endif %}"><div class="codebox-bar"></div>
-{%- if show_tab %}<div class="codebox-header"><span class="codebox-filename">{{ _title }}</span></div>{% endif -%}
-{%- if _highlight %}
-{% filter markdown %}
-~~~~~{{ _lang }}
-{{ _code | safe }}
-~~~~~
-{% endfilter %}
-{%- else -%}
-<pre><code{% if _lang %} class="language-{{ _lang }}"{% endif %}>{{ _code }}</code></pre>
-{%- endif -%}
-</div>
+{% include "partials/codebox.html" %}

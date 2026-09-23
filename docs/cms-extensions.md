@@ -19,6 +19,7 @@ static/admin/
   index.html            CMS 本体の読み込み (版固定、手動 init)
   config.yml            コレクション定義。hero は widget: hero-ai
   cms.js                エントリ。プレビュー CSS 登録、各拡張の登録、CMS.init()
+  csp-compat.js         本番 CSP 下でプレビュー iframe を動かす互換処理 (blob: → srcdoc)
   shortcodes.js         Zola ショートコード → プレビュー用 HTML (templates/shortcodes/ の移植)
   preview-template.js   記事プレビュー (single.html 相当: ヒーロー / タイトル / 日付 / タグ / 本文)
   editor-components.js  note / code / img / link の挿入フォーム
@@ -78,21 +79,46 @@ width/height を受け付けるモデルに変えると、`hero.ts` は 1216×64
 - ローテーション: `gh secret set ADMIN_KEY -R etak64n/blog.etak64n.dev` して main に push
 - CMS 側: 初回に「管理 API キー」欄へ貼る。localStorage に保存され、401 が返ると消える
 
+## /admin の CSP との関係
+
+本番の `/admin` には etak64n.dev ゾーンの Transform Rule が Content-Security-Policy を付ける
+(このリポジトリの外)。その方針を変えずに動かすため、管理画面側で 2 つ対処している。
+
+| 本番での症状 | 原因 | 対処 |
+|---|---|---|
+| プレビュー欄が空になる (`Framing 'blob:…' violates … default-src 'self'`) | Sveltia はプレビュー雛形かスタイルを登録すると、プレビュー欄を `blob:` URL の iframe で描く。CSP に `frame-src` が無く、`'self'` は `blob:` に一致しない | `static/admin/csp-compat.js` が text/html の Blob URL を iframe の `srcdoc` に差し替える |
+| 独自フィールドとプレビュー雛形が動かない (`immutable.es.js` の読み込み失敗) | Sveltia は Immutable.js と Shiki を unpkg.com から動的 import する。`script-src` に unpkg が無い | `static/admin/index.html` の import map で `https://unpkg.com/` を jsDelivr に付け替える |
+
+Transform Rule に `frame-src 'self' blob:` と `script-src` の `https://unpkg.com` を足せば、
+どちらの対処も不要になる。
+
+次の 2 つは CSP に弾かれたままだが、動作には影響しない。
+
+- Sveltia が自分のロゴ (`data:` URL) を fetch する処理
+- GitHub の稼働状況 (githubstatus.com) の確認
+
 ## ローカルで試す
 
 ```sh
 cp .dev.vars.example .dev.vars   # ADMIN_KEY と DEV_FAKE_AI=true
-npm run admin                    # zola build → wrangler pages dev public --port 8788
+npm run admin                    # scripts/admin-dev.sh
 open http://127.0.0.1:8788/admin/?backend=test
 ```
 
+`scripts/admin-dev.sh` は一時ディレクトリにビルドし、本番サイトから取得した `/admin` の CSP を
+`_headers` に書いてから `wrangler pages dev` を起動する。CSP 起因の不具合もローカルで再現できる。
+wrangler.toml の Workers AI バインディングは外して起動するので、Cloudflare へのログインは要らない。
+
 `?backend=test` を付けると GitHub の代わりにブラウザ内 (OPFS) の Test backend を使うので、
 ログインなしで記事を作って保存できる。`DEV_FAKE_AI=true` のときは Workers AI を呼ばず、
-プロンプトを書いた SVG を返す (Cloudflare にログインしていなくても動く)。
+プロンプトを書いた SVG を返す。
 
 型チェック: `npm run typecheck` (functions/ のみ)。
 
 ## ハマりどころ (2026-09-23 時点、Sveltia 0.218.3)
+
+- 本番だけ壊れる場合はまず CSP を疑う。ブラウザのコンソールに `violates the following
+  Content Security Policy directive` が出る。`npm run admin` は本番の CSP を適用して起動する。
 
 - `CMS.renderRichText()` はエディタ部品の `toPreview` 用。プレビュー雛形から呼ぶと
   entry draft のコンテキストが無く `reading 'current'` の例外を連発する。雛形では

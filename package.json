@@ -6,7 +6,7 @@
     "dev": "zola serve",
     "build": "zola build",
     "preview": "zola build && wrangler pages dev public",
-    "admin": "zola build --base-url http://127.0.0.1:8788 && wrangler pages dev public --port 8788",
+    "admin": "bash scripts/admin-dev.sh",
     "typecheck": "tsc -p functions/tsconfig.json"
   },
   "devDependencies": {

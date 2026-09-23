@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
     <title>Content Manager</title>
+    <!--
+      The /admin Content-Security-Policy (a Cloudflare Transform Rule on the zone) allows scripts
+      from cdn.jsdelivr.net but not from unpkg.com, where Sveltia CMS lazily imports Immutable.js
+      (needed by custom preview templates and field types) and Shiki. jsDelivr mirrors npm under
+      the same package@version/path layout, so remap the prefix. Must precede every module load.
+    -->
+    <script type="importmap">
+      {
+        "imports": {
+          "https://unpkg.com/": "https://cdn.jsdelivr.net/npm/"
+        }
+      }
+    </script>
     <script>
       // Defer initialization so that the blog-specific extensions can register first.
       window.CMS_MANUAL_INIT = true;

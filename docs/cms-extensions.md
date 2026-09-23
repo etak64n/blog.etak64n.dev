@@ -24,6 +24,7 @@ static/admin/
   preview-template.js   記事プレビュー (single.html 相当: ヒーロー / タイトル / 日付 / タグ / 本文)
   editor-components.js  note / code / img / link の挿入フォーム
   hero-field.js         ヒーロー画像フィールド (AI 生成 / 既存から選択 / プレースホルダー)
+  hero-image.js         生成画像を 1200×630 の WebP に収める処理
   preview.css           プレビュー iframe 専用の補正 (main.css の後に読む)
 functions/api/admin/
   _middleware.ts        同一オリジン + Bearer ADMIN_KEY の検証
@@ -55,7 +56,8 @@ note / code / img / link をフォーム入力できる。`ref` は文中(イン
    画像モデルで生成して画像をそのまま返す。使ったプロンプトは `X-Hero-Prompt` ヘッダー
 4. ブラウザ側で 1200×630 に収めて WebP 化し、`addFile()` で記事の下書きに添付する。
    縦横比が 1200:630 に近い画像は枠いっぱいに切り抜く。既定モデルの正方形のように比率が違う画像は、
-   被写体が欠けないよう全体を中央に置き、左右を同じ画像のぼかしで埋める
+   被写体が欠けないよう全体を中央に置き、左右を元画像の背景色 (縁でいちばん多い色) で塗って
+   境目をぼかす (`static/admin/hero-image.js`)。プロンプトでも無地の背景と中央配置を指定している
 5. 保存すると `static/images/hero/<slug>-hero.webp` が記事と同じコミットに入り、
    `extra.hero` は `/images/hero/<slug>-hero.webp` になる
 

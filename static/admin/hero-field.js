@@ -7,12 +7,11 @@
  * The stored value stays a plain path string (`/images/hero/<name>.webp`), which is what the
  * Zola templates expect in `extra.hero`.
  */
+import { toHeroWebp } from './hero-image.js';
 
 const PLACEHOLDER = '/images/hero/placeholder.svg';
 const DEFAULT_ENDPOINT = '/api/admin/hero';
 const STORAGE_KEY = 'blog-admin-api-key';
-const WIDTH = 1200;
-const HEIGHT = 630;
 
 const storage = {
   get() {
@@ -38,118 +37,6 @@ const toArray = (value) => {
 
   return Array.isArray(value) ? value : [value];
 };
-
-/** Decode any image the browser can display (PNG, JPEG, WebP, SVG with a size) into an element. */
-const loadImage = (blob) =>
-  new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(blob);
-    const image = new Image();
-
-    image.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(image);
-    };
-    image.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('生成された画像を読み込めませんでした'));
-    };
-    image.src = url;
-  });
-
-/** Aspect ratios this close to the hero's are cropped to fill the frame; others are fitted. */
-const COVER_TOLERANCE = 0.08;
-
-/** Width of the soft edge between a fitted image and the blurred fill around it. */
-const FEATHER = 48;
-
-/** Draw `image` centered on `ctx` at `scale` and return the rectangle it occupies. */
-const drawCentered = (ctx, image, scale, width, height) => {
-  const w = image.naturalWidth * scale;
-  const h = image.naturalHeight * scale;
-  const x = (width - w) / 2;
-  const y = (height - h) / 2;
-
-  ctx.drawImage(image, x, y, w, h);
-
-  return { x, y, w, h };
-};
-
-/** Fade the edges of `rect` that do not touch the canvas border, keeping the inside opaque. */
-function featherEdges(ctx, { x, y, w, h }, width, height) {
-  const fade = (x0, y0, x1, y1, length) => {
-    const edge = Math.min(FEATHER, length / 8) / length;
-    const gradient = ctx.createLinearGradient(x0, y0, x1, y1);
-
-    gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-    gradient.addColorStop(edge, 'rgba(0, 0, 0, 1)');
-    gradient.addColorStop(1 - edge, 'rgba(0, 0, 0, 1)');
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-  };
-
-  ctx.globalCompositeOperation = 'destination-in';
-
-  if (w < width - 1) fade(x, 0, x + w, 0, w);
-  if (h < height - 1) fade(0, y, 0, y + h, h);
-
-  ctx.globalCompositeOperation = 'source-over';
-}
-
-/**
- * Fit the image into the 1200x630 hero frame and encode it as WebP.
- *
- * An image with (almost) the hero's aspect ratio is cropped to fill the frame. Anything else,
- * such as the square output of FLUX.1 [schnell], is shown whole, centered on a blurred and
- * enlarged copy of itself with softened edges, so that the subject is never cut off. The blur
- * comes from drawing a tiny thumbnail at full size with smoothing on, which works in every
- * browser (unlike the canvas `filter` property).
- */
-async function toHeroWebp(blob) {
-  const image = await loadImage(blob);
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-
-  canvas.width = WIDTH;
-  canvas.height = HEIGHT;
-
-  const ratio = image.naturalWidth / image.naturalHeight;
-  const cover = Math.max(WIDTH / image.naturalWidth, HEIGHT / image.naturalHeight);
-
-  if (Math.abs(ratio - WIDTH / HEIGHT) / (WIDTH / HEIGHT) <= COVER_TOLERANCE) {
-    drawCentered(ctx, image, cover, WIDTH, HEIGHT);
-  } else {
-    const thumb = document.createElement('canvas');
-
-    thumb.width = 32;
-    thumb.height = Math.round((32 * HEIGHT) / WIDTH);
-    drawCentered(
-      thumb.getContext('2d'),
-      image,
-      Math.max(thumb.width / image.naturalWidth, thumb.height / image.naturalHeight),
-      thumb.width,
-      thumb.height,
-    );
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(thumb, 0, 0, WIDTH, HEIGHT);
-
-    const fitted = document.createElement('canvas');
-    const fittedCtx = fitted.getContext('2d');
-
-    fitted.width = WIDTH;
-    fitted.height = HEIGHT;
-
-    const rect = drawCentered(fittedCtx, image, Math.min(WIDTH / image.naturalWidth, HEIGHT / image.naturalHeight), WIDTH, HEIGHT);
-
-    featherEdges(fittedCtx, rect, WIDTH, HEIGHT);
-    ctx.drawImage(fitted, 0, 0);
-  }
-
-  return new Promise((resolve, reject) => {
-    canvas.toBlob((result) => (result ? resolve(result) : reject(new Error('WebP への変換に失敗しました'))), 'image/webp', 0.86);
-  });
-}
 
 const timestamp = () => new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, '').replace('T', '-');
 

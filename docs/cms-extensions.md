@@ -33,7 +33,9 @@ functions/api/admin/
   _middleware.ts        同一オリジン + Bearer ADMIN_KEY の検証
   hero.ts               Workers AI で画像生成 (プロンプト生成 → 画像生成)
 functions/favicon/
-  [host].ts             リンクカード・参照のファビコンを同一オリジンで返す (公開)
+  [host].ts             リンクカード・参照のファビコンをリンク先から取って同一オリジンで返す (公開)
+functions/lib/
+  favicon.ts            リンク先サイトのアイコン指定を読んで画像を取る処理
 ```
 
 ## ショートコードのプレビュー
@@ -125,14 +127,18 @@ Transform Rule に `frame-src 'self' blob:` と `script-src` の `https://unpkg.
 どちらの対処も不要になる。
 
 公開ページの CSP は画像を同一オリジン (と data:) にしか許可しない。リンクカードと参照の
-ファビコンは外部サービスの画像なので、`functions/favicon/[host].ts` が DuckDuckGo から取得して
-`/favicon/<ホスト名>` として同一オリジンで返す (テンプレートとプレビューはこの URL を使う)。
+ファビコンはリンク先サイトの画像なので、`functions/favicon/[host].ts` がリクエストのたびに
+リンク先サイトから取得し、`/favicon/<ホスト名>` として同一オリジンで返す (テンプレートと
+プレビューはこの URL を使う)。第三者のファビコンサービスは使わず、ブログ側には何も保存しない。
 
-- 取得先は DuckDuckGo だけで、ホスト名は検証してから使う
+- リンク先のトップページを読み、`<head>` のアイコン指定 (icon / apple-touch-icon) を探す。
+  48px 前後を優先し、無ければ `/favicon.ico`。処理は `functions/lib/favicon.ts`
 - 中身は先頭バイトで PNG / ICO / GIF / JPEG / WebP を判定し、正しい型を付けて返す。
-  それ以外 (404・空・SVG など) は地球アイコンにするので、壊れた画像にはならない
-- ブラウザに 1 週間キャッシュさせる。他サイトからの直リンク (Sec-Fetch-Site が cross-site /
-  same-site) は 403
+  それ以外 (見つからない・空・SVG など) は地球アイコンにするので、壊れた画像にはならない
+- 取得元の URL はレスポンスヘッダー `X-Favicon-Source` に出る
+- 読者のブラウザが普通の画像と同じく 1 日保持する。他サイトからの直リンク
+  (Sec-Fetch-Site が cross-site / same-site) は 403
+- 1 件あたり 0.1〜2 秒ほどかかる (リンク先の応答しだい)。ボットを拒むサイトは地球アイコンになる
 
 次の 2 つは CSP に弾かれたままだが、動作には影響しない。
 

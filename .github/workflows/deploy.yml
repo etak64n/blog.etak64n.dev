@@ -30,10 +30,12 @@ jobs:
         with:
           submodules: true
 
+      # Pinned: newer Zola releases reject the [markdown.highlighting] table in config.toml.
+      # Keep in sync with the local version (`zola --version`) when upgrading.
       - name: Install Zola
         uses: taiki-e/install-action@v2
         with:
-          tool: zola@latest
+          tool: zola@0.22.1
 
       - name: Build
         run: zola build

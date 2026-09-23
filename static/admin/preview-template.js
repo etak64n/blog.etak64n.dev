@@ -14,6 +14,14 @@ import { transformShortcodes } from './shortcodes.js';
 
 const PLACEHOLDER = '/images/hero/placeholder.svg';
 const HLJS_URL = 'https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/lib/common/+esm';
+// Same version as templates/base.html; its stylesheet is registered in cms.js.
+const KATEX_AUTO_RENDER_URL = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.mjs';
+/** The site's delimiters (templates/base.html): no single `$`, which marks hexadecimal numbers. */
+const MATH_DELIMITERS = [
+  { left: '$$', right: '$$', display: true },
+  { left: '\\(', right: '\\)', display: false },
+  { left: '\\[', right: '\\]', display: true },
+];
 
 // Loaded once, lazily; `null` when the CDN is unreachable or blocked.
 let hljsPromise;
@@ -108,6 +116,25 @@ function applyImageOptions(root) {
 /** Code that templates/shortcodes/code.html leaves plain because it looks like a shortcode call. */
 const SHORTCODE_LIKE = /\{[{%]\s*[A-Za-z_][A-Za-z0-9_]*\s*\(|\{%\s*end\s*%\}/;
 
+let autoRenderPromise;
+
+/** Render the formulas of an article that enables math (`extra.math`), like the site does. */
+async function renderMath(root) {
+  autoRenderPromise ??= import(KATEX_AUTO_RENDER_URL)
+    .then((module) => module.default)
+    .catch((error) => {
+      console.warn('[preview] KaTeX could not be loaded; formulas are shown as text', error);
+
+      return null;
+    });
+
+  const renderMathInElement = await autoRenderPromise;
+
+  if (!renderMathInElement || !root.isConnected) return;
+
+  renderMathInElement(root, { delimiters: MATH_DELIMITERS, throwOnError: false });
+}
+
 async function highlightCode(root) {
   // Colour what Zola colours at build time: code with a language, except in light-theme code
   // boxes and in code boxes whose code looks like a shortcode call.
@@ -164,11 +191,13 @@ const ArticlePreview = createClass({
     if (!element) return;
 
     const markdown = this.props.entry.getIn(['data', 'body']) || '';
+    const math = this.props.entry.getIn(['data', 'extra', 'math']) === true;
 
-    if (element === this.renderedElement && markdown === this.renderedMarkdown) return;
+    if (element === this.renderedElement && markdown === this.renderedMarkdown && math === this.renderedMath) return;
 
     this.renderedElement = element;
     this.renderedMarkdown = markdown;
+    this.renderedMath = math;
 
     try {
       element.innerHTML = renderMarkdown(markdown);
@@ -183,6 +212,8 @@ const ArticlePreview = createClass({
     applyImageOptions(element);
     markLoadedFavicons(element);
     highlightCode(element);
+
+    if (math) renderMath(element);
   },
 
   render: function () {

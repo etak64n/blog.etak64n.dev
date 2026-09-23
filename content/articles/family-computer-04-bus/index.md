@@ -4,8 +4,8 @@ date = 2025-10-28
 updated = 2025-10-28
 draft = true
 taxonomies = { tags=["Nintendo","Game","NES", "ファミコンを作る"] }
-math = true
 [extra]
+math = true
 author = "etak64n"
 hero = "/images/hero/placeholder.svg"
 toc = true

@@ -1,0 +1,8 @@
+# Variables for `wrangler pages dev` (copy to .dev.vars, which is ignored by git).
+# In production these are Pages secrets / variables of the etak64n-blog project.
+ADMIN_KEY=change-me
+# Return a placeholder SVG instead of calling Workers AI, so no Cloudflare login is needed.
+DEV_FAKE_AI=true
+# Optional model overrides
+# AI_TEXT_MODEL=@cf/meta/llama-3.3-70b-instruct-fp8-fast
+# AI_IMAGE_MODEL=@cf/black-forest-labs/flux-1-schnell

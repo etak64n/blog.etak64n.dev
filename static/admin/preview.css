@@ -1,0 +1,29 @@
+/*
+ * Extra styles for the Sveltia CMS preview pane. The pane is an iframe that loads the
+ * site's /main.css first, then this file, so only preview-specific tweaks live here.
+ */
+body { padding: 16px; }
+.page-body.no-toc { display: block; }
+.post-hero img { aspect-ratio: 1200 / 630; object-fit: cover; }
+
+/* On the site the reference tooltip is toggled by JavaScript; in the preview use hover. */
+.ref { position: relative; }
+.ref:hover .ref-panel,
+.ref:focus-within .ref-panel {
+  display: flex;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translate(calc(-50% + var(--ref-shift, 0px)), 0);
+}
+
+/* Fenced code is plain <pre><code> here (highlight.js adds colours); mimic the site's blocks. */
+.content pre { margin: 12px 0; border-radius: 4px; overflow-x: auto; background: #0f172a; }
+.content pre code { display: block; padding: 14px 16px; font-size: 0.85em; line-height: 1.5; background: transparent; }
+.codebox { position: relative; }
+.codebox pre { margin: 0 0 10px; border: 1px solid var(--border); background: #f8fafc; }
+.codebox pre code { color: #1e293b; }
+.codebox.has-title pre code { padding-top: 42px; }
+.codebox.dark pre { background: #0f172a; border-color: rgba(148, 163, 184, 0.15); }
+.codebox.dark pre code { color: #e5e7eb; }
+.codebox .codebox-title-inside { z-index: 1; }

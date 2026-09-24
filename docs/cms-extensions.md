@@ -170,10 +170,12 @@ flux-1-schnell は正方形 (1024×1024) しか出せない。`@cf/leonardo/phoe
 Transform Rule に `frame-src 'self' blob:` と `script-src` の `https://unpkg.com` を足せば、
 どちらの対処も不要になる。
 
-公開ページの CSP は画像を同一オリジン (と data:) にしか許可しない。リンクカードと参照の
-ファビコンはリンク先サイトの画像なので、`functions/favicon/[host].ts` がリクエストのたびに
-リンク先サイトから取得し、`/favicon/<ホスト名>` として同一オリジンで返す (テンプレートと
-プレビューはこの URL を使う)。第三者のファビコンサービスは使わず、ブログ側には何も保存しない。
+公開ページと管理画面の画像と動画は、https ならどのサイトからでも読める (ブログ用の規則は
+`scripts/cloudflare-edge.mjs` で設定する。詳しくは docs/architecture.md)。リンクカードと参照の
+ファビコンは、リンク先のページの `<head>` を読んで選ぶ必要があり、ブラウザからは他サイトの HTML を
+読めないので、`functions/favicon/[host].ts` がリクエストのたびにリンク先サイトから取得し、
+`/favicon/<ホスト名>` として同一オリジンで返す (テンプレートとプレビューはこの URL を使う)。
+第三者のファビコンサービスは使わず、ブログ側には何も保存しない。
 
 - リンク先のトップページを読み、`<head>` のアイコン指定 (icon / apple-touch-icon) を探す。
   48px 前後を優先し、無ければ `/favicon.ico`。処理は `functions/lib/favicon.ts`

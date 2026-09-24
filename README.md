@@ -153,9 +153,12 @@ Two small adaptations keep Sveltia CMS working under it; see
 [docs/cms-extensions.md](docs/cms-extensions.md#admin-の-csp-との関係):
 an import map in `static/admin/index.html` (unpkg.com → jsDelivr) and
 `static/admin/csp-compat.js` (preview iframe via `srcdoc` instead of a `blob:` URL).
-The public pages only allow same-origin images, so link cards and ref pills load favicons from
-`/favicon/<host>` (`functions/favicon/[host].ts`, which fetches each icon from the linked site
-itself on request; no third-party favicon service, nothing stored).
+The blog's own rules (the CSP of the public pages, and the images and media the admin may load) and
+the redirect of `etak64n-blog.pages.dev` to the custom domain are set by
+`scripts/cloudflare-edge.mjs` (shows the differences; applies them with `--apply`). The zone's
+fallback rule is shared with other apps and left alone. Link cards and ref pills load favicons
+from `/favicon/<host>` (`functions/favicon/[host].ts`), which reads the linked site's `<head>` to
+pick the icon on request; no third-party favicon service, nothing stored.
 
 ### Secrets
 

@@ -199,8 +199,8 @@ Zola の記事は、本文の中からテンプレートを呼び出せる。
 
 ### ファビコンの取得
 
-公開ページの CSP は、画像の読み込み元を、同じオリジンと data: URL などの決まった出どころに限っている。
-リンク先のサイトはその中に含まれないので、リンクカードと参照に出すファビコンは、リンク先から直接読み込めない。
+リンクカードと参照に出すファビコンは、リンク先のサイトがページの `<head>` で指定している。
+ブラウザのスクリプトはほかのサイトの HTML を読めないため、指定を読んで画像を選ぶ処理はサーバー側に置いている。
 `/favicon/<ホスト名>` は、リクエストのたびにリンク先サイトのトップページを取得し、`<head>` のアイコン指定から 48 px 前後の画像を選んで返す。
 アイコン指定が使えないときは `/favicon.ico` を試し、それも取れなければ地球のアイコンを返す。
 
@@ -288,18 +288,50 @@ sveltia-cms-auth は、GitHub の OAuth App の値（`GITHUB_CLIENT_ID`、`GITHU
 ## Content-Security-Policy
 
 このサイトの CSP は、Cloudflare のゾーン設定にある Transform Rule が応答に付ける。
-ポリシーは、管理画面（`/admin/`）と公開ページで別になっている。
+ゾーン etak64n.dev にはブログのほかにも多くのアプリがあり、規則は、全ホストに共通の規則とホストごとの規則を順に適用する形になっている。
+同じヘッダーを複数の規則が設定したときは、後から適用した規則の値が残る。
 
-どちらのポリシーも、スクリプトの読み込み元を同じオリジンと jsDelivr などに限り、フレームの読み込み元を同じオリジンに限る。
-公開ページの画像の読み込み元は、同じオリジン、data: URL、ほか一部のホストに限られる。
-このサイトの作りの一部は、これらの制限に合わせたものである。
+ブログに関わる規則は次の 3 本で、この順に適用される。
 
-- **ファビコン**：リンク先のファビコンは、`/favicon/<ホスト名>` を通して同じオリジンから返す。
-- **アイコン**：note のアイコンと、コード枠のファイル名のアイコンは、CSS の中に data: URL の SVG として埋め込む。
+- **既定の規則**：全ホストに CSP、Permissions-Policy、Referrer-Policy、HSTS、X-Content-Type-Options、X-Frame-Options を付ける。
+  ほかのアプリと共有しているので、ブログの都合では変えない。
+- **公開ページの規則**：blog.etak64n.dev の CSP と Permissions-Policy を、ブログ用の値に置き換える。
+- **管理画面の規則**：blog.etak64n.dev の `/admin/` の CSP を、Sveltia CMS 用の値に置き換える。
+
+公開ページの CSP は、読み込み元を次のように許可する。
+
+- **スクリプト**：同じオリジン、インラインのスクリプト、KaTeX を置く jsDelivr、Cloudflare のアクセス解析のスクリプト。
+  アクセス解析のスクリプトは Cloudflare が配信時にページへ差し込み、計測結果を同じオリジンの `/cdn-cgi/rum` へ送る。
+- **スタイル**：同じオリジン、インラインのスタイル、jsDelivr。
+- **フォント**：同じオリジンと jsDelivr。
+- **画像**：同じオリジン、data: URL、https で配信されるすべての画像。
+  記事は、どのサイトの画像でも表示できる。
+- **動画と音声**：同じオリジンと、https で配信されるすべての動画と音声。
+- **接続先**：同じオリジンだけ。
+- **フレーム**：ほかのサイトがこのサイトをフレームに埋め込むことを禁じる。
+
+管理画面の CSP は、画像と動画について公開ページと同じ出どころを許可するので、プレビューにも同じ画像が出る。
+そのうえで、GitHub の API との通信と、Sveltia CMS が作る blob: URL を許可する。
+管理画面の作りの一部は、この CSP に合わせたものである。
+
 - **import map**：Sveltia CMS は、一部のモジュールを unpkg.com から読み込む。
   unpkg.com はスクリプトの読み込み元に含まれないため、`static/admin/index.html` の import map が unpkg.com の URL を jsDelivr の同じパッケージに読み替える。
 - **プレビューの iframe**：Sveltia CMS は、プレビューの iframe を blob: URL で作る。
   blob: URL はフレームの読み込み元に含まれないため、`static/admin/csp-compat.js` が blob: URL の代わりに `srcdoc` で iframe に中身を渡す。
+
+ゾーンの規則が効くのは、etak64n.dev の名前で届いた要求だけである。
+Cloudflare Pages が割り当てる `etak64n-blog.pages.dev` への要求には、ゾーンの規則のヘッダーが付かない。
+そのため、アカウントの一括転送（Bulk Redirects）で、`etak64n-blog.pages.dev` への要求を blog.etak64n.dev へ 301 で転送している。
+PR のプレビューが出るサブドメインは転送の対象外で、ゾーンの規則のヘッダーが付かないまま表示される。
+
+公開ページの規則、管理画面の規則の画像と動画の許可、一括転送は、`scripts/cloudflare-edge.mjs` が設定する。
+スクリプトは既定では現在の設定との差分を表示するだけで、`--apply` を付けたときに設定を変え、読み直して差分が残っていないことを確かめる。
+既定の規則とほかのアプリの規則には触れない。
+
+```bash
+node --env-file=<CLOUDFLARE_* を書いたファイル> scripts/cloudflare-edge.mjs           # 差分の表示
+node --env-file=<CLOUDFLARE_* を書いたファイル> scripts/cloudflare-edge.mjs --apply   # 反映
+```
 
 CSP による読み込みの拒否は、ポリシーが付く本番でだけ起きる。
 ローカルの管理画面サーバーは、本番の CSP ヘッダーを取得して同じポリシーを付けるので、この種の不具合を手元で再現できる。
@@ -316,6 +348,7 @@ CSP による読み込みの拒否は、ポリシーが付く本番でだけ起�
 | `ADMIN_KEY` | GitHub の Secrets、Cloudflare Pages の secret、執筆者のブラウザ | `/api/admin/` の検査、管理画面 |
 | `GITHUB_CLIENT_ID` | sveltia-cms-auth の環境変数 | GitHub ログインの中継 |
 | `GITHUB_CLIENT_SECRET` | sveltia-cms-auth の環境変数 | GitHub ログインの中継 |
+| Cloudflare の API トークン、または Global API Key | 手元の環境ファイル（リポジトリの外） | `scripts/cloudflare-edge.mjs` |
 
 `ADMIN_KEY` を替えるときは、GitHub の Secrets を更新して main に push する。
 deploy ジョブが、新しい値を Cloudflare Pages の secret に書き込む。
@@ -382,6 +415,7 @@ functions/
   favicon/[host].ts                    ファビコンの取得
   lib/                                 関数の共通処理
 scripts/admin-dev.sh                   ローカルの管理画面サーバー
+scripts/cloudflare-edge.mjs            Cloudflare のブログ用の規則と一括転送の設定
 .github/workflows/deploy.yml           build、deploy、notify のワークフロー
 wrangler.toml                          Pages のプロジェクト名と Workers AI のバインディング
 config.toml                            Zola の設定

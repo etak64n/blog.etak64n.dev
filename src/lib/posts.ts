@@ -31,31 +31,19 @@ export function tagCounts(posts: Post[]): { tag: TagSlug; count: number }[] {
     .sort((a, b) => b.count - a.count || TAGS[a.tag].localeCompare(TAGS[b.tag], 'ja'));
 }
 
-/** Up to `limit` other posts sharing the most tags with `post`; newer posts win ties. */
+/**
+ * Up to `limit` other posts sharing the most tags with `post`, newer posts first among equals. When
+ * no post shares a tag, the newest other posts.
+ */
 export function relatedPosts(post: Post, posts: Post[], limit: number): Post[] {
   const tags = new Set(post.data.tags);
-  return posts
-    .filter((other) => other.id !== post.id)
+  const others = posts.filter((other) => other.id !== post.id);
+  const sharing = others
     .map((other) => ({ other, shared: other.data.tags.filter((tag) => tags.has(tag)).length }))
     .filter(({ shared }) => shared > 0)
     .sort((a, b) => b.shared - a.shared)
-    .slice(0, limit)
     .map(({ other }) => other);
-}
-
-/**
- * Estimated reading time in minutes for Japanese prose at about 500 characters a minute. Code blocks,
- * URLs and Markdown syntax are left out of the count.
- */
-export function readingMinutes(markdown: string): number {
-  const text = markdown
-    .replace(/^(`{3,}|~{3,})[^\n]*\n[\s\S]*?^\1[^\S\n]*$/gm, '')
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
-    .replace(/\]\([^)]*\)/g, ']')
-    .replace(/<[^>]+>/g, '')
-    .replace(/https?:\/\/\S+/g, '')
-    .replace(/[\s#>*_`|~\-[\]]/g, '');
-  return Math.max(1, Math.round(text.length / 500));
+  return (sharing.length > 0 ? sharing : others).slice(0, limit);
 }
 
 /** Page URLs of the site end with a slash; Cloudflare Pages redirects the other form to it. */

@@ -1,30 +1,27 @@
-<button class="theme-toggle" type="button" aria-label="ダークモード" aria-pressed="false" data-theme-toggle>
-  <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z"></path>
-  </svg>
-  <svg
-    class="icon-sun"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="1.8"
-    stroke-linecap="round"
-    aria-hidden="true"
-  >
-    <circle cx="12" cy="12" r="4"></circle>
-    <path
-      d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
-    ></path>
-  </svg>
+<button class="theme-switch" type="button" aria-label="ダークモード" aria-pressed="false" data-theme-toggle>
+  <span class="switch-track">
+    <span class="switch-icons" aria-hidden="true">
+      <svg class="icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+        <circle cx="12" cy="12" r="4"></circle>
+        <path
+          d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+        ></path>
+      </svg>
+      <svg class="icon moon" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z"></path>
+      </svg>
+    </span>
+    <span class="switch-thumb" aria-hidden="true"></span>
+  </span>
 </button>
 
 <script>
-  // The theme was applied before the first paint by BaseLayout. A theme chosen with the button is
+  // The theme was applied before the first paint by BaseLayout. A theme chosen with the switch is
   // remembered in localStorage; until then the page follows the system setting.
   type Theme = 'light' | 'dark';
 
   const root = document.documentElement;
-  const buttons = document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]');
+  const switches = document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]');
 
   function storedTheme(): string | null {
     try {
@@ -36,12 +33,15 @@
 
   function apply(theme: Theme) {
     root.dataset.theme = theme;
-    for (const button of buttons) button.setAttribute('aria-pressed', String(theme === 'dark'));
+    for (const button of switches) {
+      button.dataset.mode = theme;
+      button.setAttribute('aria-pressed', String(theme === 'dark'));
+    }
   }
 
   apply(root.dataset.theme === 'dark' ? 'dark' : 'light');
 
-  for (const button of buttons) {
+  for (const button of switches) {
     button.addEventListener('click', () => {
       const next: Theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
       try {

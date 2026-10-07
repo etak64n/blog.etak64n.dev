@@ -1,10 +1,10 @@
 import { defineConfig, envField } from 'astro/config';
-import { satteri, satteriHeadingIdsPlugin } from '@astrojs/markdown-satteri';
+import { satteri } from '@astrojs/markdown-satteri';
 import mdx from '@astrojs/mdx';
 import expressiveCode from 'astro-expressive-code';
 import { CONTENT_WIDTH, SITE } from './src/site.ts';
-import { callouts, cjkLineBreaks, figures, quoteSources } from './src/markdown/mdast.ts';
-import { externalLinks, headingAnchors, imageSizes, tableWrappers } from './src/markdown/hast.ts';
+import { callouts, figures, quoteSources } from './src/markdown/mdast.ts';
+import { externalLinks, imageSizes, tableWrappers } from './src/markdown/hast.ts';
 
 export default defineConfig({
   site: SITE.url,
@@ -24,9 +24,9 @@ export default defineConfig({
         // Keep `--flag`, "quotes" and `...` as written.
         smartPunctuation: false,
       },
-      mdastPlugins: [cjkLineBreaks, callouts, quoteSources, figures],
+      mdastPlugins: [callouts, quoteSources, figures],
       // Expressive Code (code blocks) appends its own plugin after these.
-      hastPlugins: [satteriHeadingIdsPlugin(), headingAnchors, externalLinks, tableWrappers, imageSizes],
+      hastPlugins: [externalLinks, tableWrappers, imageSizes],
     }),
   },
   // Expressive Code reads its settings from ec.config.mjs and must come before MDX.

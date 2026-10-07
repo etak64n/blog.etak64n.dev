@@ -29,8 +29,11 @@ const blog = defineCollection({
         ),
         /** `true` keeps the post out of the production site; `astro dev` and previews show it. */
         draft: z.boolean(),
-        /** Image for link previews, relative to the post (e.g. `./og.png`); cropped to 1200×630. */
-        ogImage: image().optional(),
+        /**
+         * Image at the top of the post and on its card, relative to the post (e.g. `./hero.png`);
+         * 1200×630 suits all three uses. Also the link preview image (Open Graph), cropped to 1200×630.
+         */
+        hero: image().optional(),
       })
       .superRefine((post, ctx) => {
         if (post.updated && post.updated < post.date) {

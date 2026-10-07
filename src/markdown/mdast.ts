@@ -69,42 +69,24 @@ function stripLeadingText(
   return { match, rest: remainder ? [{ type: 'text', value: remainder }, ...rest] : rest };
 }
 
-/** Japanese characters, including their punctuation and full-width forms. */
-const CJK = String.raw`[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}　-〿ー！-｠￠-￦]`;
-
-/** A line break inside a paragraph, between two Japanese characters. */
-const CJK_LINE_BREAK = new RegExp(String.raw`(?<=${CJK})\n(?=${CJK})`, 'gu');
-
-/**
- * Line breaks inside a paragraph show as a space in HTML, which is a stray gap between two Japanese
- * sentences written one per line. They are removed between Japanese characters, as the CSS Text
- * specification prescribes; next to Latin text they stay a space.
- */
-export const cjkLineBreaks = defineMdastPlugin({
-  name: 'blog-cjk-line-breaks',
-  text(node) {
-    if (!node.value.includes('\n')) return;
-    const value = node.value.replace(CJK_LINE_BREAK, '');
-    if (value !== node.value) return { type: 'text', value };
-  },
-});
-
-const CALLOUT_LABELS = {
-  note: '補足',
-  tip: 'ヒント',
-  important: '重要',
-  warning: '注意',
-  caution: '警告',
+/** The class (colour and icon, in global.css) and the name read out by screen readers of each alert. */
+const CALLOUTS = {
+  note: { className: 'note-info', label: '補足' },
+  tip: { className: 'note-tip', label: 'ヒント' },
+  important: { className: 'note-important', label: '重要' },
+  warning: { className: 'note-warn', label: '注意' },
+  caution: { className: 'note-alert', label: '警告' },
 } as const;
 
-type CalloutType = keyof typeof CALLOUT_LABELS;
+type CalloutType = keyof typeof CALLOUTS;
 
 /** `[!NOTE]` alone on the first line of a blockquote, as in GitHub's alerts. */
 const CALLOUT_MARKER = /^\[!(note|tip|important|warning|caution)\][^\S\n]*(?:\n|$)/i;
 
 /**
  * GitHub-style alerts: a blockquote starting with `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`
- * or `[!CAUTION]` becomes `<div class="callout callout-note" role="note">` with a title.
+ * or `[!CAUTION]` becomes a note box with an icon:
+ * `<div class="note note-info" role="note"><span class="note-icon"></span><div class="note-body">…`.
  */
 export const callouts = defineMdastPlugin({
   name: 'blog-callouts',
@@ -113,11 +95,18 @@ export const callouts = defineMdastPlugin({
     if (first?.type !== 'paragraph') return;
     const stripped = stripLeadingText(first.children, CALLOUT_MARKER);
     if (!stripped) return;
-    const type = stripped.match[1].toLowerCase() as CalloutType;
+    const { className, label } = CALLOUTS[stripped.match[1].toLowerCase() as CalloutType];
     const lead = trimStart(stripped.rest);
     const body: Child[] = lead.length > 0 ? [{ type: 'paragraph', children: lead }, ...others] : others;
-    const title = element('p', ['callout-title'], [{ type: 'text', value: CALLOUT_LABELS[type] }]);
-    ctx.replaceNode(node, element('div', ['callout', `callout-${type}`], [title, ...body], { role: 'note' }));
+    ctx.replaceNode(
+      node,
+      element(
+        'div',
+        ['note', className],
+        [element('span', ['note-icon'], [], { ariaHidden: 'true' }), element('div', ['note-body'], body)],
+        { role: 'note', ariaLabel: label },
+      ),
+    );
   },
 });
 
@@ -149,8 +138,8 @@ export const quoteSources = defineMdastPlugin({
 });
 
 /**
- * Figures: a paragraph that starts with its only image becomes `<figure>`, and the text after the
- * image (usually on the next line) becomes its `<figcaption>`.
+ * Figures: a paragraph that starts with its only image becomes `<figure class="img">`, and the text
+ * after the image (usually on the next line) becomes its `<figcaption>`.
  */
 export const figures = defineMdastPlugin({
   name: 'blog-figures',
@@ -160,6 +149,6 @@ export const figures = defineMdastPlugin({
     if (rest.some((child) => child.type === 'image' || child.type === 'imageReference')) return;
     const caption = trimStart(rest);
     const children: Child[] = caption.length > 0 ? [image, element('figcaption', [], caption)] : [image];
-    ctx.replaceNode(node, element('figure', [], children));
+    ctx.replaceNode(node, element('figure', ['img'], children));
   },
 });

@@ -1,7 +1,7 @@
 ---
 import type { GetStaticPaths, Page } from 'astro';
 import Pagination from '../../components/Pagination.astro';
-import PostList from '../../components/PostList.astro';
+import PostGrid from '../../components/PostGrid.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getPosts, withTrailingSlash, type Post } from '../../lib/posts.ts';
 import { POSTS_PER_PAGE, SITE } from '../../site.ts';
@@ -16,20 +16,17 @@ interface Props {
 }
 
 const { page } = Astro.props;
-const title = page.currentPage === 1 ? '記事一覧' : `記事一覧（${page.currentPage} ページ目）`;
+const title = page.currentPage === 1 ? 'Articles' : `Articles（${page.currentPage} ページ目）`;
 ---
 
 <BaseLayout title={title} description={`${SITE.title} の記事を新しい順に並べた一覧です。`}>
-  <div class="container">
-    <h1 class="page-title">記事一覧</h1>
-    <p class="page-lead">全 {page.total} 件</p>
-    {
-      page.data.length > 0 ? (
-        <PostList posts={page.data} />
-      ) : (
-        <p class="empty">記事はまだありません。</p>
-      )
-    }
-    <Pagination page={page} />
-  </div>
+  <h1>Articles</h1>
+  {
+    page.data.length > 0 ? (
+      <PostGrid posts={page.data} />
+    ) : (
+      <p class="empty-state">まだ記事がありません。</p>
+    )
+  }
+  <Pagination page={page} base="/posts/" />
 </BaseLayout>

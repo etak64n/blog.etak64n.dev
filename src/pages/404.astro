@@ -3,12 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
 <BaseLayout title="ページが見つかりません" noindex>
-  <div class="container">
-    <h1 class="page-title">ページが見つかりません</h1>
-    <p class="page-lead">URL が間違っているか、ページが移動または削除されています。</p>
-    <p>
-      <a href="/">トップページ</a>・<a href="/posts/">記事一覧</a>・<a href="/tags/">タグ一覧</a>
-      から探してください。
-    </p>
-  </div>
+  <h1>ページが見つかりません</h1>
+  <p class="empty-state">URL が間違っているか、ページが移動または削除されています。</p>
+  <p><a href="/">トップページ</a>・<a href="/posts/">記事一覧</a>から探してください。</p>
 </BaseLayout>

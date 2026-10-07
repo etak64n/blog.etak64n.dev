@@ -30,7 +30,7 @@ blog.etak64n.dev は、リポジトリに置いた Markdown の記事を静的�
    フロントマターはスキーマで検査する。未登録のタグ、知らない項目、公開する記事の `description` の欠落はエラーになる。
 2. **Markdown の変換**：Sätteri が本文を HTML にする。途中で、[Markdown の処理](#markdown-の処理)のプラグインが構文木を書き換える。
 3. **ページの生成**：`src/pages/` の各ページが、記事の一覧から HTML を作る。
-4. **画像の生成**：本文と `ogImage` の画像を WebP や PNG に変換し、`dist/_astro/` に書き出す。
+4. **画像の生成**：本文の画像と、フロントマターの `hero` の画像を WebP や PNG に変換し、`dist/_astro/` に書き出す。
 5. **出力**：`dist/` にサイト全体が揃う。`public/` のファイルはそのまま `dist/` に入る。
 
 変換済みの記事と画像は、キャッシュのディレクトリ `.cache/` に保存される。
@@ -46,12 +46,9 @@ Sätteri のプラグインには、Markdown の構文木（mdast）を書き換
 
 | 段階 | プラグイン | 処理 |
 | --- | --- | --- |
-| mdast | `cjkLineBreaks` | 段落の中の改行を、日本語の文字どうしのあいだでは取り除く |
-| mdast | `callouts` | `> [!NOTE]` で始まる引用を注記（`<div class="callout">`）にする |
+| mdast | `callouts` | `> [!NOTE]` で始まる引用を、色とアイコンの付いた注記の枠（`<div class="note note-info">`）にする |
 | mdast | `quoteSources` | 最後の段落が `出典:` で始まる引用を、`<figure class="quote">` と `<figcaption>` にする |
-| mdast | `figures` | 画像で始まる段落を `<figure>` にし、画像の後ろの文を `<figcaption>` にする |
-| hast | `satteriHeadingIdsPlugin`（Astro） | 見出しに `id` を付ける |
-| hast | `headingAnchors` | 見出しの後ろに `#` のリンクを付ける |
+| mdast | `figures` | 画像で始まる段落を `<figure class="img">` にし、画像の後ろの文を `<figcaption>` にする |
 | hast | `externalLinks` | ほかのサイトへのリンクを新しいタブで開く |
 | hast | `tableWrappers` | 表を横にスクロールできる `<div class="table-wrap">` で包む |
 | hast | `imageSizes` | 記事フォルダーの画像に、幅と `sizes` を指定する |
@@ -67,27 +64,32 @@ Astro は、このあとに自身のプラグインで画像を最適化の対�
 
 | 元の画像の幅 | 書き出す画像 | `src` |
 | --- | --- | --- |
-| 1440px より広い | 720px と 1440px | 720px |
-| 720px から 1440px | 720px と元の幅 | 元の幅 |
-| 720px より狭い | 元の幅 | 元の幅 |
+| 1520px より広い | 760px と 1520px | 760px |
+| 760px から 1520px | 760px と元の幅 | 元の幅 |
+| 760px より狭い | 元の幅 | 元の幅 |
 
-720px は本文の幅（`src/site.ts` の `CONTENT_WIDTH` と、`global.css` の `--content-width`）である。
-1440px は、画素密度が 2 倍の画面で本文の幅いっぱいに表示するときに必要な幅である。
-`sizes` は「画面が広いときは 720px、狭いときは画面の幅」を表し、ブラウザはこれと画面の画素密度から、2 つのうち必要な方だけを読み込む。
+760px は、画面の幅が 1180px 以上のときの本文の幅（`src/site.ts` の `CONTENT_WIDTH`）である。
+1520px は、画素密度が 2 倍の画面で本文の幅いっぱいに表示するときに必要な幅である。
+`sizes`（`src/site.ts` の `CONTENT_IMAGE_SIZES`）は、画面の幅ごとの本文の幅を表す。本文は、画面が 1180px 以上で 760px、1101px から 1179px で目次の残りの幅、1100px 以下で画面の幅いっぱいになる。ブラウザはこれと画面の画素密度から、2 つのうち必要な方だけを読み込む。
 1 枚の画像から書き出すファイルを 2 つまでにしているのは、Cloudflare Pages の無料プランが 1 つのサイトに置けるファイルを 20,000 個までに制限しているためである。
 
 SVG はそのまま 1 ファイルで配信する。
 GIF はアニメーションを保ったまま、元の大きさの WebP に変換する。
 ほかのサイトの画像（`https://` で始まる URL）は変換せず、`loading="lazy"` だけを付ける。
 
-`ogImage` の画像は、記事ページの生成時に 1200×630 の PNG に切り抜かれる。
-`ogImage` がない記事と記事以外のページは、`public/og-default.png` を使う。
+フロントマターの `hero` の画像は、3 か所に使う。
+
+- 記事の先頭：本文の画像と同じ 2 つの幅で書き出す。
+- 記事一覧のカード：1200:630 の比率に切り抜いた幅 800px の WebP。
+- リンクのプレビュー（Open Graph）：1200×630 に切り抜いた PNG。
+
+`hero` がない記事は、記事の先頭とカードに `public/images/placeholder.svg` を、リンクのプレビューに `public/og-default.png` を使う。
 
 ## URL
 
 | URL | 内容 | ファイル |
 | --- | --- | --- |
-| `/` | トップページ（新着 10 件とタグ） | `src/pages/index.astro` |
+| `/` | トップページ（最新記事 10 件のカード） | `src/pages/index.astro` |
 | `/<slug>/` | 記事 | `src/pages/[slug].astro` |
 | `/posts/`、`/posts/<n>/` | 記事一覧（20 件ずつ） | `src/pages/posts/[...page].astro` |
 | `/tags/` | タグ一覧 | `src/pages/tags/index.astro` |

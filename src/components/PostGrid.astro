@@ -1,0 +1,52 @@
+---
+import { getImage } from 'astro:assets';
+import FormattedDate from './FormattedDate.astro';
+import { postPath, type Post } from '../lib/posts.ts';
+import { HERO_PLACEHOLDER } from '../site.ts';
+
+interface Props {
+  posts: Post[];
+}
+
+const { posts } = Astro.props;
+
+// Card images are cut to the 1200:630 shape of hero images; 800px wide covers the widest card (one
+// column on a phone) on high-density screens.
+const cards = await Promise.all(
+  posts.map(async (post) => {
+    if (!post.data.hero) {
+      return { post, image: { src: HERO_PLACEHOLDER.path, width: HERO_PLACEHOLDER.width, height: HERO_PLACEHOLDER.height } };
+    }
+    const image = await getImage({
+      src: post.data.hero,
+      width: 800,
+      height: 420,
+      fit: 'cover',
+      format: 'webp',
+      layout: 'none',
+    });
+    return { post, image: { src: image.src, width: 800, height: 420 } };
+  }),
+);
+---
+
+<ul class="post-list post-grid">
+  {
+    cards.map(({ post, image }) => (
+      <li>
+        <a class="thumb" href={postPath(post.id)} tabindex="-1" aria-hidden="true">
+          <img src={image.src} width={image.width} height={image.height} alt="" loading="lazy" decoding="async" />
+        </a>
+        <div class="card-body">
+          <div class="post-title">
+            <a href={postPath(post.id)}>{post.data.title}</a>
+          </div>
+          {post.data.draft && <span class="badge">下書き</span>}
+          <div class="post-meta">
+            <FormattedDate date={post.data.date} />
+          </div>
+        </div>
+      </li>
+    ))
+  }
+</ul>

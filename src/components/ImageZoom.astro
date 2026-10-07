@@ -21,7 +21,7 @@
     dialog.append(zoomed);
     dialog.addEventListener('click', () => dialog.close());
 
-    for (const image of document.querySelectorAll<HTMLImageElement>('.prose figure img')) {
+    for (const image of document.querySelectorAll<HTMLImageElement>('.content figure.img img')) {
       image.classList.add('is-zoomable');
       image.addEventListener('click', () => {
         zoomed.src = largestSource(image);

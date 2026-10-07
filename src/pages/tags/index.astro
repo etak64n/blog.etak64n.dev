@@ -4,28 +4,24 @@ import { getPosts, tagCounts, tagPath } from '../../lib/posts.ts';
 import { SITE } from '../../site.ts';
 import { TAGS } from '../../tags.ts';
 
-const tags = tagCounts(await getPosts());
+// In the order of their slugs.
+const tags = tagCounts(await getPosts()).sort((a, b) => a.tag.localeCompare(b.tag));
 ---
 
-<BaseLayout title="タグ一覧" description={`${SITE.title} の記事に付いているタグの一覧です。`}>
-  <div class="container">
-    <h1 class="page-title">タグ一覧</h1>
-    <p class="page-lead">{tags.length} 個のタグ</p>
-    {
-      tags.length > 0 ? (
-        <ul class="tag-list">
-          {tags.map(({ tag, count }) => (
-            <li>
-              <a class="tag" href={tagPath(tag)}>
-                {TAGS[tag]}
-                <span class="tag-count">{count}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p class="empty">タグの付いた記事はまだありません。</p>
-      )
-    }
-  </div>
+<BaseLayout title="Tags" description={`${SITE.title} の記事に付いているタグの一覧です。`}>
+  <h1>Tags</h1>
+  {
+    tags.length > 0 ? (
+      <ul class="taxonomy-list">
+        {tags.map(({ tag, count }) => (
+          <li class="taxonomy-item">
+            <a href={tagPath(tag)}>{TAGS[tag]}</a>
+            <span class="taxonomy-count">({count})</span>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p class="empty-state">まだタグがありません。</p>
+    )
+  }
 </BaseLayout>

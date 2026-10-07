@@ -90,7 +90,9 @@ const jsonLdText = jsonLd && JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
     <a class="skip-link" href="#main">本文へスキップ</a>
     <SiteHeader />
     <main id="main">
-      <slot />
+      <div class="wrap">
+        <slot />
+      </div>
     </main>
     <SiteFooter />
   </body>

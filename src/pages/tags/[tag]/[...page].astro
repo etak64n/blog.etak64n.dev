@@ -1,9 +1,9 @@
 ---
 import type { GetStaticPaths, Page } from 'astro';
 import Pagination from '../../../components/Pagination.astro';
-import PostList from '../../../components/PostList.astro';
+import PostGrid from '../../../components/PostGrid.astro';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { getPosts, withTrailingSlash, type Post } from '../../../lib/posts.ts';
+import { getPosts, tagPath, withTrailingSlash, type Post } from '../../../lib/posts.ts';
 import { POSTS_PER_PAGE, SITE } from '../../../site.ts';
 import { TAGS, TAG_SLUGS, type TagSlug } from '../../../tags.ts';
 
@@ -28,16 +28,11 @@ interface Props {
 
 const { tag, page } = Astro.props;
 const name = TAGS[tag];
-const title = page.currentPage === 1 ? `タグ「${name}」の記事` : `タグ「${name}」の記事（${page.currentPage} ページ目）`;
+const title = page.currentPage === 1 ? name : `${name}（${page.currentPage} ページ目）`;
 ---
 
 <BaseLayout title={title} description={`${SITE.title} で「${name}」のタグが付いた記事の一覧です。`}>
-  <div class="container">
-    <h1 class="page-title">タグ「{name}」の記事</h1>
-    <p class="page-lead">
-      全 {page.total} 件 · <a href="/tags/">タグ一覧</a>
-    </p>
-    <PostList posts={page.data} />
-    <Pagination page={page} />
-  </div>
+  <h1>{name}</h1>
+  <PostGrid posts={page.data} />
+  <Pagination page={page} base={tagPath(tag)} />
 </BaseLayout>

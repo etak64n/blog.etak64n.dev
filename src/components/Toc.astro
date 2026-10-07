@@ -5,85 +5,109 @@ interface Props {
   headings: MarkdownHeading[];
 }
 
-interface Section {
+interface Item {
   heading: MarkdownHeading;
-  subsections: MarkdownHeading[];
+  children: Item[];
 }
 
-// h2 and h3 only; `footnote-label` is the hidden heading of the footnotes.
+// h2 to h4, nested by level; `footnote-label` is the hidden heading of the footnotes.
 const headings = Astro.props.headings.filter(
-  ({ depth, slug }) => (depth === 2 || depth === 3) && slug !== 'footnote-label',
+  ({ depth, slug }) => depth >= 2 && depth <= 4 && slug !== 'footnote-label',
 );
 
-const sections: Section[] = [];
+const items: Item[] = [];
+const open: Item[] = [];
 for (const heading of headings) {
-  const parent = sections.at(-1);
-  if (heading.depth === 3 && parent) parent.subsections.push(heading);
-  else sections.push({ heading, subsections: [] });
+  const item: Item = { heading, children: [] };
+  while (open.length > 0 && open[open.length - 1].heading.depth >= heading.depth) open.pop();
+  (open.length > 0 ? open[open.length - 1].children : items).push(item);
+  open.push(item);
 }
 ---
 
 {
-  headings.length >= 2 && (
-    <>
-      <details class="toc" id="toc" open>
-        <summary>目次</summary>
-        <ol>
-          {sections.map(({ heading, subsections }) => (
-            <li>
-              <a href={`#${heading.slug}`}>{heading.text}</a>
-              {subsections.length > 0 && (
-                <ol>
-                  {subsections.map((subsection) => (
-                    <li>
-                      <a href={`#${subsection.slug}`}>{subsection.text}</a>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </li>
-          ))}
-        </ol>
-      </details>
-      {/* Closed above the article on narrow screens; decided before the first paint. */}
-      <script is:inline>
-        if (!matchMedia('(min-width: 1264px)').matches) document.getElementById('toc').open = false;
-      </script>
-    </>
+  items.length > 0 ? (
+    <aside class="toc" aria-label="目次">
+      <div class="toc-title">目次</div>
+      <ul class="toc-list">
+        {items.map((level2) => (
+          <li>
+            <a href={`#${level2.heading.slug}`}>{level2.heading.text}</a>
+            {level2.children.length > 0 && (
+              <ul>
+                {level2.children.map((level3) => (
+                  <li>
+                    <a href={`#${level3.heading.slug}`}>{level3.heading.text}</a>
+                    {level3.children.length > 0 && (
+                      <ul>
+                        {level3.children.map((level4) => (
+                          <li>
+                            <a href={`#${level4.heading.slug}`}>{level4.heading.text}</a>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ul>
+    </aside>
+  ) : (
+    <aside class="toc placeholder" aria-hidden="true"></aside>
   )
 }
 
 <script>
-  // Highlights the section being read and keeps the side contents open on wide screens.
-  const toc = document.querySelector<HTMLDetailsElement>('#toc');
+  // Marks the section being read, and scrolls the contents so that the marked link and the next
+  // five stay in view.
+  const toc = document.querySelector<HTMLElement>('.page-body .toc:not(.placeholder)');
 
   if (toc) {
-    const wide = window.matchMedia('(min-width: 1264px)');
-    wide.addEventListener('change', () => {
-      if (wide.matches) toc.open = true;
-    });
+    const anchors = [...toc.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')]
+      .map((link) => ({ link, heading: document.getElementById(decodeURIComponent(link.hash.slice(1))) }))
+      .filter((entry): entry is { link: HTMLAnchorElement; heading: HTMLElement } => entry.heading !== null);
 
-    const links = [...toc.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')];
-    const targets = links.map((link) => document.getElementById(decodeURIComponent(link.hash.slice(1))));
-    let frame = 0;
+    // A heading counts as reached once its top is this far below the top of the window.
+    const OFFSET = 100;
+    let last = -1;
+    let ticking = false;
 
     const update = () => {
-      frame = 0;
-      const line = window.innerHeight * 0.25;
-      let current = -1;
-      targets.forEach((target, index) => {
-        if (target && target.getBoundingClientRect().top <= line) current = index;
-      });
-      links.forEach((link, index) => {
-        if (index === current) link.setAttribute('aria-current', 'true');
-        else link.removeAttribute('aria-current');
-      });
+      let index = anchors.length > 0 ? 0 : -1;
+      for (let i = 0; i < anchors.length; i += 1) {
+        if (anchors[i].heading.getBoundingClientRect().top - OFFSET <= 0) index = i;
+        else break;
+      }
+      anchors.forEach(({ link }, i) => link.classList.toggle('active', i === index));
+      if (index < 0 || index === last) return;
+      last = index;
+
+      if (index === 0) {
+        toc.scrollTo({ top: 0 });
+        return;
+      }
+      const boxTop = toc.getBoundingClientRect().top;
+      const activeTop = anchors[index].link.getBoundingClientRect().top - boxTop + toc.scrollTop;
+      const ahead = anchors[Math.min(anchors.length - 1, index + 5)].link;
+      const aheadBottom = ahead.getBoundingClientRect().bottom - boxTop + toc.scrollTop;
+      if (activeTop < toc.scrollTop + 4) toc.scrollTo({ top: activeTop - 8 });
+      else if (aheadBottom > toc.scrollTop + toc.clientHeight - 4) {
+        toc.scrollTo({ top: aheadBottom - toc.clientHeight + 8 });
+      }
     };
 
     window.addEventListener(
       'scroll',
       () => {
-        if (!frame) frame = requestAnimationFrame(update);
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          update();
+          ticking = false;
+        });
       },
       { passive: true },
     );

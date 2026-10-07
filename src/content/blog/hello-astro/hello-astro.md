@@ -6,6 +6,7 @@ tags:
   - astro
   - cloudflare
 draft: false
+hero: ./hero.webp
 ---
 
 ## はじめに

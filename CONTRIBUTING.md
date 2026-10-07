@@ -145,6 +145,10 @@ npm run hero -- cloudflare-workers-architecture --subject "a globe with small se
 画風は、すべての画像で共通の指定（`scripts/hero.ts` の `HERO_STYLE`）で決まる。
 画風を変えるときは、この 1 か所を書き換える。
 
+GitHub Actions の「Hero image generation」は、同じコマンドで実際に画像を 1 枚作り、大きさとフロントマターを検査する。
+`scripts/hero.ts` を変更したプルリクエストで動き、Actions の画面の「Run workflow」から記事を指定して動かすこともできる。
+できた画像は、実行結果の Artifacts から見られる。
+
 コマンドは、Cloudflare の認証情報を `~/.config/blog-etak64n/cloudflare.env` から読む。
 このファイルには、`CLOUDFLARE_ACCOUNT_ID` と、Workers AI の権限を持つ `CLOUDFLARE_API_TOKEN`（または `CLOUDFLARE_EMAIL` と `CLOUDFLARE_API_KEY`）を書く。
 1 枚の生成には約 200 Neurons（0.3 円程度）を使い、Workers AI の無料枠（1 日 10,000 Neurons）の中なら 1 日に約 50 枚まで料金はかからない。

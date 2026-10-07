@@ -100,6 +100,7 @@ GIF はアニメーションを保ったまま、元の大きさの WebP に変�
 1216×640 は、モデルが受け付ける 16 の倍数の大きさのうち、1200×630 の比率（1.9:1）に最も近いものである。
 認証情報は環境変数で渡す。`npm run hero` は `~/.config/blog-etak64n/cloudflare.env` を Node.js の `--env-file-if-exists` で読む。
 `HERO_FAKE=1` を付けると Workers AI を呼ばずに単色の画像を作り、GitHub Actions はこれで切り抜き、保存、フロントマターの書き換えを検査する。
+`.github/workflows/hero.yml` は、Workers AI で実際に 1 枚を描き、1200×630 の WebP になっていることとフロントマターを検査して、画像を Artifacts に置く。`scripts/hero.ts` を変更したプルリクエストと、手動の実行（記事の slug を指定）で動く。Workers AI の呼び出しには、Secrets の `CLOUDFLARE_AI_TOKEN`（Workers AI の Read と Write の権限だけを持つ API トークン「blog.etak64n.dev GitHub Actions (Workers AI)」）を使う。
 
 ## URL
 
@@ -149,7 +150,7 @@ GIF はアニメーションを保ったまま、元の大きさの WebP に変�
 2. **deploy**：`wrangler pages deploy` で `dist/` を Cloudflare Pages に送る。`--branch` に Git のブランチ名を渡すため、`main` は本番、それ以外はプレビュー（`https://<ブランチ名>.etak64n-blog.pages.dev/`）になる。
 3. **notify**：結果と公開先の URL を Discord に送る。
 
-ワークフローは GitHub の Secrets の `CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`、`DISCORD_WEBHOOK_URL` を使う。
+ワークフローは GitHub の Secrets の `CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`、`DISCORD_WEBHOOK_URL` を使う。 `CLOUDFLARE_API_TOKEN` は Pages の権限だけを持つ。
 フォークからのプルリクエストは Secrets を使えないため、ビルドだけを実行する。
 
 `wrangler.toml` は Pages プロジェクトの名前と出力先を記録している。

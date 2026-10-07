@@ -6,6 +6,7 @@
  */
 export const TAGS = {
   architecture: 'アーキテクチャ',
+  astro: 'Astro',
   aws: 'AWS',
   cloudflare: 'Cloudflare',
   game: 'ゲーム',

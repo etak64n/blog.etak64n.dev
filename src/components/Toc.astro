@@ -1,0 +1,116 @@
+---
+import type { MarkdownHeading } from 'astro';
+
+interface Props {
+  headings: MarkdownHeading[];
+}
+
+interface Item {
+  heading: MarkdownHeading;
+  children: Item[];
+}
+
+// h2 to h4, nested by level; `footnote-label` is the hidden heading of the footnotes.
+const headings = Astro.props.headings.filter(
+  ({ depth, slug }) => depth >= 2 && depth <= 4 && slug !== 'footnote-label',
+);
+
+const items: Item[] = [];
+const open: Item[] = [];
+for (const heading of headings) {
+  const item: Item = { heading, children: [] };
+  while (open.length > 0 && open[open.length - 1].heading.depth >= heading.depth) open.pop();
+  (open.length > 0 ? open[open.length - 1].children : items).push(item);
+  open.push(item);
+}
+---
+
+{
+  items.length > 0 ? (
+    <aside class="toc" aria-label="目次">
+      <div class="toc-title">目次</div>
+      <ul class="toc-list">
+        {items.map((level2) => (
+          <li>
+            <a href={`#${level2.heading.slug}`}>{level2.heading.text}</a>
+            {level2.children.length > 0 && (
+              <ul>
+                {level2.children.map((level3) => (
+                  <li>
+                    <a href={`#${level3.heading.slug}`}>{level3.heading.text}</a>
+                    {level3.children.length > 0 && (
+                      <ul>
+                        {level3.children.map((level4) => (
+                          <li>
+                            <a href={`#${level4.heading.slug}`}>{level4.heading.text}</a>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ul>
+    </aside>
+  ) : (
+    <aside class="toc placeholder" aria-hidden="true"></aside>
+  )
+}
+
+<script>
+  // Marks the section being read, and scrolls the contents so that the marked link and the next
+  // five stay in view.
+  const toc = document.querySelector<HTMLElement>('.page-body .toc:not(.placeholder)');
+
+  if (toc) {
+    const anchors = [...toc.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')]
+      .map((link) => ({ link, heading: document.getElementById(decodeURIComponent(link.hash.slice(1))) }))
+      .filter((entry): entry is { link: HTMLAnchorElement; heading: HTMLElement } => entry.heading !== null);
+
+    // A heading counts as reached once its top is this far below the top of the window.
+    const OFFSET = 100;
+    let last = -1;
+    let ticking = false;
+
+    const update = () => {
+      let index = anchors.length > 0 ? 0 : -1;
+      for (let i = 0; i < anchors.length; i += 1) {
+        if (anchors[i].heading.getBoundingClientRect().top - OFFSET <= 0) index = i;
+        else break;
+      }
+      anchors.forEach(({ link }, i) => link.classList.toggle('active', i === index));
+      if (index < 0 || index === last) return;
+      last = index;
+
+      if (index === 0) {
+        toc.scrollTo({ top: 0 });
+        return;
+      }
+      const boxTop = toc.getBoundingClientRect().top;
+      const activeTop = anchors[index].link.getBoundingClientRect().top - boxTop + toc.scrollTop;
+      const ahead = anchors[Math.min(anchors.length - 1, index + 5)].link;
+      const aheadBottom = ahead.getBoundingClientRect().bottom - boxTop + toc.scrollTop;
+      if (activeTop < toc.scrollTop + 4) toc.scrollTo({ top: activeTop - 8 });
+      else if (aheadBottom > toc.scrollTop + toc.clientHeight - 4) {
+        toc.scrollTo({ top: aheadBottom - toc.clientHeight + 8 });
+      }
+    };
+
+    window.addEventListener(
+      'scroll',
+      () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          update();
+          ticking = false;
+        });
+      },
+      { passive: true },
+    );
+    update();
+  }
+</script>

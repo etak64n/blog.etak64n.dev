@@ -1,0 +1,65 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+import { SITE } from '../site.ts';
+---
+
+<header class="site-header">
+  <div class="wrap">
+    <div class="left">
+      <button
+        id="menu-toggle"
+        class="menu-toggle"
+        type="button"
+        aria-label="メニュー"
+        aria-expanded="false"
+        aria-controls="mobile-nav"
+      >
+        <svg class="icon-hamburger" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+          <path d="M4 8h24"></path>
+          <path d="M4 16h24"></path>
+          <path d="M4 24h24"></path>
+        </svg>
+        <svg class="icon-close" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+          <path d="M7 7L25 25"></path>
+          <path d="M25 7L7 25"></path>
+        </svg>
+      </button>
+      <a class="brand" href="/">{SITE.title}</a>
+    </div>
+    <div class="right">
+      <nav class="nav-desktop" aria-label="サイト">
+        <a href="/posts/">Articles</a>
+        <a href="/tags/">Tags</a>
+      </nav>
+      <ThemeToggle />
+    </div>
+  </div>
+</header>
+<nav id="mobile-nav" class="mobile-nav" aria-label="サイト" hidden>
+  <a href="/posts/">Articles</a>
+  <a href="/tags/">Tags</a>
+</nav>
+
+<script>
+  // The menu button opens the navigation panel on narrow screens (below 900px); Esc or choosing a
+  // link closes it.
+  const root = document.documentElement;
+  const button = document.querySelector<HTMLButtonElement>('#menu-toggle');
+  const panel = document.querySelector<HTMLElement>('#mobile-nav');
+
+  function setOpen(open: boolean) {
+    root.dataset.menu = open ? 'open' : 'closed';
+    button?.setAttribute('aria-expanded', String(open));
+    panel?.toggleAttribute('hidden', !open);
+  }
+
+  if (button && panel) {
+    button.addEventListener('click', () => setOpen(root.dataset.menu !== 'open'));
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') setOpen(false);
+    });
+    panel.addEventListener('click', (event) => {
+      if (event.target instanceof HTMLAnchorElement) setOpen(false);
+    });
+  }
+</script>

@@ -1,0 +1,111 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { getImage, Image } from 'astro:assets';
+import { render } from 'astro:content';
+import FormattedDate from '../components/FormattedDate.astro';
+import ImageZoom from '../components/ImageZoom.astro';
+import PostGrid from '../components/PostGrid.astro';
+import TagList from '../components/TagList.astro';
+import Toc from '../components/Toc.astro';
+import BaseLayout, { type OgImage } from '../layouts/BaseLayout.astro';
+import { getPosts, postPath, relatedPosts } from '../lib/posts.ts';
+import {
+  CONTENT_IMAGE_SIZES,
+  CONTENT_WIDTH,
+  DEFAULT_OG_IMAGE,
+  HERO_PLACEHOLDER,
+  SITE,
+} from '../site.ts';
+import { TAGS } from '../tags.ts';
+
+export const getStaticPaths = (async () => {
+  const posts = await getPosts();
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post, related: relatedPosts(post, posts, 4) },
+  }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { post, related } = Astro.props as Props;
+const { title, description, date, updated, tags, draft, hero } = post.data;
+const { Content, headings } = await render(post);
+
+const url = new URL(postPath(post.id), SITE.url).href;
+const tagNames = tags.map((tag) => TAGS[tag]);
+
+// The hero image, cropped to the 1.91:1 size that link previews expect. `layout: 'none'` skips the
+// srcset that the site-wide responsive layout would add.
+let ogImage: OgImage | undefined;
+if (hero) {
+  const generated = await getImage({ src: hero, width: 1200, height: 630, fit: 'cover', format: 'png', layout: 'none' });
+  ogImage = { url: new URL(generated.src, SITE.url).href, width: 1200, height: 630, alt: title };
+}
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: title,
+  description,
+  url,
+  mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+  datePublished: date.toISOString(),
+  dateModified: (updated ?? date).toISOString(),
+  author: { '@type': 'Person', name: SITE.author.name, url: SITE.author.url },
+  image: [ogImage?.url ?? new URL(DEFAULT_OG_IMAGE.path, SITE.url).href],
+  keywords: tagNames,
+  inLanguage: SITE.lang,
+};
+---
+
+<BaseLayout
+  title={title}
+  description={description || undefined}
+  ogImage={ogImage}
+  article={{ published: date, modified: updated, tags: tagNames }}
+  jsonLd={jsonLd}
+  noindex={draft}
+>
+  <div class="page-body">
+    <Toc headings={headings} />
+    <article class="post-col">
+      <div class="post-hero">
+        {
+          hero ? (
+            <Image src={hero} alt="" widths={[CONTENT_WIDTH, CONTENT_WIDTH * 2]} sizes={CONTENT_IMAGE_SIZES} priority />
+          ) : (
+            <img src={HERO_PLACEHOLDER.path} width={HERO_PLACEHOLDER.width} height={HERO_PLACEHOLDER.height} alt="" />
+          )
+        }
+      </div>
+      <h1>{title}</h1>
+      <p class="post-meta">
+        <FormattedDate date={date} />
+        {
+          updated && (
+            <span>
+              （更新 <FormattedDate date={updated} />）
+            </span>
+          )
+        }
+        {draft && <span class="badge">下書き</span>}
+      </p>
+      <TagList tags={tags} />
+      <div class="content">
+        <Content />
+      </div>
+    </article>
+  </div>
+
+  {
+    related.length > 0 && (
+      <section class="related">
+        <h2>関連記事</h2>
+        <PostGrid posts={related} />
+      </section>
+    )
+  }
+
+  <ImageZoom />
+</BaseLayout>

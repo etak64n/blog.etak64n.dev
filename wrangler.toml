@@ -1,7 +1,5 @@
+# Cloudflare Pages project that serves blog.etak64n.dev. GitHub Actions uploads dist/ with
+# `wrangler pages deploy` (.github/workflows/deploy.yml); the site is static, with no Functions.
 name = "etak64n-blog"
-pages_build_output_dir = "public"
+pages_build_output_dir = "dist"
 compatibility_date = "2025-09-02"
-
-# Workers AI for /api/admin/hero (functions/api/admin/hero.ts).
-[ai]
-binding = "AI"

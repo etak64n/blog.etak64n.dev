@@ -1,0 +1,49 @@
+---
+import type { Page } from 'astro';
+
+interface Props {
+  page: Page<unknown>;
+  /** URL of the first page, e.g. `/posts/`; page n is at `<base><n>/`. */
+  base: string;
+}
+
+const { page, base } = Astro.props;
+const pageUrl = (n: number) => (n === 1 ? base : `${base}${n}/`);
+
+// The first and last pages, and two on each side of the current one; a gap stands for the rest.
+const items: (number | 'gap')[] = [];
+for (let n = 1; n <= page.lastPage; n += 1) {
+  if (n === 1 || n === page.lastPage || Math.abs(n - page.currentPage) <= 2) items.push(n);
+  else if (items.at(-1) !== 'gap') items.push('gap');
+}
+---
+
+{
+  page.lastPage > 1 && (
+    <nav class="pagination" aria-label="ページ送り">
+      {page.url.prev && (
+        <a href={page.url.prev} rel="prev" aria-label="前のページ">
+          ←
+        </a>
+      )}
+      {items.map((item) =>
+        item === 'gap' ? (
+          <span class="gap" aria-hidden="true">
+            …
+          </span>
+        ) : item === page.currentPage ? (
+          <span class="current" aria-current="page">
+            {item}
+          </span>
+        ) : (
+          <a href={pageUrl(item)}>{item}</a>
+        ),
+      )}
+      {page.url.next && (
+        <a href={page.url.next} rel="next" aria-label="次のページ">
+          →
+        </a>
+      )}
+    </nav>
+  )
+}

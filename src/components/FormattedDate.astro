@@ -1,0 +1,11 @@
+---
+import { formatDate } from '../lib/dates.ts';
+
+interface Props {
+  date: Date;
+}
+
+const text = formatDate(Astro.props.date);
+---
+
+<time datetime={text}>{text}</time>

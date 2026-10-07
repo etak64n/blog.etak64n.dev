@@ -1,0 +1,33 @@
+<dialog class="image-zoom" id="image-zoom" aria-label="画像の拡大表示"></dialog>
+
+<script>
+  // Clicking a figure's image shows its largest available version over the page; any click or Esc
+  // closes it.
+  const dialog = document.querySelector<HTMLDialogElement>('#image-zoom');
+
+  /** The URL of the widest candidate in the image's srcset, or its src. */
+  function largestSource(image: HTMLImageElement): string {
+    let best = { url: image.currentSrc || image.src, width: 0 };
+    for (const candidate of image.srcset.split(',')) {
+      const [url, descriptor] = candidate.trim().split(/\s+/);
+      const width = Number.parseInt(descriptor ?? '', 10);
+      if (url && width > best.width) best = { url, width };
+    }
+    return best.url;
+  }
+
+  if (dialog) {
+    const zoomed = document.createElement('img');
+    dialog.append(zoomed);
+    dialog.addEventListener('click', () => dialog.close());
+
+    for (const image of document.querySelectorAll<HTMLImageElement>('.content figure.img img')) {
+      image.classList.add('is-zoomable');
+      image.addEventListener('click', () => {
+        zoomed.src = largestSource(image);
+        zoomed.alt = image.alt;
+        dialog.showModal();
+      });
+    }
+  }
+</script>

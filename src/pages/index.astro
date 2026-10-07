@@ -1,0 +1,28 @@
+---
+import PostGrid from '../components/PostGrid.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getPosts } from '../lib/posts.ts';
+import { HOME_POSTS, SITE } from '../site.ts';
+
+const posts = await getPosts();
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITE.title,
+  url: `${SITE.url}/`,
+  description: SITE.description,
+  inLanguage: SITE.lang,
+};
+---
+
+<BaseLayout jsonLd={jsonLd}>
+  <h1>最新記事</h1>
+  {
+    posts.length > 0 ? (
+      <PostGrid posts={posts.slice(0, HOME_POSTS)} />
+    ) : (
+      <p class="empty-state">まだ記事がありません。</p>
+    )
+  }
+</BaseLayout>

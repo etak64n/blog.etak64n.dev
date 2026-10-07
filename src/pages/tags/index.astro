@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPosts, tagCounts, tagPath } from '../../lib/posts.ts';
+import { SITE } from '../../site.ts';
+import { TAGS } from '../../tags.ts';
+
+// In the order of their slugs.
+const tags = tagCounts(await getPosts()).sort((a, b) => a.tag.localeCompare(b.tag));
+---
+
+<BaseLayout title="Tags" description={`${SITE.title} の記事に付いているタグの一覧です。`}>
+  <h1>Tags</h1>
+  {
+    tags.length > 0 ? (
+      <ul class="taxonomy-list">
+        {tags.map(({ tag, count }) => (
+          <li class="taxonomy-item">
+            <a href={tagPath(tag)}>{TAGS[tag]}</a>
+            <span class="taxonomy-count">({count})</span>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p class="empty-state">まだタグがありません。</p>
+    )
+  }
+</BaseLayout>

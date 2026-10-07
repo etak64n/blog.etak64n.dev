@@ -1,9 +1,11 @@
-name: Deploy Zola to Cloudflare Pages
-run-name: "Zola → CF Pages • ${{ github.ref_name }} #${{ github.run_number }}"
+name: Build and deploy
+run-name: "Astro → CF Pages • ${{ github.head_ref || github.ref_name }} #${{ github.run_number }}"
 
+# main → production (https://blog.etak64n.dev). Pull requests → a preview deployment at
+# https://<branch>.etak64n-blog.pages.dev that also shows draft posts.
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
 
 concurrency:
@@ -11,89 +13,101 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-  DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
   CF_PAGES_PROJECT: etak64n-blog
-  BUILD_DIR: public
+  PRODUCTION_URL: https://blog.etak64n.dev
 
 jobs:
-  # --- 1) Build ---
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: true
+      - uses: actions/checkout@v7
 
-      # Pinned: newer Zola releases reject the [markdown.highlighting] table in config.toml.
-      # Keep in sync with the local version (`zola --version`) when upgrading.
-      - name: Install Zola
-        uses: taiki-e/install-action@v2
+      - uses: actions/setup-node@v7
         with:
-          tool: zola@0.22.1
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      # Astro's content store and optimized images. Changes to the Markdown pipeline or the schema
+      # start from an empty cache, because rendered posts are reused when only their files are
+      # unchanged.
+      - name: Restore Astro cache
+        uses: actions/cache@v6
+        with:
+          path: .cache
+          key: astro-${{ hashFiles('package-lock.json', 'astro.config.ts', 'ec.config.mjs', 'src/content.config.ts', 'src/tags.ts', 'src/site.ts', 'src/markdown/**') }}-${{ github.sha }}
+          restore-keys: astro-${{ hashFiles('package-lock.json', 'astro.config.ts', 'ec.config.mjs', 'src/content.config.ts', 'src/tags.ts', 'src/site.ts', 'src/markdown/**') }}-
+
+      - name: Check types and content
+        run: npm run check
 
       - name: Build
-        run: zola build
+        run: npm run build
+        env:
+          SHOW_DRAFTS: ${{ github.event_name == 'pull_request' }}
 
-      - name: Upload artifact (site)
-        uses: actions/upload-artifact@v4
+      # The post template of `npm run new`, with a hero image set by `npm run hero` (drawn without
+      # Workers AI), must pass the front matter checks. Runs after the build, so the test post is
+      # not part of the site.
+      - name: Check the post template and the hero image command
+        run: |
+          npm run new -- ci-template-check
+          HERO_FAKE=1 npm run hero -- ci-template-check
+          test -f src/content/blog/ci-template-check/hero.webp
+          grep -qx 'hero: ./hero.webp' src/content/blog/ci-template-check/ci-template-check.md
+          npx astro sync
+
+      - uses: actions/upload-artifact@v7
         with:
-          name: zola-public
-          path: ${{ env.BUILD_DIR }}
+          name: site
+          path: dist
           if-no-files-found: error
           retention-days: 1
 
-  # --- 2) Deploy ---
   deploy:
     needs: build
-    if: ${{ needs.build.result == 'success' && (github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)) }}
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
       deployments: write
     timeout-minutes: 10
+    outputs:
+      url: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
     steps:
-      # functions/ and wrangler.toml must sit next to the build output for Pages Functions.
-      - name: Checkout
-        uses: actions/checkout@v4
+      # wrangler.toml names the Pages project and the output directory.
+      - uses: actions/checkout@v7
 
-      - name: Download artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/setup-node@v7
         with:
-          name: zola-public
-          path: ${{ env.BUILD_DIR }}
+          node-version-file: .nvmrc
 
-      # Shared key for /api/admin/* (entered once in the CMS). Kept in GitHub Secrets so that
-      # rotating it is `gh secret set ADMIN_KEY` followed by a deploy.
-      - name: Set Pages secret ADMIN_KEY
-        if: ${{ github.event_name == 'push' }}
-        env:
-          ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
-        run: |
-          set -euo pipefail
-          if [ -z "${ADMIN_KEY:-}" ]; then
-            echo "::warning::ADMIN_KEY secret is not set; /api/admin/* will answer 503 until it is."
-            exit 0
-          fi
-          printf '%s' "$ADMIN_KEY" | npx --yes wrangler@4 pages secret put ADMIN_KEY --project-name "$CF_PAGES_PROJECT"
+      - uses: actions/download-artifact@v8
+        with:
+          name: site
+          path: dist
 
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
+        id: deploy
+        uses: cloudflare/wrangler-action@v4
         with:
-          # Match package.json: the action's default wrangler 3.x cannot be installed next to
-          # @cloudflare/workers-types 5.x (peer dependency conflict).
-          wranglerVersion: "4.136.3"
-          apiToken:  ${{ env.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy ${{ env.BUILD_DIR }} --project-name=${{ env.CF_PAGES_PROJECT }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # The action installs Wrangler into the checkout, which leaves it modified (--commit-dirty).
+          command: pages deploy dist --project-name=${{ env.CF_PAGES_PROJECT }} --branch=${{ github.head_ref || github.ref_name }} --commit-dirty=true
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
-  # --- 3) Notify（1回通知・1つのEmbedに統合／ZWSP修正・ProjectはGitHubへ） ---
+      - name: Summary
+        env:
+          URL: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
+        run: echo "Deployed to ${URL}" >> "$GITHUB_STEP_SUMMARY"
+
+  # One Discord message per run.
   notify:
     needs: [build, deploy]
     if: ${{ always() && (github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)) }}
@@ -102,124 +116,87 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Verify DISCORD_WEBHOOK_URL is set
+      - name: Notify Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          BUILD_RES: ${{ needs.build.result }}
+          DEPLOY_RES: ${{ needs.deploy.result }}
+          DEPLOY_URL: ${{ needs.deploy.outputs.url }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          HEAD_MSG: ${{ github.event.head_commit.message }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+          ACTOR: ${{ github.actor }}
         run: |
           set -euo pipefail
-          if [ -z "${DISCORD_WEBHOOK_URL:-}" ] || [ -z "$(printf '%s' "$DISCORD_WEBHOOK_URL" | tr -d '[:space:]')" ]; then
+          if [ -z "$(printf '%s' "${DISCORD_WEBHOOK_URL:-}" | tr -d '[:space:]')" ]; then
             echo "::error::DISCORD_WEBHOOK_URL secret is not set. Configure it in Settings → Secrets and variables → Actions."
             exit 1
           fi
 
-      - name: Notify Discord (single embed, horizontal fields)
-        env:
-          BUILD_RES: ${{ needs.build.result }}
-          DEPLOY_RES: ${{ needs.deploy.result }}
-          EVENT_NAME: ${{ github.event_name }}
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          HEAD_MSG: ${{ github.event.head_commit.message }}
-          REF_NAME: ${{ github.ref_name }}
-          HEAD_REF: ${{ github.head_ref }}
-          IS_FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork }}
-          ACTOR: ${{ github.actor }}
-        run: |
-          set -euo pipefail
-
-          BUILD="${BUILD_RES:-unknown}"
-          DEPLOY="${DEPLOY_RES:-skipped}"
-          EVENT="${EVENT_NAME:-push}"
-
-          case "$BUILD" in
-            success) BUILD_TEXT="Success" ;;
-            failure) BUILD_TEXT="Failed"  ;;
-            *)       BUILD_TEXT="$BUILD"  ;;
+          case "$BUILD_RES" in success) BUILD_TEXT="Success" ;; failure) BUILD_TEXT="Failed" ;; *) BUILD_TEXT="$BUILD_RES" ;; esac
+          case "$DEPLOY_RES" in
+            success) DEPLOY_TEXT="Success" ;;
+            failure) DEPLOY_TEXT="Failed" ;;
+            *) DEPLOY_TEXT="Skipped" ;;
           esac
 
-          if [ "$DEPLOY" = "success" ]; then
-            DEPLOY_TEXT="Success"
-          elif [ "$DEPLOY" = "failure" ]; then
-            DEPLOY_TEXT="Failed"
-          else
-            REASON=""
-            if [ "$EVENT" = "pull_request" ] && [ "${IS_FORK}" = "true" ]; then
-              REASON="(forked PR / secrets unavailable)"
-            elif [ "$BUILD" != "success" ]; then
-              REASON="(build not successful)"
-            fi
-            DEPLOY_TEXT="Skipped ${REASON}"
-          fi
-
-          # 色（Embed 全体：ワースト優先）
-          if   [ "$BUILD"  = "failure" ]; then SUMMARY_COLOR=15158332     # red
-          elif [ "$DEPLOY" = "failure" ]; then SUMMARY_COLOR=15105570     # orange
-          elif [ "$BUILD"  != "success" ] || [ "$DEPLOY" != "success" ]; then SUMMARY_COLOR=16705372  # yellow
-          else SUMMARY_COLOR=3066993; fi                                  # green
+          # Colour of the embed: the worst result wins.
+          if   [ "$BUILD_RES"  = "failure" ]; then COLOR=15158332
+          elif [ "$DEPLOY_RES" = "failure" ]; then COLOR=15105570
+          elif [ "$BUILD_RES" != "success" ] || [ "$DEPLOY_RES" != "success" ]; then COLOR=16705372
+          else COLOR=3066993; fi
 
           SUBJECT="${HEAD_MSG:-Workflow summary}"
-          [ "$EVENT" = "pull_request" ] && [ -n "${PR_TITLE:-}" ] && SUBJECT="$PR_TITLE"
+          [ "$EVENT_NAME" = "pull_request" ] && [ -n "${PR_TITLE:-}" ] && SUBJECT="$PR_TITLE"
           SUBJECT=$(printf '%s' "$SUBJECT" | tr -d '\r' | head -n1 | cut -c1-120)
 
-          BRANCH="${REF_NAME}"; [ "$EVENT" = "pull_request" ] && [ -n "${HEAD_REF:-}" ] && BRANCH="$HEAD_REF"
-          SHORT_SHA="${GITHUB_SHA::7}"
+          SITE_URL="$PRODUCTION_URL"
+          [ "$EVENT_NAME" = "pull_request" ] && [ -n "${DEPLOY_URL:-}" ] && SITE_URL="$DEPLOY_URL"
 
-          RUN_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          COMMIT_URL="https://github.com/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}"
           REPO_URL="https://github.com/${GITHUB_REPOSITORY}"
-          BRANCH_URL="https://github.com/${GITHUB_REPOSITORY}/tree/${BRANCH}"
-          ACTOR_URL="https://github.com/${ACTOR}"
-          SITE_URL="https://${CF_PAGES_PROJECT}.pages.dev"
-          TITLE="Zola → CF Pages • ${BRANCH} #${GITHUB_RUN_NUMBER}"
-          NOW_UTC="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-
-          # ★ ZWSP は Bash の ANSI-C 形式で“実体”を渡す（表示されない）
-          SPACER=$'\u200B'
+          RUN_URL="${REPO_URL}/actions/runs/${GITHUB_RUN_ID}"
+          COMMIT_URL="${REPO_URL}/commit/${GITHUB_SHA}"
+          SPACER=$'​'
 
           jq -n \
-            --arg title "$TITLE" --arg run_url "$RUN_URL" --arg subject "$SUBJECT" \
-            --arg now "$NOW_UTC" --arg repo "$GITHUB_REPOSITORY" --arg repo_url "$REPO_URL" \
-            --arg branch "$BRANCH" --arg branch_url "$BRANCH_URL" \
-            --arg short_sha "$SHORT_SHA" --arg commit_url "$COMMIT_URL" \
-            --arg actor "$ACTOR" --arg actor_url "$ACTOR_URL" \
+            --arg title "Astro → CF Pages • ${BRANCH} #${GITHUB_RUN_NUMBER}" \
+            --arg run_url "$RUN_URL" --arg subject "$SUBJECT" \
+            --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg repo "$GITHUB_REPOSITORY" --arg repo_url "$REPO_URL" \
+            --arg branch "$BRANCH" --arg branch_url "${REPO_URL}/tree/${BRANCH}" \
+            --arg short_sha "${GITHUB_SHA::7}" --arg commit_url "$COMMIT_URL" \
+            --arg actor "$ACTOR" --arg actor_url "https://github.com/${ACTOR}" \
             --arg build_text "$BUILD_TEXT" --arg deploy_text "$DEPLOY_TEXT" \
-            --arg run_number "$GITHUB_RUN_NUMBER" \
-            --arg spacer "$SPACER" \
-            --arg site_url "$SITE_URL" \
-            --argjson color "$SUMMARY_COLOR" \
+            --arg run_number "$GITHUB_RUN_NUMBER" --arg spacer "$SPACER" \
+            --arg site_url "$SITE_URL" --argjson color "$COLOR" \
             '{
               username: "GitHub Actions",
               avatar_url: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
               allowed_mentions: {parse: []},
-              embeds: [
-                {
-                  title: $title, url: $run_url, description: $subject,
-                  color: $color, timestamp: $now,
-                  author: {name: $repo, url: $repo_url},
-                  thumbnail: {url: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"},
-                  fields: [
-                    # 1段目（横並び）
-                    {name:"Build",  value:$build_text,  inline:true},
-                    {name:"Deploy", value:$deploy_text, inline:true},
-                    {name:$spacer,  value:$spacer,      inline:true},
-
-                    # 2段目
-                    {name:"Branch", value:("["+$branch+"]("+$branch_url+")"), inline:true},
-                    {name:"Commit", value:("["+$short_sha+"]("+$commit_url+")"), inline:true},
-                    {name:$spacer,  value:$spacer, inline:true},
-
-                    # 3段目（★ Project は GitHub リポジトリにリンク）
-                    {name:"Actor",   value:("["+$actor+"]("+$actor_url+")"), inline:true},
-                    {name:"Project", value:("["+$repo+"]("+$repo_url+")"),   inline:true},
-                    {name:$spacer,   value:$spacer, inline:true}
-                  ],
-                  footer:{text: ("Run #"+$run_number)}
-                }
-              ],
+              embeds: [{
+                title: $title, url: $run_url, description: $subject,
+                color: $color, timestamp: $now,
+                author: {name: $repo, url: $repo_url},
+                fields: [
+                  {name: "Build",  value: $build_text,  inline: true},
+                  {name: "Deploy", value: $deploy_text, inline: true},
+                  {name: $spacer,  value: $spacer,      inline: true},
+                  {name: "Branch", value: ("[" + $branch + "](" + $branch_url + ")"), inline: true},
+                  {name: "Commit", value: ("[" + $short_sha + "](" + $commit_url + ")"), inline: true},
+                  {name: $spacer,  value: $spacer, inline: true},
+                  {name: "Actor",  value: ("[" + $actor + "](" + $actor_url + ")"), inline: true},
+                  {name: "Site",   value: $site_url, inline: true},
+                  {name: $spacer,  value: $spacer, inline: true}
+                ],
+                footer: {text: ("Run #" + $run_number)}
+              }],
               components: [{
                 type: 1,
                 components: [
-                  {type:2, style:5, label:"Open Run",    url:$run_url},
-                  {type:2, style:5, label:"View Commit", url:$commit_url},
-                  {type:2, style:5, label:"Repository",  url:$repo_url},
-                  {type:2, style:5, label:"View Site",   url:$site_url}
+                  {type: 2, style: 5, label: "Open Run",    url: $run_url},
+                  {type: 2, style: 5, label: "View Commit", url: $commit_url},
+                  {type: 2, style: 5, label: "View Site",   url: $site_url}
                 ]
               }]
             }' > payload.json
@@ -228,8 +205,6 @@ jobs:
           echo "Discord HTTP: $code"
           if [ "$code" != "200" ] && [ "$code" != "204" ]; then
             echo "::error::Discord webhook error (HTTP $code)"
-            echo "Response body:"; cat resp.json || true
-            echo "Payload preview:"; head -c 500 payload.json; echo
+            cat resp.json || true
             exit 1
           fi
-          echo "Discord OK"

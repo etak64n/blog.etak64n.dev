@@ -1,0 +1,14 @@
+{
+  // All optional: writing, image pasting, preview and link checks work with VS Code alone.
+  "recommendations": [
+    // Front matter completion for posts, and .astro files.
+    "astro-build.astro-vscode",
+    // Markdown style checks (.markdownlint.jsonc).
+    "DavidAnson.vscode-markdownlint",
+    // .mdx posts.
+    "unifiedjs.vscode-mdx",
+    // Formatting of the site's code (not of posts).
+    "esbenp.prettier-vscode",
+    "EditorConfig.EditorConfig"
+  ]
+}

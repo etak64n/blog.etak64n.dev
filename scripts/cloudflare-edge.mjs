@@ -26,8 +26,9 @@ const HOST = 'blog.etak64n.dev';
 /** Content-Security-Policy of the public pages; checked against the site's pages and scripts. */
 const BLOG_CSP = [
   "default-src 'self'",
-  // Inline scripts of base.html, KaTeX from jsDelivr, and the Web Analytics beacon that
-  // Cloudflare inserts into the pages (it reports to /cdn-cgi/rum on this origin).
+  // Inline scripts of the pages and the Web Analytics beacon that Cloudflare inserts into them (it
+  // reports to /cdn-cgi/rum on this origin). The site loads nothing from jsDelivr; it can be dropped
+  // from these directives the next time the rules are applied.
   "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://static.cloudflareinsights.com",
   "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
   "font-src 'self' https://cdn.jsdelivr.net",

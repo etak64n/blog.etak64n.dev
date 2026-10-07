@@ -1,22 +1,67 @@
 {
-    "workbench.colorCustomizations": {
-        "activityBar.activeBackground": "#3399ff",
-        "activityBar.background": "#3399ff",
-        "activityBar.foreground": "#15202b",
-        "activityBar.inactiveForeground": "#15202b99",
-        "activityBarBadge.background": "#bf0060",
-        "activityBarBadge.foreground": "#e7e7e7",
-        "commandCenter.border": "#e7e7e799",
-        "sash.hoverBorder": "#3399ff",
-        "statusBar.background": "#007fff",
-        "statusBar.foreground": "#e7e7e7",
-        "statusBarItem.hoverBackground": "#3399ff",
-        "statusBarItem.remoteBackground": "#007fff",
-        "statusBarItem.remoteForeground": "#e7e7e7",
-        "titleBar.activeBackground": "#007fff",
-        "titleBar.activeForeground": "#e7e7e7",
-        "titleBar.inactiveBackground": "#007fff99",
-        "titleBar.inactiveForeground": "#e7e7e799"
-    },
-    "peacock.color": "#007fff"
+  // Pasted or dropped images are saved next to the post and linked as ![alt text](image.png).
+  "markdown.copyFiles.destination": {
+    "/src/content/blog/**/*": "${documentDirName}/${fileName}"
+  },
+  "markdown.copyFiles.overwriteBehavior": "nameIncrementally",
+  "markdown.editor.filePaste.enabled": "smart",
+  "markdown.editor.filePaste.copyIntoWorkspace": "mediaFiles",
+  "markdown.editor.drop.enabled": "smart",
+  "markdown.editor.drop.copyIntoWorkspace": "mediaFiles",
+  "markdown.editor.pasteUrlAsFormattedLink.enabled": "smartWithSelection",
+  // Renaming an image in the Explorer updates the links to it.
+  "markdown.updateLinksOnFileMove.enabled": "always",
+  // Reports links to missing images, files and headings.
+  "markdown.validate.enabled": true,
+
+  // Front matter completion and checks from the content collection schema (Astro extension).
+  "astro.content-intellisense": true,
+
+  "[markdown]": {
+    "editor.wordWrap": "on",
+    "editor.formatOnSave": false,
+    "editor.wordBasedSuggestions": "off",
+    // Type a snippet prefix (fm, fig, quote, note, …) and press Tab.
+    "editor.tabCompletion": "onlySnippets",
+    "editor.unicodeHighlight.ambiguousCharacters": false,
+    "editor.unicodeHighlight.invisibleCharacters": false
+  },
+  "[mdx]": {
+    "editor.wordWrap": "on",
+    "editor.formatOnSave": false
+  },
+  "[astro][typescript][javascript][json][jsonc][css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  "files.exclude": {
+    ".astro": true,
+    ".cache": true,
+    "dist": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "package-lock.json": true
+  },
+
+  "workbench.colorCustomizations": {
+    "activityBar.activeBackground": "#3399ff",
+    "activityBar.background": "#3399ff",
+    "activityBar.foreground": "#15202b",
+    "activityBar.inactiveForeground": "#15202b99",
+    "activityBarBadge.background": "#bf0060",
+    "activityBarBadge.foreground": "#e7e7e7",
+    "commandCenter.border": "#e7e7e799",
+    "sash.hoverBorder": "#3399ff",
+    "statusBar.background": "#007fff",
+    "statusBar.foreground": "#e7e7e7",
+    "statusBarItem.hoverBackground": "#3399ff",
+    "statusBarItem.remoteBackground": "#007fff",
+    "statusBarItem.remoteForeground": "#e7e7e7",
+    "titleBar.activeBackground": "#007fff",
+    "titleBar.activeForeground": "#e7e7e7",
+    "titleBar.inactiveBackground": "#007fff99",
+    "titleBar.inactiveForeground": "#e7e7e799"
+  },
+  "peacock.color": "#007fff"
 }

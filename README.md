@@ -1,177 +1,83 @@
-# etak64n-blog
+# blog.etak64n.dev
 
-Blog built with Zola + Tera and deployed to Cloudflare Pages via GitHub Actions.
+[blog.etak64n.dev](https://blog.etak64n.dev) のソースである。
+記事は Markdown ファイルで、[Astro](https://astro.build/) が静的な HTML に変換し、[Cloudflare Pages](https://developers.cloudflare.com/pages/) が配信する。
 
-How the pieces fit together (site, CMS, Pages Functions, CI, CSP, secrets): [docs/architecture.md](docs/architecture.md) (Japanese).
+## 仕組み
 
-Highlights
-- Grid cards for Latest/Indexes (large thumbnail + title + date)
-- Sticky Table of Contents (ToC) on the left of article pages
-- Hero image support (fallback placeholder when not provided)
-- Tags/Categories (taxonomies), related posts generated at build time by tag match
-- Feeds disabled by default (can be enabled later)
+記事は、記事ごとのフォルダーに、画像と一緒に置かれる。
 
-## Requirements
-- Zola — install: https://www.getzola.org/documentation/getting-started/installation/
-
-## Local development
-- Start dev server: `zola serve` → http://127.0.0.1:1111/
-- Build for production: `zola build` → output in `public/`
-
-## Project structure (excerpt)
-- `content/articles/` — posts section (category/slug/index.md + assets)
-- `templates/` — Tera templates
-  - `templates/base.html` — shared layout
-  - `templates/index.html` — Home (latest posts)
-  - `templates/articles/list.html` — Articles index
-  - `templates/articles/single.html` — Article page
-  - `templates/taxonomy_list.html`, `templates/taxonomy_single.html` — Tags/Categories
-- `sass/main.scss` — site styles (compiled to `main.css`)
-- `static/images/` — images served under `/images/...`
-
-## Writing posts
-Create a directory under `content/articles/<Category>/<slug>/` and add an `index.md` (plus any images/assets) there.
-Year/month folders are no longer needed; the category name becomes part of the output path.
-Use one of the existing category folders (`Cloudflare`, `Security`, etc.), or create a new folder and drop a minimal `_index.md` like:
-```toml
-+++
-title = "YourCategory"
-transparent = true
-+++
-```
-This keeps the category section transparent so the article still appears in the top-level Articles listing.
-
-Front matter example (TOML):
-```toml
-+++
-title = "Title"
-date = 2025-09-01
-updated = 2025-09-01
-draft = true
-taxonomies = { tags=["AWS","QuickSight"], categories=["Analytics"] }
-[extra]
-hero = "/images/your-hero.svg"  # optional; placeholder used if omitted
-toc = true                       # enable ToC
-+++
-
-Body...
+```text
+src/content/blog/
+  cloudflare-workers-architecture/
+    cloudflare-workers-architecture.md   → https://blog.etak64n.dev/cloudflare-workers-architecture/
+    architecture.png
 ```
 
-Notes
-- Place hero images under `static/images/` and reference via `/images/...`.
-- The ToC is generated automatically from headings (##, ###, ...).
-- Related posts are computed at build time by tag overlap (tweakable in template).
+`main` ブランチへの push を受けて、GitHub Actions がサイトをビルドし、Cloudflare Pages に公開する。
 
-## Taxonomies (Tags/Categories)
-- Configured in `config.toml` via `[[taxonomies]]` blocks for `tags` and `categories`.
-- Term pages render as a responsive card grid.
+```text
+VS Code で記事を書く → git push → GitHub Actions（型とフロントマターの検査、ビルド、画像の最適化）→ Cloudflare Pages → blog.etak64n.dev
+```
 
-## Content management (Sveltia CMS)
+プルリクエストを作ると、下書きを含むプレビューが `https://<ブランチ名>.etak64n-blog.pages.dev/` に公開される。
 
-記事の作成・編集は **[Sveltia CMS](https://sveltiacms.app/)**（Git ベースのヘッドレス CMS）で行う。
-ブラウザの管理画面 `https://blog.etak64n.dev/admin/` から GitHub にログインし、編集内容は
-リポジトリへのコミットとして保存される（コミット＝GitHub Actions が走り Cloudflare Pages へ反映）。
+## 機能
 
-CMS 本体は CDN から読み込むだけでビルド不要:
-- `static/admin/index.html` — 管理画面のエントリ（`@sveltia/cms` を CDN ロード）
-- `static/admin/config.yml` — コレクション定義（`articles` の 1 コレクション、タグのみ）
-- `static/admin/*.js`, `preview.css` — ブログ固有の拡張（下の CMS extensions を参照）
+- 記事一覧（新しい順、ページ送り）、タグとタグ別の記事一覧、関連記事、前後の記事
+- 目次（幅の広い画面では本文の右に追従）、ダークモード、スマートフォン対応
+- コードブロックの色付け、ファイル名のタブ、ターミナルの枠、コピーボタン、行番号、差分
+- 画像の WebP 変換、本文の幅に合わせた 2 つの大きさ、`width`/`height`、遅延読み込み、クリックで拡大
+- 注記（`> [!NOTE]` など）、出典付きの引用、画像のキャプション、脚注
+- RSS（`/rss.xml`）、サイトマップ（`/sitemap.xml`）、`robots.txt`、canonical URL、Open Graph、Twitter Card、JSON-LD
+- 旧 URL（`/articles/<slug>/`）からの転送
 
-### 記事フォーマットとの対応
-- 各記事は `content/articles/{Category}/{slug}/index.md`（page bundle）として保存される。
-- 本文中の画像は **記事フォルダに co-located** でアップロードされる（`media_folder: ""`）。
-  挿入される Markdown は `![](foo.png)`。レスポンシブ表示が必要なら `{{ img(src="foo.png") }}` shortcode に書き換える。
-- frontmatter は Zola 互換の TOML（`format: toml-frontmatter`）。`taxonomies` / `[extra]` も CMS から編集可能。
-- **既存記事を CMS で再保存すると frontmatter が正規化される**（インライン `taxonomies = {…}` が `[taxonomies]` テーブルになる等）。意味は同じだが差分が出る点に注意。
-- 新しいカテゴリを追加したら `static/admin/config.yml` にコレクションブロックを 1 つ追記する
-  （`name` を ASCII、`folder` を `content/articles/<新カテゴリ>`、`taxonomies.categories` の `default` を新カテゴリ名にする）。
+## 必要なもの
 
-### ログイン認証（OAuth Worker）のセットアップ
-Sveltia CMS は GitHub OAuth でログインする。OAuth の secret 交換用に
-**[sveltia-cms-auth](https://github.com/sveltia/sveltia-cms-auth)** を Cloudflare Workers にデプロイする（初回のみ）。
+- Node.js 24 以上（`.nvmrc`）と npm
 
-1. `sveltia/sveltia-cms-auth` を Cloudflare Workers にデプロイ → Worker URL を控える
-   （例: `https://sveltia-cms-auth.<subdomain>.workers.dev`）。
-2. GitHub で OAuth App を登録（Settings → Developer settings → OAuth Apps → New）:
-   - **Authorization callback URL**: `<WORKER_URL>/callback`
-   - Client ID と Client Secret を発行。
-3. Worker に環境変数を設定（Cloudflare ダッシュボード → Worker → Settings → Variables）:
-   - `GITHUB_CLIENT_ID`
-   - `GITHUB_CLIENT_SECRET`（Encrypt して保存）
-   - `ALLOWED_DOMAINS = blog.etak64n.dev`
-4. `static/admin/config.yml` の `backend.base_url` を Worker URL に書き換える
-   （現状は `https://sveltia-cms-auth.CHANGE-ME.workers.dev` のプレースホルダ）。
-
-> 単一ユーザーで手早く済ませたい場合は、OAuth Worker の代わりに GitHub Personal Access Token を
-> ログイン時に貼り付ける運用も可能（`base_url` 不要）。ただし端末ごとにトークン管理が必要。
-
-### ローカルでの動作確認
-Sveltia はプロキシサーバ不要。Chromium 系ブラウザのファイルシステムアクセスでローカルリポジトリを直接編集する:
-1. `zola build`（`static/admin/` を `public/admin/` に出力させる）してから `wrangler pages dev public`、
-   もしくは任意の静的サーバで `public/` を配信する。
-2. Chrome/Edge で `http://localhost:8788/admin/` を開く。
-3. 「Work with Local Repository」を選び、このリポジトリのフォルダへのアクセスを許可する。
-4. 編集 → 保存はローカルファイルに反映される（コミットは手動）。
-
-## CMS extensions
-
-The Sveltia CMS at `/admin/` is extended through its JavaScript API (no fork). See
-[docs/cms-extensions.md](docs/cms-extensions.md) for details.
-
-- **Shortcode preview** — `{% ref %}`, `{% note %}`, `{% code %}`, `{% codebox %}`, `{{ img() }}`
-  and `{{ link() }}` are rendered in the preview pane with the site's own stylesheet
-  (`static/admin/shortcodes.js`, `preview-template.js`).
-- **Body editor** — the body is a plain Markdown editor with one-click insertion of the shortcodes
-  (toolbar, or a searchable list on ⌘/ / Ctrl+/). Inserted shortcodes come with example values
-  and Tab stops between their arguments; examples left in optional arguments are removed when the
-  shortcode is finished. Link cards and refs get the title (and description) of the linked page
-  through `GET /api/admin/link-meta` (`functions/api/admin/link-meta.ts`). Images that are pasted
-  or dropped are saved next to `index.md` as `{{ img() }}` (`static/admin/body-editor.js`,
-  `snippets.js`).
-- **Insert forms** — kept for the built-in Markdown widget: `note`, `code`, `img` and `link` in
-  the rich text editor's Insert menu (`static/admin/editor-components.js`).
-- **AI hero image** — the `hero-ai` field generates a 1200×630 hero with Workers AI through
-  `POST /api/admin/hero` (`functions/api/admin/hero.ts`) and commits it with the entry.
-
-The Sveltia CMS version is pinned in `static/admin/index.html`.
-
-### Local admin
+## クイックスタート
 
 ```bash
-cp .dev.vars.example .dev.vars   # ADMIN_KEY + DEV_FAKE_AI=true (no Workers AI call)
-npm run admin                    # scripts/admin-dev.sh: zola build + wrangler pages dev on :8788
-open http://127.0.0.1:8788/admin/?backend=test   # in-browser Test backend, no GitHub login
+npm ci                                  # 依存パッケージを入れる
+npm run dev                             # http://localhost:4321/ で表示（下書きも表示される）
+npm run new -- my-first-post            # 記事 src/content/blog/my-first-post/my-first-post.md を作る
 ```
 
-`npm run admin` serves `/admin` with the production Content-Security-Policy (fetched from the live
-site) and needs no Cloudflare login: the dev server runs without the Workers AI binding.
+記事の書き方、画像の貼り方、引用と出典のルールは [CONTRIBUTING.md](CONTRIBUTING.md) にある。
 
-### Content-Security-Policy
+## コマンド
 
-Production `/admin` gets its CSP from a Cloudflare Transform Rule on the zone, outside this repo.
-Two small adaptations keep Sveltia CMS working under it; see
-[docs/cms-extensions.md](docs/cms-extensions.md#admin-の-csp-との関係):
-an import map in `static/admin/index.html` (unpkg.com → jsDelivr) and
-`static/admin/csp-compat.js` (preview iframe via `srcdoc` instead of a `blob:` URL).
-The blog's own rules (the CSP of the public pages, and the images and media the admin may load) and
-the redirect of `etak64n-blog.pages.dev` to the custom domain are set by
-`scripts/cloudflare-edge.mjs` (shows the differences; applies them with `--apply`). The zone's
-fallback rule is shared with other apps and left alone. Link cards and ref pills load favicons
-from `/favicon/<host>` (`functions/favicon/[host].ts`), which reads the linked site's `<head>` to
-pick the icon on request; no third-party favicon service, nothing stored.
+| コマンド | 内容 |
+| --- | --- |
+| `npm run dev` | 開発サーバーを起動する。保存すると表示が更新される |
+| `npm run new -- <slug>` | 記事のフォルダーとファイルを下書きとして作る。`--open` で VS Code で開く |
+| `npm run check` | TypeScript とフロントマターを検査する |
+| `npm run build` | `dist/` にサイトを書き出す |
+| `npm run preview` | 書き出した `dist/` を表示する |
 
-### Secrets
+## ディレクトリ構成
 
-`/api/admin/*` requires the `ADMIN_KEY` bearer token. It lives in GitHub Secrets and is copied to
-the Pages project by `deploy.yml` on every push to `main`. Rotate it with
-`gh secret set ADMIN_KEY -R etak64n/blog.etak64n.dev` and push.
+```text
+src/
+  content/blog/      記事（<slug>/<slug>.md と画像）
+  content.config.ts  フロントマターの定義と検査
+  tags.ts            使えるタグと表示名
+  site.ts            サイト名、URL、本文の幅などの設定
+  markdown/          Markdown の拡張（注記、引用、図、画像の大きさなど）
+  pages/             ページ（トップ、記事、一覧、タグ、RSS、サイトマップ、404）
+  layouts/           HTML の共通部分と SEO のメタデータ
+  components/        ヘッダー、記事一覧、目次などの部品
+  styles/global.css  スタイル
+public/              そのまま配信するファイル（favicon、OG 画像、_headers、_redirects）
+scripts/             記事を作るスクリプト、Cloudflare のゾーン設定のスクリプト
+.vscode/             VS Code の設定、スニペット、タスク
+ec.config.mjs        コードブロック（Expressive Code）の設定
+astro.config.ts      Astro の設定
+wrangler.toml        Cloudflare Pages のプロジェクト
+```
 
-## Deployment (Cloudflare Pages)
-- Build command: `zola build -u "${CF_PAGES_URL:-https://blog.etak64n.dev/}"`
-  - Output directory: `public`
-  - Direct upload via Wrangler: `wrangler pages deploy public`
+## ドキュメント
 
-Notes
-- Feeds are currently disabled (`generate_feeds = false`). Turn on and add a header link if you need them.
-- `wrangler.toml` is for Pages Direct Upload/Workers. If you only use Pages (GitHub integration), it may remain unused.
-- If a preview shows old styles, view page source and check the `main.css` URL domain. It should be the preview domain when using the build command above.
+- [CONTRIBUTING.md](CONTRIBUTING.md)：記事の書き方（フロントマター、画像、コード、注記、引用と出典のルール、公開）
+- [docs/architecture.md](docs/architecture.md)：構成（ビルド、Markdown の処理、画像、URL、SEO、デプロイ、Cloudflare の設定）

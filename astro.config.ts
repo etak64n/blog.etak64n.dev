@@ -3,7 +3,7 @@ import { satteri, satteriHeadingIdsPlugin } from '@astrojs/markdown-satteri';
 import mdx from '@astrojs/mdx';
 import expressiveCode from 'astro-expressive-code';
 import { CONTENT_WIDTH, SITE } from './src/site.ts';
-import { callouts, figures, quoteSources } from './src/markdown/mdast.ts';
+import { callouts, cjkLineBreaks, figures, quoteSources } from './src/markdown/mdast.ts';
 import { externalLinks, headingAnchors, imageSizes, tableWrappers } from './src/markdown/hast.ts';
 
 export default defineConfig({
@@ -24,7 +24,7 @@ export default defineConfig({
         // Keep `--flag`, "quotes" and `...` as written.
         smartPunctuation: false,
       },
-      mdastPlugins: [callouts, quoteSources, figures],
+      mdastPlugins: [cjkLineBreaks, callouts, quoteSources, figures],
       // Expressive Code (code blocks) appends its own plugin after these.
       hastPlugins: [satteriHeadingIdsPlugin(), headingAnchors, externalLinks, tableWrappers, imageSizes],
     }),

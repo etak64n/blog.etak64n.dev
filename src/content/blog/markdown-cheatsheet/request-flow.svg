@@ -22,6 +22,6 @@
   </g>
   <g fill="#59636e" font-size="13" text-anchor="middle">
     <text x="234" y="88">HTTPS</text>
-    <text x="484" y="88">キャッシュなし</text>
+    <text x="484" y="88">転送</text>
   </g>
 </svg>

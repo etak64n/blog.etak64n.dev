@@ -28,17 +28,10 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
+          cache: npm
 
-      # TODO(bootstrap): switch to `npm ci` with `cache: npm` once package-lock.json is committed.
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Upload package-lock.json
-        uses: actions/upload-artifact@v7
-        with:
-          name: package-lock
-          path: package-lock.json
-          retention-days: 3
+        run: npm ci --no-audit --no-fund
 
       # Astro's content store and optimized images. Changes to the Markdown pipeline or the schema
       # start from an empty cache, because rendered posts are reused when only their files are
@@ -79,6 +72,10 @@ jobs:
       # wrangler.toml names the Pages project and the output directory.
       - uses: actions/checkout@v7
 
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
       - uses: actions/download-artifact@v8
         with:
           name: site
@@ -90,7 +87,8 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=${{ env.CF_PAGES_PROJECT }} --branch=${{ github.head_ref || github.ref_name }}
+          # The action installs Wrangler into the checkout, which leaves it modified (--commit-dirty).
+          command: pages deploy dist --project-name=${{ env.CF_PAGES_PROJECT }} --branch=${{ github.head_ref || github.ref_name }} --commit-dirty=true
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Summary

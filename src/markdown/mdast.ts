@@ -69,6 +69,26 @@ function stripLeadingText(
   return { match, rest: remainder ? [{ type: 'text', value: remainder }, ...rest] : rest };
 }
 
+/** Japanese characters, including their punctuation and full-width forms. */
+const CJK = String.raw`[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}　-〿ー！-｠￠-￦]`;
+
+/** A line break inside a paragraph, between two Japanese characters. */
+const CJK_LINE_BREAK = new RegExp(String.raw`(?<=${CJK})\n(?=${CJK})`, 'gu');
+
+/**
+ * Line breaks inside a paragraph show as a space in HTML, which is a stray gap between two Japanese
+ * sentences written one per line. They are removed between Japanese characters, as the CSS Text
+ * specification prescribes; next to Latin text they stay a space.
+ */
+export const cjkLineBreaks = defineMdastPlugin({
+  name: 'blog-cjk-line-breaks',
+  text(node) {
+    if (!node.value.includes('\n')) return;
+    const value = node.value.replace(CJK_LINE_BREAK, '');
+    if (value !== node.value) return { type: 'text', value };
+  },
+});
+
 const CALLOUT_LABELS = {
   note: '補足',
   tip: 'ヒント',

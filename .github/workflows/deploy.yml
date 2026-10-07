@@ -51,6 +51,14 @@ jobs:
         env:
           SHOW_DRAFTS: ${{ github.event_name == 'pull_request' }}
 
+      # The post template of `npm run new` must pass the front matter checks. Runs after the build,
+      # so the test post is not part of the site.
+      - name: Check the post template
+        run: |
+          npm run new -- ci-template-check
+          test -f src/content/blog/ci-template-check/ci-template-check.md
+          npx astro sync
+
       - uses: actions/upload-artifact@v7
         with:
           name: site

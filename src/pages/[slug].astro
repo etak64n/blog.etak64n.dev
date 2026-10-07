@@ -9,7 +9,7 @@ import TagList from '../components/TagList.astro';
 import Toc from '../components/Toc.astro';
 import BaseLayout, { type OgImage } from '../layouts/BaseLayout.astro';
 import { getPosts, postPath, readingMinutes, relatedPosts } from '../lib/posts.ts';
-import { SITE } from '../site.ts';
+import { DEFAULT_OG_IMAGE, SITE } from '../site.ts';
 import { TAGS } from '../tags.ts';
 
 export const getStaticPaths = (async () => {
@@ -59,7 +59,7 @@ const jsonLd = {
   datePublished: date.toISOString(),
   dateModified: (updated ?? date).toISOString(),
   author: { '@type': 'Person', name: SITE.author.name, url: SITE.author.url },
-  ...(image && { image: [image.url] }),
+  image: [image?.url ?? new URL(DEFAULT_OG_IMAGE.path, SITE.url).href],
   keywords: tagNames,
   inLanguage: SITE.lang,
 };

@@ -807,7 +807,7 @@ article { padding: 8px 0; }
 /* Show hamburger and panel on small screens */
 @media (max-width: 900px) {
   .menu-toggle { display: inline-block; }
-  .nav-desktop { display: none; }
+  .site-header .nav-desktop { display: none; }
   :root[data-menu='open'] .mobile-nav { display: flex; }
 }
 

@@ -1,0 +1,144 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { getImage } from 'astro:assets';
+import { render } from 'astro:content';
+import FormattedDate from '../components/FormattedDate.astro';
+import ImageZoom from '../components/ImageZoom.astro';
+import PostList from '../components/PostList.astro';
+import TagList from '../components/TagList.astro';
+import Toc from '../components/Toc.astro';
+import BaseLayout, { type OgImage } from '../layouts/BaseLayout.astro';
+import { getPosts, postPath, readingMinutes, relatedPosts } from '../lib/posts.ts';
+import { SITE } from '../site.ts';
+import { TAGS } from '../tags.ts';
+
+export const getStaticPaths = (async () => {
+  const posts = await getPosts();
+  return posts.map((post, index) => ({
+    params: { slug: post.id },
+    props: {
+      post,
+      newer: posts[index - 1],
+      older: posts[index + 1],
+      related: relatedPosts(post, posts, 3),
+    },
+  }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { post, newer, older, related } = Astro.props as Props;
+const { title, description, date, updated, tags, draft, ogImage } = post.data;
+const { Content, headings } = await render(post);
+
+const url = new URL(postPath(post.id), SITE.url).href;
+const tagNames = tags.map((tag) => TAGS[tag]);
+
+let image: OgImage | undefined;
+if (ogImage) {
+  // Cropped to the 1.91:1 size that link previews expect. `layout: 'none'` skips the srcset that the
+  // site-wide responsive layout would add.
+  const generated = await getImage({
+    src: ogImage,
+    width: 1200,
+    height: 630,
+    fit: 'cover',
+    format: 'png',
+    layout: 'none',
+  });
+  image = { url: new URL(generated.src, SITE.url).href, width: 1200, height: 630, alt: title };
+}
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: title,
+  description,
+  url,
+  mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+  datePublished: date.toISOString(),
+  dateModified: (updated ?? date).toISOString(),
+  author: { '@type': 'Person', name: SITE.author.name, url: SITE.author.url },
+  ...(image && { image: [image.url] }),
+  keywords: tagNames,
+  inLanguage: SITE.lang,
+};
+
+const sourceUrl = `${SITE.repository}/blob/${SITE.branch}/${post.filePath}`;
+const historyUrl = `${SITE.repository}/commits/${SITE.branch}/${post.filePath}`;
+---
+
+<BaseLayout
+  title={title}
+  description={description || undefined}
+  ogImage={image}
+  article={{ published: date, modified: updated, tags: tagNames }}
+  jsonLd={jsonLd}
+  noindex={draft}
+>
+  <article class="post-layout">
+    <header class="post-header">
+      <h1>{title}</h1>
+      <div class="post-meta">
+        <span>
+          投稿 <FormattedDate date={date} />
+        </span>
+        {
+          updated && (
+            <span>
+              更新 <FormattedDate date={updated} />
+            </span>
+          )
+        }
+        <span>約 {readingMinutes(post.body ?? '')} 分</span>
+        {draft && <span class="badge">下書き</span>}
+      </div>
+      <TagList tags={tags} />
+    </header>
+
+    <Toc headings={headings} />
+
+    <div class="prose">
+      <Content />
+    </div>
+
+    <footer class="post-footer">
+      <p class="post-source">
+        <a href={sourceUrl}>この記事のソース</a>
+        <a href={historyUrl}>変更履歴</a>
+      </p>
+
+      {
+        (newer || older) && (
+          <nav class="post-nav" aria-label="前後の記事">
+            {older && (
+              <a class="prev" href={postPath(older.id)} rel="prev">
+                <span class="label">← 前の記事</span>
+                {older.data.title}
+              </a>
+            )}
+            {newer && (
+              <a class="next" href={postPath(newer.id)} rel="next">
+                <span class="label">次の記事 →</span>
+                {newer.data.title}
+              </a>
+            )}
+          </nav>
+        )
+      }
+
+      {
+        related.length > 0 && (
+          <section class="related" aria-labelledby="related-title">
+            <h2 class="section-title" id="related-title">
+              関連記事
+            </h2>
+            <PostList posts={related} headingLevel={3} />
+          </section>
+        )
+      }
+    </footer>
+  </article>
+
+  <ImageZoom />
+</BaseLayout>

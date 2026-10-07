@@ -1,0 +1,18 @@
+// markdownlint rules for posts (VS Code extension DavidAnson.vscode-markdownlint).
+// https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+{
+  "default": true,
+  // Japanese paragraphs are written one sentence per line, often longer than 80 characters.
+  "MD013": false,
+  // Same heading text is fine in different sections ("まとめ" under each part).
+  "MD024": { "siblings_only": true },
+  // Japanese headings may end with "？" or "！".
+  "MD026": { "punctuation": ".,;:" },
+  // HTML allowed in posts.
+  "MD033": { "allowed_elements": ["details", "summary", "kbd", "br", "sup", "sub", "mark"] },
+  // Bare URLs become links.
+  "MD034": false,
+  // Underscores next to Japanese text are not emphasis; use asterisks.
+  "MD049": { "style": "asterisk" },
+  "MD050": { "style": "asterisk" }
+}

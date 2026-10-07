@@ -1,0 +1,62 @@
+---
+import PostList from '../components/PostList.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getPosts, tagCounts, tagPath } from '../lib/posts.ts';
+import { SITE } from '../site.ts';
+import { TAGS } from '../tags.ts';
+
+const LATEST = 10;
+
+const posts = await getPosts();
+const tags = tagCounts(posts);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITE.title,
+  url: `${SITE.url}/`,
+  description: SITE.description,
+  inLanguage: SITE.lang,
+};
+---
+
+<BaseLayout jsonLd={jsonLd}>
+  <div class="container">
+    <h1 class="page-title">{SITE.title}</h1>
+    <p class="page-lead">{SITE.description}</p>
+
+    <h2 class="section-title">新着記事</h2>
+    {
+      posts.length > 0 ? (
+        <PostList posts={posts.slice(0, LATEST)} headingLevel={3} />
+      ) : (
+        <p class="empty">記事はまだありません。</p>
+      )
+    }
+    {
+      posts.length > LATEST && (
+        <a class="more-link" href="/posts/">
+          すべての記事（{posts.length} 件）→
+        </a>
+      )
+    }
+
+    {
+      tags.length > 0 && (
+        <>
+          <h2 class="section-title">タグ</h2>
+          <ul class="tag-list">
+            {tags.map(({ tag, count }) => (
+              <li>
+                <a class="tag" href={tagPath(tag)}>
+                  {TAGS[tag]}
+                  <span class="tag-count">{count}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </>
+      )
+    }
+  </div>
+</BaseLayout>

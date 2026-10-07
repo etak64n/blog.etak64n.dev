@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="200" viewBox="0 0 720 200" font-family="system-ui, -apple-system, 'Hiragino Sans', sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 10 5 0 10z" fill="#59636e"/>
+    </marker>
+  </defs>
+  <rect width="720" height="200" fill="#ffffff"/>
+  <g stroke="#1f2328" stroke-width="2" fill="#f6f8fa">
+    <rect x="30" y="60" width="160" height="80" rx="10"/>
+    <rect x="280" y="60" width="160" height="80" rx="10" fill="#fff4e5" stroke="#f38020"/>
+    <rect x="530" y="60" width="160" height="80" rx="10"/>
+  </g>
+  <g fill="#1f2328" font-size="18" text-anchor="middle">
+    <text x="110" y="106">ブラウザ</text>
+    <text x="360" y="98">Cloudflare</text>
+    <text x="360" y="122" font-size="14" fill="#59636e">エッジ</text>
+    <text x="610" y="106">オリジン</text>
+  </g>
+  <g stroke="#59636e" stroke-width="2" marker-end="url(#arrow)">
+    <line x1="194" y1="100" x2="274" y2="100"/>
+    <line x1="444" y1="100" x2="524" y2="100"/>
+  </g>
+  <g fill="#59636e" font-size="13" text-anchor="middle">
+    <text x="234" y="88">HTTPS</text>
+    <text x="484" y="88">キャッシュなし</text>
+  </g>
+</svg>

@@ -1,0 +1,18 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+import { SITE } from '../site.ts';
+
+const path = Astro.url.pathname;
+const currentIn = (section: string) => (path.startsWith(section) ? 'page' : undefined);
+---
+
+<header class="site-header">
+  <div class="container">
+    <a class="site-title" href="/">{SITE.title}</a>
+    <nav class="site-nav" aria-label="サイト">
+      <a href="/posts/" aria-current={currentIn('/posts')}>記事</a>
+      <a href="/tags/" aria-current={currentIn('/tags')}>タグ</a>
+      <ThemeToggle />
+    </nav>
+  </div>
+</header>

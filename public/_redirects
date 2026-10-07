@@ -1,0 +1,7 @@
+# Cloudflare Pages redirects; the first matching rule wins.
+# Posts used to live under /articles/ (the Zola version of the blog).
+/articles /posts/ 301
+/articles/ /posts/ 301
+/articles/page/* /posts/ 301
+/articles/:slug /:slug/ 301
+/articles/:slug/ /:slug/ 301

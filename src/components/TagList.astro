@@ -1,0 +1,24 @@
+---
+import { tagPath } from '../lib/posts.ts';
+import { TAGS, type TagSlug } from '../tags.ts';
+
+interface Props {
+  tags: readonly TagSlug[];
+}
+
+const { tags } = Astro.props;
+---
+
+{
+  tags.length > 0 && (
+    <ul class="tag-list" aria-label="タグ">
+      {tags.map((tag) => (
+        <li>
+          <a class="tag" href={tagPath(tag)}>
+            {TAGS[tag]}
+          </a>
+        </li>
+      ))}
+    </ul>
+  )
+}

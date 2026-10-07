@@ -1,0 +1,7 @@
+# Posts are formatted by hand: Prettier rewrites emphasis markers in ways that break next to Japanese text.
+*.md
+*.mdx
+dist/
+.astro/
+.cache/
+package-lock.json

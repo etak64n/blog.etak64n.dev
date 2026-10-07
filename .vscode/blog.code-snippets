@@ -1,0 +1,92 @@
+{
+  // Markdown snippets for posts: type the prefix and press Tab (or pick from Ctrl+Space).
+  // The syntax is described in CONTRIBUTING.md.
+  "Front matter": {
+    "scope": "markdown,mdx",
+    "prefix": "fm",
+    "description": "記事のフロントマター（下書き）",
+    "body": [
+      "---",
+      "title: ${1:タイトル}",
+      "description: \"${2}\"",
+      "date: $CURRENT_YEAR-$CURRENT_MONTH-$CURRENT_DATE",
+      "tags: [${3}]",
+      "draft: true",
+      "---",
+      "",
+      "$0"
+    ]
+  },
+  "Updated date": {
+    "scope": "markdown,mdx",
+    "prefix": "updated",
+    "description": "フロントマターの更新日（今日）",
+    "body": ["updated: $CURRENT_YEAR-$CURRENT_MONTH-$CURRENT_DATE"]
+  },
+  "Figure": {
+    "scope": "markdown,mdx",
+    "prefix": "fig",
+    "description": "画像とキャプション（次の行がキャプションになる）",
+    "body": ["![${1:画像の内容を説明する代替テキスト}](./${2:image.png})", "${3:キャプション}", "$0"]
+  },
+  "Quote with source": {
+    "scope": "markdown,mdx",
+    "prefix": "quote",
+    "description": "出典付きの引用",
+    "body": ["> ${1:引用する文}", ">", "> 出典: [${2:ページのタイトル}](${3:https://})", "", "$0"]
+  },
+  "Note": {
+    "scope": "markdown,mdx",
+    "prefix": "note",
+    "description": "注記: 補足",
+    "body": ["> [!NOTE]", "> ${1:補足の情報}", "", "$0"]
+  },
+  "Tip": {
+    "scope": "markdown,mdx",
+    "prefix": "tip",
+    "description": "注記: ヒント",
+    "body": ["> [!TIP]", "> ${1:知っておくと便利なこと}", "", "$0"]
+  },
+  "Important": {
+    "scope": "markdown,mdx",
+    "prefix": "important",
+    "description": "注記: 重要",
+    "body": ["> [!IMPORTANT]", "> ${1:読み飛ばしてほしくないこと}", "", "$0"]
+  },
+  "Warning": {
+    "scope": "markdown,mdx",
+    "prefix": "warning",
+    "description": "注記: 注意",
+    "body": ["> [!WARNING]", "> ${1:注意が必要なこと}", "", "$0"]
+  },
+  "Caution": {
+    "scope": "markdown,mdx",
+    "prefix": "caution",
+    "description": "注記: 警告",
+    "body": ["> [!CAUTION]", "> ${1:危険を伴う操作や取り返しのつかないこと}", "", "$0"]
+  },
+  "Code block with file name": {
+    "scope": "markdown,mdx",
+    "prefix": "code",
+    "description": "ファイル名付きのコードブロック",
+    "body": ["```${1:ts} title=\"${2:src/index.ts}\"", "$0", "```"]
+  },
+  "Terminal": {
+    "scope": "markdown,mdx",
+    "prefix": "term",
+    "description": "ターミナルのコマンド",
+    "body": ["```bash", "$0", "```"]
+  },
+  "Details": {
+    "scope": "markdown,mdx",
+    "prefix": "details",
+    "description": "折りたたみ",
+    "body": ["<details>", "<summary>${1:見出し}</summary>", "", "$0", "", "</details>"]
+  },
+  "References": {
+    "scope": "markdown,mdx",
+    "prefix": "refs",
+    "description": "参考資料の節",
+    "body": ["## 参考資料", "", "- [${1:ページのタイトル}](${2:https://})$0"]
+  }
+}

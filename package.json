@@ -1,26 +1,38 @@
 {
   "name": "etak64n-blog",
   "version": "1.0.0",
-  "description": "Blog built with Zola + Tera, managed with Sveltia CMS (custom extensions in static/admin), deployed to Cloudflare Pages via GitHub Actions.",
+  "private": true,
+  "type": "module",
+  "description": "Source of blog.etak64n.dev: Markdown posts built with Astro and served by Cloudflare Pages.",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
-    "dev": "zola serve",
-    "build": "zola build",
-    "preview": "zola build && wrangler pages dev public",
-    "admin": "bash scripts/admin-dev.sh",
-    "typecheck": "tsc -p functions/tsconfig.json"
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "new": "node scripts/new-post.ts"
+  },
+  "dependencies": {
+    "@astrojs/markdown-satteri": "^0.4.3",
+    "@astrojs/mdx": "^8.0.3",
+    "@astrojs/rss": "^4.0.19",
+    "@expressive-code/plugin-line-numbers": "^0.44.2",
+    "astro": "^7.3.6",
+    "astro-expressive-code": "^0.44.2",
+    "satteri": "^0.10.5",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260923.1",
-    "typescript": "^7.0.2",
-    "wrangler": "^4.20.0"
+    "@astrojs/check": "^0.9.10",
+    "@types/node": "^24.9.2",
+    "prettier": "^3.9.9",
+    "prettier-plugin-astro": "^1.1.0",
+    "typescript": "^6.0.3"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/etak64n/etak64n-blog.git"
-  },
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/etak64n/etak64n-blog/issues"
-  },
-  "homepage": "https://github.com/etak64n/etak64n-blog#readme"
+    "url": "git+https://github.com/etak64n/blog.etak64n.dev.git"
+  }
 }

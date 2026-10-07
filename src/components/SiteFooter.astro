@@ -1,0 +1,15 @@
+---
+import { SITE } from '../site.ts';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container">
+    <span>© {year} {SITE.author.name}</span>
+    <nav aria-label="フッター">
+      <a href="/rss.xml">RSS</a>
+      <a href={SITE.repository}>GitHub</a>
+    </nav>
+  </div>
+</footer>

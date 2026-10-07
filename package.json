@@ -12,7 +12,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "new": "node scripts/new-post.ts"
+    "new": "node scripts/new-post.ts",
+    "hero": "node --env-file-if-exists=$HOME/.config/blog-etak64n/cloudflare.env scripts/hero.ts"
   },
   "dependencies": {
     "@astrojs/markdown-satteri": "^0.4.3",

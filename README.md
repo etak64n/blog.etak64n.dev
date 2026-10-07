@@ -53,6 +53,7 @@ npm run new -- my-first-post            # 記事 src/content/blog/my-first-post/
 | --- | --- |
 | `npm run dev` | 開発サーバーを起動する。保存すると表示が更新される |
 | `npm run new -- <slug>` | 記事のフォルダーとファイルを下書きとして作る。`--open` で VS Code で開く |
+| `npm run hero -- <slug>` | 記事のヒーロー画像を Workers AI で作り、`hero.webp` として保存する（CONTRIBUTING.md の「ヒーロー画像を AI で作る」） |
 | `npm run check` | TypeScript とフロントマターを検査する |
 | `npm run build` | `dist/` にサイトを書き出す |
 | `npm run preview` | 書き出した `dist/` を表示する |

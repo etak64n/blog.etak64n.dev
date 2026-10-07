@@ -85,6 +85,22 @@ GIF はアニメーションを保ったまま、元の大きさの WebP に変�
 
 `hero` がない記事は、記事の先頭とカードに `public/images/placeholder.svg` を、リンクのプレビューに `public/og-default.png` を使う。
 
+## ヒーロー画像の生成
+
+`npm run hero -- <slug>`（`scripts/hero.ts`）は、手元で Workers AI の REST API を呼んでヒーロー画像を作る。
+画像は記事のフォルダーに保存してリポジトリに入れるため、ビルドは画像を生成しない。
+同じ記事は何度ビルドしても同じ画像になり、ビルドに Workers AI の権限も料金もかからない。
+
+| 段階 | 使うもの | 内容 |
+| --- | --- | --- |
+| 場面 | `@cf/openai/gpt-oss-120b`（OpenAI 互換の `v1/chat/completions`） | タイトル、概要、本文の冒頭 1,500 文字から、場面を英語の 1 文で書く |
+| 描画 | `@cf/black-forest-labs/flux-2-klein-4b`（multipart の `run`） | `HERO_STYLE` と場面をつないだプロンプトから、1216×640 の JPEG を描く |
+| 保存 | sharp | 1200×630 に切り抜き、品質 90 の WebP で `hero.webp` に保存し、フロントマターの `hero` を書き換える |
+
+1216×640 は、モデルが受け付ける 16 の倍数の大きさのうち、1200×630 の比率（1.9:1）に最も近いものである。
+認証情報は環境変数で渡す。`npm run hero` は `~/.config/blog-etak64n/cloudflare.env` を Node.js の `--env-file-if-exists` で読む。
+`HERO_FAKE=1` を付けると Workers AI を呼ばずに単色の画像を作り、GitHub Actions はこれで切り抜き、保存、フロントマターの書き換えを検査する。
+
 ## URL
 
 | URL | 内容 | ファイル |

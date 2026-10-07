@@ -7,6 +7,7 @@ blog.etak64n.dev の記事は、リポジトリの中の Markdown ファイル�
 - [フロントマター](#フロントマター)
 - [本文](#本文)
 - [画像](#画像)
+- [ヒーロー画像を AI で作る](#ヒーロー画像を-ai-で作る)
 - [コードブロック](#コードブロック)
 - [注記](#注記)
 - [引用と出典のルール](#引用と出典のルール)
@@ -120,6 +121,33 @@ Workers のリクエスト処理の流れ（Cloudflare Docs をもとに筆者�
 ほかのサイトの画像の URL を貼ることもできるが、その画像は変換されず、外部のサイトから読み込まれる。
 
 記事の図は、クリックすると拡大表示される。
+
+## ヒーロー画像を AI で作る
+
+記事の先頭とカードに出す**ヒーロー画像**は、Cloudflare の Workers AI で作れる。
+記事を開いた状態で、VS Code のコマンドパレットから「Tasks: Run Task」→「ヒーロー画像を生成」を選ぶ。
+ターミナルでは `npm run hero -- <slug>` で同じことができる。
+
+コマンドは次の順に処理する（30〜60 秒かかる）。
+
+1. 文章のモデル（`gpt-oss-120b`）が、記事のタイトル、概要、本文の冒頭から、記事の話題を表す場面を英語の 1 文で考える。
+2. 画像のモデル（FLUX.2 [klein]）が、その場面をこのブログ共通の画風で描く。
+3. 画像を 1200×630 に切り抜き、記事のフォルダーに `hero.webp` として保存し、フロントマターに `hero: ./hero.webp` を書く。
+
+できた画像は VS Code で開く。
+気に入らなければ、もう一度実行すると画像が置き換わる。
+描いてほしい場面が決まっているときは、`--subject` で英語の説明を渡す。
+
+```bash
+npm run hero -- cloudflare-workers-architecture --subject "a globe with small server boxes on it, connected by light lines"
+```
+
+画風は、すべての画像で共通の指定（`scripts/hero.ts` の `HERO_STYLE`）で決まる。
+画風を変えるときは、この 1 か所を書き換える。
+
+コマンドは、Cloudflare の認証情報を `~/.config/blog-etak64n/cloudflare.env` から読む。
+このファイルには、`CLOUDFLARE_ACCOUNT_ID` と、Workers AI の権限を持つ `CLOUDFLARE_API_TOKEN`（または `CLOUDFLARE_EMAIL` と `CLOUDFLARE_API_KEY`）を書く。
+1 枚の生成には約 200 Neurons（0.3 円程度）を使い、Workers AI の無料枠（1 日 10,000 Neurons）の中なら 1 日に約 50 枚まで料金はかからない。
 
 ## コードブロック
 

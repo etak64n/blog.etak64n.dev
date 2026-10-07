@@ -51,12 +51,15 @@ jobs:
         env:
           SHOW_DRAFTS: ${{ github.event_name == 'pull_request' }}
 
-      # The post template of `npm run new` must pass the front matter checks. Runs after the build,
-      # so the test post is not part of the site.
-      - name: Check the post template
+      # The post template of `npm run new`, with a hero image set by `npm run hero` (drawn without
+      # Workers AI), must pass the front matter checks. Runs after the build, so the test post is
+      # not part of the site.
+      - name: Check the post template and the hero image command
         run: |
           npm run new -- ci-template-check
-          test -f src/content/blog/ci-template-check/ci-template-check.md
+          HERO_FAKE=1 npm run hero -- ci-template-check
+          test -f src/content/blog/ci-template-check/hero.webp
+          grep -qx 'hero: ./hero.webp' src/content/blog/ci-template-check/ci-template-check.md
           npx astro sync
 
       - uses: actions/upload-artifact@v7

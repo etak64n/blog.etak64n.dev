@@ -11,6 +11,14 @@
       "presentation": { "reveal": "silent", "close": true }
     },
     {
+      "label": "ヒーロー画像を生成",
+      "detail": "開いている記事の画像を Workers AI で作り、記事フォルダーに hero.webp として保存して開く（30〜60 秒）",
+      "type": "shell",
+      "command": "npm run hero -- \"${fileBasenameNoExtension}\" --open",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always" }
+    },
+    {
       "label": "プレビュー（開発サーバー）",
       "detail": "http://localhost:4321/ で下書きを含めて表示する",
       "type": "npm",

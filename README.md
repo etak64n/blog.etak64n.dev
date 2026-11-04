@@ -20,6 +20,8 @@ src/content/blog/
 VS Code で記事を書く → git push → GitHub Actions（型とフロントマターの検査、ビルド、画像の最適化）→ Cloudflare Pages → blog.etak64n.dev
 ```
 
+ブラウザの編集画面（`https://blog.etak64n.dev/admin/`）で保存した記事も、GitHub API で `main` にコミットされ、同じ流れで公開される。
+
 プルリクエストを作ると、下書きを含むプレビューが `https://<ブランチ名>.etak64n-blog.pages.dev/` に公開される。
 
 ## 機能
@@ -32,6 +34,7 @@ VS Code で記事を書く → git push → GitHub Actions（型とフロント�
 - 注記（`> [!NOTE]` など、色とアイコンの枠）、出典付きの引用、画像のキャプション、脚注
 - RSS（`/rss.xml`）、サイトマップ（`/sitemap.xml`）、`robots.txt`、canonical URL、Open Graph、Twitter Card、JSON-LD
 - 旧 URL（`/articles/<slug>/`）からの転送
+- ブラウザの編集画面（`/admin/`、Cloudflare Access でログイン）：記事の一覧と新規作成、記事ページと同じ見た目の Markdown エディター、画像の WebP 変換、`main` へのコミット
 
 ## 必要なもの
 
@@ -70,7 +73,9 @@ src/
   pages/             ページ（トップ、記事、一覧、タグ、RSS、サイトマップ、404）
   layouts/           HTML の共通部分と SEO のメタデータ
   components/        ヘッダー、記事一覧、目次などの部品
-  styles/global.css  スタイル
+  styles/            スタイル（global.css はサイト、admin.css は編集画面）
+  admin/             ブラウザの編集画面（エディター、下書き、画像の変換）
+functions/           編集画面の API（Cloudflare Pages Functions）
 public/              そのまま配信するファイル（favicon、OG 画像、_headers、_redirects）
 scripts/             記事を作るスクリプト、Cloudflare のゾーン設定のスクリプト
 .vscode/             VS Code の設定、スニペット、タスク

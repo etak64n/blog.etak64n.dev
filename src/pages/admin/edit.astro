@@ -1,0 +1,31 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout title="記事を編集">
+  <Fragment slot="header">
+    <div class="left">
+      <a class="admin-back" href="/admin/" aria-label="記事の一覧へ">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path d="M15 5l-7 7 7 7"></path>
+        </svg>
+      </a>
+      <span id="file-name" class="admin-file"></span>
+    </div>
+    <div class="right">
+      <span id="status" class="admin-status" role="status"></span>
+      <label class="admin-button" for="image-input">画像</label>
+      <input id="image-input" class="sr-only" type="file" accept="image/*" multiple />
+      <button id="save" class="admin-button primary" type="button" disabled>保存</button>
+    </div>
+  </Fragment>
+
+  <div class="admin-panel admin-editor">
+    <div id="notices"></div>
+    <div id="editor"></div>
+  </div>
+</AdminLayout>
+
+<script>
+  import '../../admin/editor-page.ts';
+</script>

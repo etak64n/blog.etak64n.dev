@@ -1,5 +1,17 @@
-# Cloudflare Pages project that serves blog.etak64n.dev. GitHub Actions uploads dist/ with
-# `wrangler pages deploy` (.github/workflows/deploy.yml); the site is static, with no Functions.
+# Cloudflare Pages project that serves blog.etak64n.dev. GitHub Actions uploads dist/ and the
+# Functions in functions/ with `wrangler pages deploy` (.github/workflows/deploy.yml). The site is
+# static; the Functions are the API of the editor at /admin/ (docs/architecture.md).
 name = "etak64n-blog"
 pages_build_output_dir = "dist"
 compatibility_date = "2025-09-02"
+
+# The editor's settings in production. Previews have none, so the editor's API answers 404 there.
+# The secrets GITHUB_TOKEN and EDITOR_EMAIL are set on the Pages project, not in this file.
+[env.production.vars]
+# Team domain of Cloudflare Access and the audience (AUD) tag of the Access application
+# "blog.etak64n.dev/admin", which lets only the editor's email address in.
+ACCESS_TEAM_DOMAIN = "https://etak64n.cloudflareaccess.com"
+ACCESS_AUD = "458ec5977b94c9934d39609d06b76cbb865d61ca3913a290f56e1c791baeefc4"
+# Repository and branch the editor reads the posts from and commits them to.
+GITHUB_REPOSITORY = "etak64n/blog.etak64n.dev"
+GITHUB_BRANCH = "main"

@@ -1,12 +1,12 @@
 import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
-import { postSlugFromPath } from './lib/post-path.ts';
+import { POSTS_DIR, postSlugFromPath } from './lib/post-path.ts';
 import { TAG_SLUGS } from './tags.ts';
 
 const blog = defineCollection({
   loader: glob({
-    base: './src/content/blog',
+    base: `./${POSTS_DIR}`,
     // Every Markdown file is matched so that a misplaced one fails in postSlugFromPath instead of
     // being skipped.
     pattern: '**/*.{md,mdx}',

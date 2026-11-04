@@ -2,9 +2,13 @@
  * Rules for where a post lives. Each post is `src/content/blog/<slug>/<slug>.md` (or `.mdx`), and
  * is published at `/<slug>/`. The folder holds the post's images next to it.
  *
- * Shared by the content collection (src/content.config.ts) and `npm run new` (scripts/new-post.ts),
- * so this module must not import anything.
+ * Shared by the content collection (src/content.config.ts), `npm run new` (scripts/new-post.ts) and
+ * the editor at /admin/ (src/admin/ and its API in functions/), so this module must not import
+ * anything.
  */
+
+/** Folder of the posts, relative to the root of the repository. */
+export const POSTS_DIR = 'src/content/blog';
 
 /** Top-level paths of the site's own pages, which a post's URL must not take. */
 export const RESERVED_SLUGS: ReadonlySet<string> = new Set([

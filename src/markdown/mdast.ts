@@ -5,6 +5,7 @@
  */
 import { defineMdastPlugin, type Custom } from 'satteri';
 import type { PhrasingContent } from 'mdast';
+import { CALLOUT_MARKER, CALLOUTS, SOURCE_LINE, type CalloutType } from './syntax.ts';
 
 type Child = NonNullable<Custom['children']>[number];
 
@@ -69,20 +70,6 @@ function stripLeadingText(
   return { match, rest: remainder ? [{ type: 'text', value: remainder }, ...rest] : rest };
 }
 
-/** The class (colour and icon, in global.css) and the name read out by screen readers of each alert. */
-const CALLOUTS = {
-  note: { className: 'note-info', label: '補足' },
-  tip: { className: 'note-tip', label: 'ヒント' },
-  important: { className: 'note-important', label: '重要' },
-  warning: { className: 'note-warn', label: '注意' },
-  caution: { className: 'note-alert', label: '警告' },
-} as const;
-
-type CalloutType = keyof typeof CALLOUTS;
-
-/** `[!NOTE]` alone on the first line of a blockquote, as in GitHub's alerts. */
-const CALLOUT_MARKER = /^\[!(note|tip|important|warning|caution)\][^\S\n]*(?:\n|$)/i;
-
 /**
  * GitHub-style alerts: a blockquote starting with `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`
  * or `[!CAUTION]` becomes a note box with an icon:
@@ -109,9 +96,6 @@ export const callouts = defineMdastPlugin({
     );
   },
 });
-
-/** The line naming the source of a quotation, e.g. `出典: [タイトル](https://example.com/)`. */
-const SOURCE_LINE = /^出典[:：]/;
 
 /**
  * Quotations with a source: a blockquote whose last paragraph starts with `出典:` becomes

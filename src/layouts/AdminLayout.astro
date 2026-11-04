@@ -1,0 +1,41 @@
+---
+/**
+ * Pages of the editor at /admin/ (src/admin/). The site's header bar holds the page's controls
+ * (slot `header`); the look is the site's (global.css) with the editor's additions (admin.css).
+ * Cloudflare Access lets only the editor open these pages on blog.etak64n.dev.
+ */
+import '../styles/global.css';
+import '../styles/admin.css';
+import ThemeScript from '../components/ThemeScript.astro';
+import { SITE } from '../site.ts';
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang={SITE.lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>{`${title} | ${SITE.title}`}</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <ThemeScript />
+  </head>
+  <body class="admin">
+    <header class="site-header">
+      <div class="wrap">
+        <slot name="header" />
+      </div>
+    </header>
+    <main id="main">
+      <div class="wrap">
+        <slot />
+      </div>
+    </main>
+  </body>
+</html>

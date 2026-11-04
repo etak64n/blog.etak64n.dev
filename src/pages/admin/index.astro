@@ -1,0 +1,47 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { SITE } from '../../site.ts';
+---
+
+<AdminLayout title="記事の編集">
+  <Fragment slot="header">
+    <div class="left">
+      <a class="brand" href="/">{SITE.title}</a>
+    </div>
+  </Fragment>
+
+  <div class="admin-panel">
+    <form id="new-post" class="admin-new" novalidate>
+      <label for="new-slug">新しい記事</label>
+      <input
+        id="new-slug"
+        name="slug"
+        type="text"
+        placeholder="slug"
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+        required
+      />
+      <button class="admin-button primary" type="submit">作成</button>
+      <p id="new-error" class="admin-error" hidden></p>
+    </form>
+    <div id="notices"></div>
+    <table class="admin-posts">
+      <thead>
+        <tr>
+          <th class="title">タイトル</th>
+          <th class="slug">slug</th>
+          <th class="date">日付</th>
+          <th class="state">状態</th>
+          <th class="local">この端末</th>
+        </tr>
+      </thead>
+      <tbody id="posts"></tbody>
+    </table>
+  </div>
+</AdminLayout>
+
+<script>
+  import '../../admin/list-page.ts';
+</script>

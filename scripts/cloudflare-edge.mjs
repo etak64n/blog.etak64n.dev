@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * Cloudflare settings of blog.etak64n.dev that live outside this repository's deploys: the
- * response headers set by Transform Rules of the zone etak64n.dev, and the redirect of the
- * project's pages.dev hostname to the custom domain.
+ * response headers set by Transform Rules of the zone etak64n.dev (for the public pages and for the
+ * editor at /admin/), and the redirect of the project's pages.dev hostname to the custom domain.
  *
  *   node --env-file=<file with the CLOUDFLARE_* variables> scripts/cloudflare-edge.mjs [--apply]
  *
@@ -42,7 +42,7 @@ const BLOG_CSP = [
   "frame-ancestors 'none'",
 ].join('; ');
 
-/** Rule for the public pages. It sits before the admin rule, which then replaces its CSP on /admin. */
+/** Rule for the public pages. It sits before the editor's rule, which then replaces its CSP on /admin. */
 const BLOG_RULE = {
   description: '2b) blog 公開ページ: 専用CSP（KaTeX と Web Analytics、https の画像と動画を許可。/admin は 3) で上書き）',
   expression: `(http.host eq "${HOST}")`,
@@ -57,12 +57,38 @@ const BLOG_RULE = {
 };
 const BLOG_RULE_PREFIX = '2b) blog 公開ページ';
 
-/** Directives of the admin rule's CSP that must match, so that the CMS preview shows the same images. */
-const ADMIN_RULE_PREFIX = '3) blog 管理画面';
-const ADMIN_DIRECTIVES = {
-  'img-src': "'self' data: blob: https:",
-  'media-src': "'self' blob: https:",
+/**
+ * Content-Security-Policy of the editor at /admin/ (src/admin/): the public pages' policy without
+ * jsDelivr, plus `blob:` images (images added in the editor, shown before they are saved) and
+ * WebAssembly (`'wasm-unsafe-eval'`, the WebP encoder).
+ */
+const ADMIN_CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://static.cloudflareinsights.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "media-src 'self' https:",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join('; ');
+
+/** Rule for the editor. It sits after the public pages' rule, whose CSP it replaces on /admin. */
+const ADMIN_RULE = {
+  description: '3) blog 管理画面(/admin): 編集画面の CSP（追加した画像の blob: と、WebP の変換の WebAssembly を許可）',
+  expression: `(http.host eq "${HOST}" and starts_with(http.request.uri.path, "/admin"))`,
+  action: 'rewrite',
+  action_parameters: {
+    headers: {
+      'Content-Security-Policy': { operation: 'set', value: ADMIN_CSP },
+      'Permissions-Policy': { operation: 'set', value: 'camera=(), microphone=(), geolocation=()' },
+    },
+  },
+  enabled: true,
 };
+const ADMIN_RULE_PREFIX = '3) blog 管理画面';
 
 /** Redirect of the production pages.dev hostname; preview deployments (subdomains) stay reachable. */
 const LIST_NAME = 'blog_pages_dev';
@@ -121,32 +147,6 @@ async function api(method, path, body, { allow404 = false } = {}) {
 
 /* ---------------------------------------------------------------- helpers */
 
-/** `a; b c; d` → [['a', ''], ['b', 'c'], ['d', '']], keeping the order. */
-const parseCsp = (csp) =>
-  csp
-    .split(';')
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .map((part) => {
-      const [name, ...values] = part.split(/\s+/);
-
-      return [name.toLowerCase(), values.join(' ')];
-    });
-
-/** The CSP with the given directives set (replaced in place, or appended). */
-function withDirectives(csp, directives) {
-  const parts = parseCsp(csp);
-
-  for (const [name, value] of Object.entries(directives)) {
-    const found = parts.find(([n]) => n === name);
-
-    if (found) found[1] = value;
-    else parts.push([name, value]);
-  }
-
-  return parts.map(([name, value]) => (value ? `${name} ${value}` : name)).join('; ');
-}
-
 /** JSON with sorted keys, so that the order in which the API returns fields does not matter. */
 const stable = (value) =>
   Array.isArray(value)
@@ -193,43 +193,37 @@ async function plan() {
   // Response header Transform Rules of the zone.
   const headers = await api('GET', `/zones/${zone.id}/rulesets/phases/http_response_headers_transform/entrypoint`);
   const rules = headers.rules ?? [];
-  const adminIndex = rules.findIndex((r) => (r.description ?? '').startsWith(ADMIN_RULE_PREFIX));
-  const blogIndex = rules.findIndex((r) => (r.description ?? '').startsWith(BLOG_RULE_PREFIX));
-
-  if (adminIndex < 0) throw new Error(`rule "${ADMIN_RULE_PREFIX}" not found; nothing to place the blog rule before`);
-
-  const admin = rules[adminIndex];
   const base = `/zones/${zone.id}/rulesets/${headers.id}/rules`;
+  const blogIndex = rules.findIndex((r) => (r.description ?? '').startsWith(BLOG_RULE_PREFIX));
+  const adminIndex = rules.findIndex((r) => (r.description ?? '').startsWith(ADMIN_RULE_PREFIX));
+  const admin = rules[adminIndex];
 
+  // The public pages' rule comes before the editor's rule.
   if (blogIndex < 0) {
     steps.push({
-      what: `add rule "${BLOG_RULE_PREFIX}" before "${ADMIN_RULE_PREFIX}"`,
-      run: () => api('POST', base, { ...ruleBody(BLOG_RULE), position: { before: admin.id } }),
+      what: `add rule "${BLOG_RULE_PREFIX}"${admin ? ` before "${ADMIN_RULE_PREFIX}"` : ''}`,
+      run: () => api('POST', base, { ...ruleBody(BLOG_RULE), ...(admin ? { position: { before: admin.id } } : {}) }),
     });
   } else {
     const blog = rules[blogIndex];
-    const misplaced = blogIndex > adminIndex;
+    const misplaced = admin !== undefined && blogIndex > adminIndex;
 
     if (misplaced || !same(ruleBody(blog), ruleBody({ ...BLOG_RULE, ref: blog.ref }))) {
       steps.push({
-        what: `update rule "${BLOG_RULE_PREFIX}"${misplaced ? ' and move it before the admin rule' : ''}`,
+        what: `update rule "${BLOG_RULE_PREFIX}"${misplaced ? ` and move it before "${ADMIN_RULE_PREFIX}"` : ''}`,
         run: () =>
           api('PATCH', `${base}/${blog.id}`, { ...ruleBody(BLOG_RULE), ...(misplaced ? { position: { before: admin.id } } : {}) }),
       });
     }
   }
 
-  const adminCsp = admin.action_parameters?.headers?.['Content-Security-Policy']?.value ?? '';
-  const nextAdminCsp = withDirectives(adminCsp, ADMIN_DIRECTIVES);
-
-  if (nextAdminCsp !== adminCsp) {
-    const changed = Object.keys(ADMIN_DIRECTIVES).join(', ');
-    const nextAdmin = structuredClone(admin);
-
-    nextAdmin.action_parameters.headers['Content-Security-Policy'].value = nextAdminCsp;
+  // A new editor's rule is added after every rule, and so after the public pages' rule.
+  if (!admin) {
+    steps.push({ what: `add rule "${ADMIN_RULE_PREFIX}"`, run: () => api('POST', base, ruleBody(ADMIN_RULE)) });
+  } else if (!same(ruleBody(admin), ruleBody({ ...ADMIN_RULE, ref: admin.ref }))) {
     steps.push({
-      what: `set ${changed} of rule "${ADMIN_RULE_PREFIX}"`,
-      run: () => api('PATCH', `${base}/${admin.id}`, ruleBody(nextAdmin)),
+      what: `update rule "${ADMIN_RULE_PREFIX}"`,
+      run: () => api('PATCH', `${base}/${admin.id}`, ruleBody(ADMIN_RULE)),
     });
   }
 

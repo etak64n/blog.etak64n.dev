@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import SiteFooter from '../components/SiteFooter.astro';
 import SiteHeader from '../components/SiteHeader.astro';
+import ThemeScript from '../components/ThemeScript.astro';
 import { withTrailingSlash } from '../lib/posts.ts';
 import { DEFAULT_OG_IMAGE, SITE } from '../site.ts';
 
@@ -72,19 +73,7 @@ const jsonLdText = jsonLd && JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
     <meta name="twitter:card" content="summary_large_image" />
     {jsonLdText && <script type="application/ld+json" set:html={jsonLdText}></script>}
 
-    <!-- Runs before the first paint so that the page never flashes in the other theme. -->
-    <script is:inline>
-      (() => {
-        let theme = null;
-        try {
-          theme = localStorage.getItem('theme');
-        } catch {}
-        if (theme !== 'light' && theme !== 'dark') {
-          theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        }
-        document.documentElement.dataset.theme = theme;
-      })();
-    </script>
+    <ThemeScript />
   </head>
   <body>
     <a class="skip-link" href="#main">本文へスキップ</a>

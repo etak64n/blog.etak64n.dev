@@ -1,0 +1,178 @@
+/* The editor at /admin/ (src/admin/): its controls, and the post's Markdown in the article's type.
+   The cm-md-* classes come from src/admin/live-preview.ts; their values follow the article's styles
+   in global.css (`.content …`), so that a post looks the same while it is written. */
+
+/* ---------------------------------------------------------------- controls */
+
+.admin .site-header .wrap .left { flex: 1; min-width: 0; }
+.admin-back { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 32px; height: 32px; color: var(--muted); }
+.admin-back path { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.admin-back:hover { color: var(--link); }
+.admin-file { min-width: 0; overflow: hidden; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.admin-status { color: var(--muted); font-size: 0.85rem; white-space: nowrap; }
+
+.admin-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.admin-button:hover { border-color: #bfdbfe; color: var(--link); }
+.admin-button.primary,
+.admin-button.primary:hover { border-color: var(--link); background: var(--link); color: #ffffff; }
+.admin-button.primary:hover:not(:disabled) { border-color: var(--link-hover); background: var(--link-hover); }
+:root[data-theme='dark'] .admin-button.primary { color: #0b1220; }
+.admin-button:disabled { opacity: 0.45; cursor: default; }
+/* The image button is the label of a visually hidden file input. */
+.right:has(#image-input:disabled) label[for='image-input'] { opacity: 0.45; pointer-events: none; }
+.right:has(#image-input:focus-visible) label[for='image-input'] { outline: 2px solid var(--link); outline-offset: 2px; }
+
+/* The panel, as the article's (.page-body .post-col), at the article's width */
+.admin-panel { max-width: 800px; margin: 0 auto; padding: 16px 18px; border: 1px solid var(--border); background: var(--panel); }
+.admin-panel .note { margin: 0 0 16px; }
+.admin-panel .note p { margin: 0; }
+.admin-panel .note .admin-button { margin-top: 8px; }
+.admin-editor { min-height: calc(100vh - var(--header-h) - 64px); }
+
+/* The list page */
+.admin-new { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; }
+.admin-new label { font-weight: 600; }
+.admin-new input {
+  flex: 1;
+  min-width: 12em;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9rem;
+}
+.admin-new input:focus { outline: 2px solid var(--link); outline-offset: -1px; }
+.admin-error { flex-basis: 100%; margin: 0; color: #dc2626; font-size: 0.9rem; }
+:root[data-theme='dark'] .admin-error { color: #f87171; }
+
+.admin-posts { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+.admin-posts th,
+.admin-posts td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+.admin-posts th { color: var(--muted); font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+.admin-posts td.title a { font-weight: 600; }
+.admin-posts td:is(.slug, .date, .state, .local) { font-size: 0.85rem; white-space: nowrap; }
+.admin-posts td:is(.slug, .date) { color: var(--muted); }
+.admin-posts td.slug { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+/* The colour of the draft badge (.badge) */
+.admin-posts td.state.draft { color: #b45309; }
+:root[data-theme='dark'] .admin-posts td.state.draft { color: #fbbf24; }
+.admin-posts td.local { color: var(--link); }
+@media (max-width: 640px) {
+  .admin-posts .slug { display: none; }
+}
+
+/* ---------------------------------------------------------------- the post */
+
+.admin-editor .cm-editor { font-size: 16px; }
+
+/* Headings: .content h2 and h3; h1 is the size of the post's title */
+.admin-editor .cm-line.cm-md-h1 { font-size: 1.8rem; font-weight: 700; line-height: 1.25; }
+.admin-editor .cm-line.cm-md-h2 { padding: 12px 0 8px; border-bottom: 2px solid var(--border); font-size: 1.4rem; font-weight: 700; line-height: 1.25; }
+.admin-editor .cm-line.cm-md-h3 { padding-top: 8px; font-size: 1.2rem; font-weight: 700; line-height: 1.25; }
+.admin-editor .cm-line:is(.cm-md-h4, .cm-md-h5, .cm-md-h6) { font-weight: 700; }
+
+/* Marks shown on the lines being edited, and inline styles */
+.admin-editor .cm-md-mark { color: var(--muted); }
+.admin-editor .cm-md-strong { font-weight: 700; }
+.admin-editor .cm-md-em { font-style: italic; }
+.admin-editor .cm-md-strike { text-decoration: line-through; }
+.admin-editor .cm-md-link { color: var(--link); }
+.admin-editor .cm-md-code {
+  padding: 0.05em 0.25em;
+  border: 1px solid #93c5fd;
+  border-radius: 3px;
+  background: #dbeafe;
+  color: #dc2626;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.95em;
+}
+:root[data-theme='dark'] .admin-editor .cm-md-code { border-color: rgba(96, 165, 250, 0.4); background: rgba(96, 165, 250, 0.3); color: #f87171; }
+.admin-editor .cm-md-bullet { color: var(--text); }
+.admin-editor .cm-md-hr { display: inline-block; width: 100%; border-top: 1px solid var(--border); vertical-align: middle; }
+
+/* Quotations: .content blockquote; the source line: .content figure.quote > figcaption */
+.admin-editor .cm-line.cm-md-quote {
+  position: relative;
+  padding: 0 28px 0 52px;
+  border-left: 6px solid #4fc9e9;
+  border-left-color: color-mix(in oklab, var(--accent) 65%, var(--border));
+  background: color-mix(in oklab, var(--panel) 96%, var(--accent));
+  color: #686868;
+}
+.admin-editor .cm-line.cm-md-quote-first { padding-top: 22px; }
+.admin-editor .cm-line.cm-md-quote-last { padding-bottom: 22px; }
+.admin-editor .cm-line.cm-md-quote-first::before {
+  content: "\201C";
+  position: absolute;
+  top: 16px;
+  left: 18px;
+  color: color-mix(in oklab, var(--accent) 55%, #ffffff);
+  font-size: 3rem;
+  line-height: 1;
+  opacity: 0.25;
+  pointer-events: none;
+}
+.admin-editor .cm-line.cm-md-quote-source { color: #7a7a7a; font-size: 0.95rem; text-align: right; }
+.admin-editor .cm-line.cm-md-quote-source-first { padding-top: 12px; border-top: 1px solid color-mix(in oklab, var(--accent) 25%, var(--border)); }
+:root[data-theme='dark'] .admin-editor .cm-line.cm-md-quote { border-left-color: color-mix(in oklab, var(--accent) 70%, rgba(148, 163, 184, 0.45)); color: #d1d5db; }
+:root[data-theme='dark'] .admin-editor .cm-line.cm-md-quote-source { color: #e2e8f0; }
+
+/* Notes: .note; the colours come from .note-info, .note-tip, … in global.css */
+.admin-editor .cm-line.cm-md-note { padding: 0 18px; border-style: solid; border-width: 0 1px 0 4px; }
+.admin-editor .cm-line.cm-md-note-first { padding-top: 16px; border-top-width: 1px; }
+.admin-editor .cm-line.cm-md-note-last { padding-bottom: 16px; border-bottom-width: 1px; }
+.admin-editor .cm-md-note-label { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.admin-editor .cm-md-note-label .note-icon {
+  width: 1.25em;
+  height: 1.25em;
+  -webkit-mask: var(--note-icon) center / contain no-repeat;
+  mask: var(--note-icon) center / contain no-repeat;
+}
+
+/* Figures: .content figure.img */
+.admin-editor .cm-line.cm-md-figure { text-align: center; }
+.admin-editor .cm-line.cm-md-figcaption { color: var(--muted); font-size: 0.9rem; text-align: center; }
+.admin-editor .cm-md-image { display: block; max-width: 100%; height: auto; margin: 12px auto; border: 1px solid var(--border); }
+:root[data-theme='dark'] .admin-editor .cm-md-image { background: #ffffff; }
+.admin-editor .cm-md-image-missing { min-width: 8em; min-height: 3em; outline: 2px dashed #dc2626; }
+
+/* Code blocks: Expressive Code's Nord colours (ec.config.mjs) */
+.admin-editor .cm-line.cm-md-codeblock {
+  padding: 0 16px;
+  background: #2e3440;
+  color: #d8dee9;
+  caret-color: #d8dee9;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.admin-editor .cm-line.cm-md-codeblock-first { padding-top: 10px; }
+.admin-editor .cm-line.cm-md-codeblock-last { padding-bottom: 10px; }
+.admin-editor .cm-md-fence { color: #81a1c1; }
+
+/* Front matter, tables and HTML, as written */
+.admin-editor .cm-line:is(.cm-md-frontmatter, .cm-md-table, .cm-md-html) { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85rem; }
+.admin-editor .cm-line.cm-md-frontmatter { padding: 0 10px; background: var(--bg); }
+.admin-editor .cm-line.cm-md-frontmatter-first { padding-top: 6px; }
+.admin-editor .cm-line.cm-md-frontmatter-last { padding-bottom: 6px; }
+.admin-editor .cm-line.cm-md-html { color: var(--muted); }

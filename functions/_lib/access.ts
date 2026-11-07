@@ -8,6 +8,7 @@
  * application (`aud`), not expired, and for the editor's email address.
  */
 import type { Config } from './config.ts';
+import { isPassingStatus, retry } from './retry.ts';
 
 interface Jwk {
   kid?: string;
@@ -33,7 +34,18 @@ async function signingKeys(teamDomain: string, unknownKey: boolean): Promise<Map
     const age = Date.now() - cache.fetchedAt;
     if (age < (unknownKey ? KEYS_MIN_AGE : KEYS_MAX_AGE)) return cache.keys;
   }
-  const response = await fetch(`${teamDomain}/cdn-cgi/access/certs`);
+  // A lost connection or an answer of 429 or 5xx asks again, 0.2 and 0.4 seconds later.
+  const response = await retry(
+    async () => {
+      const answer = await fetch(`${teamDomain}/cdn-cgi/access/certs`);
+      if (isPassingStatus(answer.status)) throw new KeysUnavailable(answer.status);
+      return answer;
+    },
+    { attempts: 3, firstDelayMs: 200, retryable: (error) => error instanceof TypeError || error instanceof KeysUnavailable },
+  ).catch((error: unknown) => {
+    if (error instanceof KeysUnavailable) throw new Error(`Cloudflare Access の公開鍵を取得できません（HTTP ${error.status}）`);
+    throw error;
+  });
   if (!response.ok) {
     throw new Error(`Cloudflare Access の公開鍵を取得できません（HTTP ${response.status}）`);
   }
@@ -106,4 +118,13 @@ export async function isEditorToken(token: string, config: Config): Promise<bool
     (typeof payload.nbf !== 'number' || payload.nbf <= now + 60) &&
     email === config.editorEmail.toLowerCase()
   );
+}
+
+/** An answer of Access that may pass, such as 503, while the keys load. */
+class KeysUnavailable extends Error {
+  readonly status: number;
+  constructor(status: number) {
+    super(`HTTP ${status}`);
+    this.status = status;
+  }
 }

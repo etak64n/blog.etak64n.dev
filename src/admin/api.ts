@@ -13,7 +13,22 @@ export class ApiError extends Error {
   }
 }
 
+// A read runs again after a lost connection or an answer of 429 or 5xx, 0.5 and 1 second later.
+// A save runs once: one that reached GitHub before its answer got lost must not happen twice.
 async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const read = (init.method ?? 'GET') === 'GET';
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await callOnce<T>(path, init);
+    } catch (error) {
+      const passing = error instanceof ApiError && (error.status === 0 || [429, 500, 502, 503, 504].includes(error.status));
+      if (!read || !passing || attempt >= 3) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 500 * 2 ** (attempt - 1)));
+    }
+  }
+}
+
+async function callOnce<T>(path: string, init: RequestInit): Promise<T> {
   let response: Response;
   try {
     // Cloudflare Access answers a request without a valid session with a redirect to its login page.

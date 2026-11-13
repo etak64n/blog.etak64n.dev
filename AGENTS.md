@@ -11,6 +11,7 @@ This is an EmDash site -- a CMS built on Astro with a full admin UI at `/_emdash
 | `src/layouts/Base.astro` | The page frame: head, header, footer |
 | `src/components/content/` | How the post text (Portable Text) is drawn: headings with anchors, quotes with their source, note boxes, code boxes, tables |
 | `src/lib/` | Post and magazine queries, pagination, related and adjacent posts, dates (YYYY/MM/DD in Japan time), the table of contents |
+| `src/plugins/ai-image/` | A native EmDash plugin: the editor of image fields with `widget: "ai-image:image"` (`admin.tsx`) and the routes that draw images with Workers AI (`plugin.ts`), registered by `descriptor.mjs` in `astro.config.mjs` |
 
 ## Rules
 

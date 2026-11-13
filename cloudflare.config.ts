@@ -26,6 +26,8 @@ export default defineConfig({
 			SESSION: bindings.kv({ id: "91415a93c788472cbbe6873475d174b6" }),
 			// Resizes media for the Image component and images in rich text.
 			IMAGES: bindings.images(),
+			// Draws images for the editor's image fields (src/plugins/ai-image).
+			AI: bindings.ai(),
 		},
 	},
 });

@@ -45,7 +45,8 @@
 				{
 					"slug": "featured_image",
 					"label": "Featured Image",
-					"type": "image"
+					"type": "image",
+					"widget": "ai-image:image"
 				},
 				{
 					"slug": "content",
@@ -96,7 +97,8 @@
 				{
 					"slug": "cover",
 					"label": "Cover",
-					"type": "image"
+					"type": "image",
+					"widget": "ai-image:image"
 				},
 				{
 					"slug": "posts",

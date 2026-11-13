@@ -15,6 +15,8 @@ A paragraph starting with `出典:` right under an image appears as its caption.
 
 The featured image of a post appears beside it on the home page and over it in the lists of posts. Pages show images resized by Cloudflare Images to the size they take up.
 
+The featured image of a post and the cover of a magazine can be drawn in the admin: under the image, **AI で描く** draws four candidates of a subject (the title, to begin with) with Workers AI, and choosing one adds it to the media library and to the entry. A drawing costs about 1,000 of the account's 10,000 free Neurons a day.
+
 ## Pages
 
 | Page | Path |
@@ -40,6 +42,6 @@ Resized images are kept for a day, in the data center and in the browser (`IMAGE
 
 ## Deploying
 
-A push to `main` deploys the site with the Cloudflare CLI (`pnpm exec cf deploy`), as `.github/workflows/deploy.yml` does. The Worker, its domain and its D1, R2 and KV bindings are in `cloudflare.config.ts`.
+A push to `main` deploys the site with the Cloudflare CLI (`pnpm exec cf deploy`), as `.github/workflows/deploy.yml` does. The Worker, its domain and its bindings (D1, R2, KV, Images, Workers AI) are in `cloudflare.config.ts`.
 
 After changing `package.json`, run the **Lockfile** workflow and commit the `pnpm-lock.yaml` it produces.

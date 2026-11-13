@@ -11,9 +11,9 @@ export default defineConfig({
 		entrypoint: "./src/worker.ts",
 		compatibilityDate: "2026-02-24",
 		compatibilityFlags: ["nodejs_compat"],
-		// Reachable on workers.dev only until the site moves to blog.etak64n.dev.
-		domains: [],
-		workersDev: true,
+		// Served only on the custom domain.
+		domains: ["blog.etak64n.dev"],
+		workersDev: false,
 		previewUrls: false,
 		// No cron trigger, so EmDash's scheduled publishing and its hourly cleanup
 		// never run. The posts collection does not offer scheduling (seed/seed.json).

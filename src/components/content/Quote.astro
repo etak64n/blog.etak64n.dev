@@ -80,7 +80,10 @@ if (marker) {
 				))}
 			</blockquote>
 			<figcaption>
-				<Spans spans={source.children} markDefs={source.markDefs} />
+				{/* One flex item, so that a long title wraps as text instead of squeezing "出典:" into a column. */}
+				<span>
+					<Spans spans={source.children} markDefs={source.markDefs} />
+				</span>
 			</figcaption>
 		</figure>
 	) : (

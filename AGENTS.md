@@ -17,6 +17,7 @@ This is an EmDash site -- a CMS built on Astro with a full admin UI at `/_emdash
 - All pages are server-rendered. No `getStaticPaths()` for CMS content.
 - `entry.id` is the slug (for URLs); `entry.data.id` is the database ULID (for `getTermsForEntries` and the like).
 - Posts are at `/articles/<slug>/` and tags at `/tags/<slug>/`; pages end in a slash (`src/middleware.ts`).
+- Public pages are cached for `PAGE_CACHE_SECONDS` per Cloudflare data center by `src/middleware.ts` (Cache API); requests with the `astro-session` cookie or `_preview` bypass it. Never let a response that varies by visitor through that cache.
 - Pages read only the entries they show (a page of posts, the related posts through tags): D1's read allowance is shared by every database on the account. Never read every post on a page view.
 - Nothing is installed or run on the local machine. The lockfile comes from the Lockfile workflow, and builds run in the Deploy workflow.
 

@@ -18,11 +18,21 @@ export const HOME_MAGAZINES = 8;
 /** Posts in the RSS feed. */
 export const FEED_POSTS = 20;
 
+/**
+ * How long a Cloudflare data center keeps a public page (src/middleware.ts). A published or edited
+ * post reaches visitors within this time; signed-in editors see it at once. Each kept page saves the
+ * D1 reads of rendering it again.
+ */
+export const PAGE_CACHE_SECONDS = 300;
+
 /** Posts per page on /articles/ and on tag pages. */
 export const POSTS_PER_PAGE = 20;
 
 /** Related posts under an article. */
 export const RELATED_POSTS = 4;
+
+/** The newest posts sharing a tag that the related posts are picked from. */
+export const RELATED_CANDIDATES = 8;
 
 /** Tags on so many posts that sharing one does not make two posts related. */
 export const RELATED_IGNORED_TAGS = ["aws"];

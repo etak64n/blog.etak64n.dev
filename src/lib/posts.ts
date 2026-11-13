@@ -1,5 +1,5 @@
 import { getEmDashCollection, getTaxonomyTerms } from "emdash";
-import { POSTS_PER_PAGE, RELATED_IGNORED_TAGS, RELATED_POSTS } from "../site";
+import { POSTS_PER_PAGE, RELATED_CANDIDATES, RELATED_IGNORED_TAGS, RELATED_POSTS } from "../site";
 
 type CollectionResult = Awaited<ReturnType<typeof getEmDashCollection<"posts">>>;
 export type Post = CollectionResult["entries"][number];
@@ -69,8 +69,9 @@ export async function getRelatedPosts(post: Post): Promise<Post[]> {
 	const isOther = (other: Post) => other.data.id !== post.data.id;
 
 	if (own.length > 0) {
-		// Candidates: the newest posts that carry any of the tags.
-		const { entries } = await query({ where: { tag: own }, limit: 20 });
+		// Candidates: the newest posts that carry any of the tags. EmDash reads about 14 rows for each
+		// entry it returns, so the candidates are kept few.
+		const { entries } = await query({ where: { tag: own }, limit: RELATED_CANDIDATES });
 		const scored = entries
 			.filter(isOther)
 			.map((other, index) => ({

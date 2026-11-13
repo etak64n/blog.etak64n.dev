@@ -30,6 +30,10 @@ A magazine gathers posts in an order, with a cover and a description. Posts are 
 
 The About page is the page with the slug `about` in the Pages collection. The header links to it, and to the magazines, once they are published.
 
+## Caching
+
+Public pages are kept for 5 minutes in the cache of the Cloudflare data center that served them, so a page viewed again there costs no database reads. A published or edited post reaches visitors within those 5 minutes; while signed in to the admin, and in previews, pages are always fresh. The time is `PAGE_CACHE_SECONDS` in `src/site.ts`.
+
 ## Deploying
 
 A push to `main` deploys the site with the Cloudflare CLI (`pnpm exec cf deploy`), as `.github/workflows/deploy.yml` does. The Worker, its domain and its D1, R2 and KV bindings are in `cloudflare.config.ts`.

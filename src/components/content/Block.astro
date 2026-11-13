@@ -1,0 +1,24 @@
+---
+/**
+ * Paragraphs and headings of the post text. Headings carry the id that the table of contents links
+ * to (src/lib/content.ts); the source line under an image is set like a caption.
+ */
+interface Props {
+	node: {
+		style?: string;
+		anchor?: string;
+		imageSource?: boolean;
+		textAlign?: string;
+	};
+	index?: number;
+	isInline?: boolean;
+}
+
+const { node } = Astro.props;
+const style = node.style ?? "normal";
+const Tag = /^h[1-6]$/.test(style) ? style : style === "blockquote" ? "blockquote" : "p";
+// Alignment chosen in the editor; left is the default and has no class.
+const align = ["center", "right", "justify"].includes(node.textAlign ?? "") ? `has-text-align-${node.textAlign}` : undefined;
+---
+
+<Tag id={node.anchor} class:list={[align, node.imageSource && "image-source"]}><slot /></Tag>

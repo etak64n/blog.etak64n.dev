@@ -1,0 +1,95 @@
+---
+/**
+ * A quote: consecutive quote paragraphs, which EmDash groups into one node.
+ *
+ * - First line [!NOTE], [!TIP], [!IMPORTANT], [!WARNING] or [!CAUTION]: a note box.
+ * - Last line starting with 出典: the quotation with its source below it (figure.quote).
+ * - Otherwise a plain quote.
+ */
+import { blockText, SOURCE_LINE, type TextBlock } from "../../lib/content";
+import Spans from "./Spans.astro";
+
+interface Props {
+	node: { blocks?: TextBlock[] };
+}
+
+const blocks = (Astro.props.node?.blocks ?? []).filter((block) => Array.isArray(block.children));
+
+const NOTE_KINDS: Record<string, string> = {
+	NOTE: "info",
+	TIP: "tip",
+	IMPORTANT: "important",
+	WARNING: "warn",
+	CAUTION: "alert",
+};
+const NOTE_MARKER = /^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\][ \t]*\n?/;
+
+/** The block without its first `length` characters. */
+function dropStart(block: TextBlock, length: number): TextBlock {
+	let rest = length;
+	const children = [];
+	for (const child of block.children) {
+		const text = child.text ?? "";
+		if (rest >= text.length) {
+			rest -= text.length;
+			continue;
+		}
+		children.push({ ...child, text: text.slice(rest) });
+		rest = 0;
+	}
+	return { ...block, children };
+}
+
+let kind: "note" | "source" | "plain" = "plain";
+let noteClass = "";
+let body = blocks;
+let source: TextBlock | undefined;
+
+const marker = blocks[0] ? NOTE_MARKER.exec(blockText(blocks[0])) : null;
+if (marker) {
+	kind = "note";
+	noteClass = `note-${NOTE_KINDS[marker[1]]}`;
+	const first = dropStart(blocks[0], marker[0].length);
+	body = blockText(first).trim() ? [first, ...blocks.slice(1)] : blocks.slice(1);
+} else if (blocks.length >= 2 && SOURCE_LINE.test(blockText(blocks[blocks.length - 1]).trimStart())) {
+	kind = "source";
+	body = blocks.slice(0, -1);
+	source = blocks[blocks.length - 1];
+}
+---
+
+{
+	kind === "note" ? (
+		<div class:list={["note", noteClass]}>
+			<span class="note-icon" aria-hidden="true" />
+			<div class="note-body">
+				{body.map((block) => (
+					<p>
+						<Spans spans={block.children} markDefs={block.markDefs} />
+					</p>
+				))}
+			</div>
+		</div>
+	) : kind === "source" && source ? (
+		<figure class="quote">
+			<blockquote>
+				{body.map((block) => (
+					<p>
+						<Spans spans={block.children} markDefs={block.markDefs} />
+					</p>
+				))}
+			</blockquote>
+			<figcaption>
+				<Spans spans={source.children} markDefs={source.markDefs} />
+			</figcaption>
+		</figure>
+	) : (
+		<blockquote>
+			{body.map((block) => (
+				<p>
+					<Spans spans={block.children} markDefs={block.markDefs} />
+				</p>
+			))}
+		</blockquote>
+	)
+}

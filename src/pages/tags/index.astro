@@ -1,0 +1,36 @@
+---
+import Base from "../../layouts/Base.astro";
+import { getPostTags, getPublishedPosts, tagPath, type Tag } from "../../lib/posts";
+
+const { posts, cacheHint } = await getPublishedPosts();
+if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+
+// Tags on published posts, with their counts, in the order of their slugs.
+const counts = new Map<string, { tag: Tag; count: number }>();
+for (const tags of (await getPostTags(posts)).values()) {
+	for (const tag of tags) {
+		const entry = counts.get(tag.slug) ?? { tag, count: 0 };
+		entry.count += 1;
+		counts.set(tag.slug, entry);
+	}
+}
+const tags = [...counts.values()].sort((a, b) => a.tag.slug.localeCompare(b.tag.slug));
+---
+
+<Base title="Tags">
+	<h1>Tags</h1>
+	{
+		tags.length > 0 ? (
+			<ul class="taxonomy-list">
+				{tags.map(({ tag, count }) => (
+					<li class="taxonomy-item">
+						<a href={tagPath(tag.slug)}>{tag.label}</a>
+						<span class="taxonomy-count">({count})</span>
+					</li>
+				))}
+			</ul>
+		) : (
+			<p class="empty-state">まだタグがありません。</p>
+		)
+	}
+</Base>

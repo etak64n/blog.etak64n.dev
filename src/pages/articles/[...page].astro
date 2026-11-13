@@ -1,0 +1,22 @@
+---
+// /articles/ and its later pages, /articles/page/<n>/.
+import Pagination from "../../components/Pagination.astro";
+import PostGrid from "../../components/PostGrid.astro";
+import Base from "../../layouts/Base.astro";
+import { getPublishedPosts, paginate, readPageNumber } from "../../lib/posts";
+
+const rest = Astro.params.page;
+const page = rest === undefined ? 1 : readPageNumber(/^page\/([^/]+)$/.exec(rest)?.[1]);
+if (page === null) return Astro.rewrite("/404");
+
+const { posts, cacheHint } = await getPublishedPosts();
+if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+const { items, lastPage } = paginate(posts, page);
+if (page > lastPage) return Astro.rewrite("/404");
+---
+
+<Base title={page === 1 ? "Articles" : `Articles（${page} ページ目）`}>
+	<h1>Articles</h1>
+	{items.length > 0 ? <PostGrid posts={items} /> : <p class="empty-state">まだ記事がありません。</p>}
+	<Pagination base="/articles/" current={page} last={lastPage} />
+</Base>

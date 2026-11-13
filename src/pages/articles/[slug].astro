@@ -1,0 +1,89 @@
+---
+import { decodeSlug, getEmDashEntry } from "emdash";
+import { Image } from "emdash/ui";
+import Body from "../../components/content/Body.astro";
+import FormattedDate from "../../components/FormattedDate.astro";
+import PostGrid from "../../components/PostGrid.astro";
+import TagList from "../../components/TagList.astro";
+import Toc from "../../components/Toc.astro";
+import Base from "../../layouts/Base.astro";
+import { prepareContent } from "../../lib/content";
+import { getPostTags, getPublishedPosts, postDate, relatedPosts } from "../../lib/posts";
+import { CONTENT_IMAGE_SIZES, HERO_PLACEHOLDER } from "../../site";
+import type { Post as PostData } from "../../../emdash-env";
+
+const slug = decodeSlug(Astro.params.slug);
+if (!slug) return Astro.rewrite("/404");
+
+// A draft is found only in a preview, with the token from the admin.
+const { entry: post, cacheHint } = await getEmDashEntry("posts", slug);
+if (!post) return Astro.rewrite("/404");
+
+const { posts, cacheHint: postsHint } = await getPublishedPosts();
+if (Astro.cache?.enabled) {
+	Astro.cache.set(cacheHint);
+	Astro.cache.set(postsHint);
+}
+
+const tagsByPost = await getPostTags([post, ...posts]);
+const tags = tagsByPost.get(post.data.id) ?? [];
+const related = relatedPosts(post, posts, tagsByPost);
+const { blocks, toc } = prepareContent(post.data.content);
+const isDraft = post.data.status !== "published";
+
+/** Absolute URL of the featured image, for link previews. */
+function imageUrl(image: PostData["featured_image"]): string | undefined {
+	if (!image) return undefined;
+	if (image.src) return new URL(image.src, Astro.site).href;
+	const key = typeof image.meta?.storageKey === "string" ? image.meta.storageKey : image.id;
+	return key ? new URL(`/_emdash/api/media/file/${key}`, Astro.site).href : undefined;
+}
+---
+
+<Base
+	title={post.data.title}
+	description={post.data.excerpt}
+	image={imageUrl(post.data.featured_image)}
+	type="article"
+	publishedTime={post.data.publishedAt?.toISOString()}
+	modifiedTime={post.data.updatedAt?.toISOString()}
+	noindex={isDraft}
+	content={{ collection: "posts", id: post.data.id, slug }}
+>
+	<div class="page-body">
+		<Toc items={toc} />
+		<article class="post-col">
+			<div class="post-hero">
+				{
+					post.data.featured_image ? (
+						<Image image={post.data.featured_image} alt="" sizes={CONTENT_IMAGE_SIZES} priority />
+					) : (
+						<img src={HERO_PLACEHOLDER.path} width={HERO_PLACEHOLDER.width} height={HERO_PLACEHOLDER.height} alt="" />
+					)
+				}
+			</div>
+			<h1>{post.data.title}</h1>
+			<p class="post-meta">
+				<FormattedDate date={postDate(post)} />
+				{isDraft && <span class="badge">下書き</span>}
+			</p>
+			<TagList tags={tags} />
+			<div class="content">
+				<Body value={blocks} />
+			</div>
+		</article>
+	</div>
+
+	{
+		related.length > 0 && (
+			<section class="related">
+				<h2>関連記事</h2>
+				<PostGrid posts={related} />
+			</section>
+		)
+	}
+</Base>
+
+<script>
+	import "../../scripts/code.ts";
+</script>

@@ -1,0 +1,31 @@
+---
+// /tags/<slug>/ and its later pages, /tags/<slug>/page/<n>/.
+import { decodeSlug } from "emdash";
+import Pagination from "../../../components/Pagination.astro";
+import PostGrid from "../../../components/PostGrid.astro";
+import Base from "../../../layouts/Base.astro";
+import { getPostTags, getPublishedPosts, paginate, readPageNumber, tagPath } from "../../../lib/posts";
+
+const slug = decodeSlug(Astro.params.slug);
+const rest = Astro.params.page;
+const page = rest === undefined ? 1 : readPageNumber(/^page\/([^/]+)$/.exec(rest)?.[1]);
+if (!slug || page === null) return Astro.rewrite("/404");
+
+const { posts, cacheHint } = await getPublishedPosts();
+if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+
+// A tag has a page while a published post carries it.
+const tagsByPost = await getPostTags(posts);
+const tagged = posts.filter((post) => (tagsByPost.get(post.data.id) ?? []).some((tag) => tag.slug === slug));
+const tag = tagged.length > 0 ? tagsByPost.get(tagged[0].data.id)?.find((item) => item.slug === slug) : undefined;
+if (!tag) return Astro.rewrite("/404");
+
+const { items, lastPage } = paginate(tagged, page);
+if (page > lastPage) return Astro.rewrite("/404");
+---
+
+<Base title={page === 1 ? tag.label : `${tag.label}（${page} ページ目）`}>
+	<h1>{tag.label}</h1>
+	<PostGrid posts={items} />
+	<Pagination base={tagPath(tag.slug)} current={page} last={lastPage} />
+</Base>

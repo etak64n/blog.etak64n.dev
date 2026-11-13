@@ -1,26 +1,29 @@
 {
-  "name": "etak64n-blog",
-  "version": "1.0.0",
-  "description": "Blog built with Zola + Tera, managed with Sveltia CMS (custom extensions in static/admin), deployed to Cloudflare Pages via GitHub Actions.",
+  "name": "blog-etak64n-dev",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "emdash": {
+    "label": "Blog",
+    "seed": "seed/seed.json"
+  },
   "scripts": {
-    "dev": "zola serve",
-    "build": "zola build",
-    "preview": "zola build && wrangler pages dev public",
-    "admin": "bash scripts/admin-dev.sh",
-    "typecheck": "tsc -p functions/tsconfig.json"
+    "typecheck": "cf workers types && astro check"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "15.0.0-beta.5",
+    "@astrojs/react": "^7.0.0",
+    "@emdash-cms/cloudflare": "^1.5.0",
+    "astro": "^7.4.11",
+    "emdash": "^1.5.0",
+    "highlight.js": "^11.12.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260923.1",
-    "typescript": "^7.0.2",
-    "wrangler": "^4.20.0"
+    "@astrojs/check": "^0.9.10",
+    "@cloudflare/workers-types": "^5.20260820.1",
+    "cf": "1.0.0-beta.28"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/etak64n/etak64n-blog.git"
-  },
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/etak64n/etak64n-blog/issues"
-  },
-  "homepage": "https://github.com/etak64n/etak64n-blog#readme"
+  "packageManager": "pnpm@12.18.0"
 }

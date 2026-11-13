@@ -1,0 +1,21 @@
+---
+import { tagPath, type Tag } from "../lib/posts";
+
+interface Props {
+	tags: Tag[];
+}
+
+const { tags } = Astro.props;
+---
+
+{
+	tags.length > 0 && (
+		<p class="tax">
+			{tags.map((tag) => (
+				<a class="pill tag" href={tagPath(tag.slug)}>
+					#{tag.label}
+				</a>
+			))}
+		</p>
+	)
+}

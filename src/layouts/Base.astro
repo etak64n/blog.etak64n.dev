@@ -1,0 +1,89 @@
+---
+import { getSiteSettings } from "emdash";
+import { createPublicPageContext } from "emdash/page";
+import { EmDashBodyEnd, EmDashBodyStart, EmDashHead } from "emdash/ui";
+import SiteFooter from "../components/SiteFooter.astro";
+import SiteHeader from "../components/SiteHeader.astro";
+import { DEFAULT_SITE_TITLE, SITE_LANG } from "../site";
+import "../styles/global.css";
+
+interface Props {
+	/** Page title, followed by the site title. Omitted on the home page. */
+	title?: string;
+	description?: string | null;
+	/** Absolute URL of the link preview image. */
+	image?: string | null;
+	type?: "website" | "article";
+	publishedTime?: string | null;
+	modifiedTime?: string | null;
+	noindex?: boolean;
+	/** The entry the page shows, for its SEO settings in the admin. */
+	content?: { collection: string; id: string; slug?: string | null };
+}
+
+const {
+	title,
+	description,
+	image,
+	type = "website",
+	publishedTime,
+	modifiedTime,
+	noindex = false,
+	content,
+} = Astro.props;
+
+const settings = await getSiteSettings();
+const siteTitle = settings?.title || DEFAULT_SITE_TITLE;
+const fullTitle = title ? `${title} | ${siteTitle}` : siteTitle;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+
+const page = createPublicPageContext({
+	Astro,
+	kind: content ? "content" : "custom",
+	pageType: type,
+	title: fullTitle,
+	pageTitle: title ?? siteTitle,
+	description,
+	canonical,
+	image,
+	content,
+	seo: { ogImage: image, robots: noindex ? "noindex" : null },
+	articleMeta: { publishedTime, modifiedTime },
+	siteName: siteTitle,
+});
+---
+
+<!doctype html>
+<html lang={SITE_LANG}>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>{fullTitle}</title>
+		<EmDashHead page={page} />
+		<script is:inline>
+			// Apply the saved or the system theme before the first paint, so the page never flashes in the other one.
+			(() => {
+				let theme = null;
+				try {
+					theme = localStorage.getItem("theme");
+				} catch {}
+				if (theme !== "light" && theme !== "dark") {
+					theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+				}
+				document.documentElement.dataset.theme = theme;
+			})();
+		</script>
+	</head>
+	<body>
+		<EmDashBodyStart page={page} />
+		<a class="skip-link" href="#main">本文へスキップ</a>
+		<SiteHeader siteTitle={siteTitle} />
+		<main id="main">
+			<div class="wrap">
+				<slot />
+			</div>
+		</main>
+		<SiteFooter />
+		<EmDashBodyEnd page={page} />
+	</body>
+</html>

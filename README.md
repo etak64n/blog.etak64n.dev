@@ -4,7 +4,7 @@ The source of [blog.etak64n.dev](https://blog.etak64n.dev/), a blog on [EmDash](
 
 ## Writing
 
-Posts are written, previewed and published in the admin at [blog.etak64n.dev/_emdash/admin](https://blog.etak64n.dev/_emdash/admin), signed in with a passkey. Posts, tags and images are kept by EmDash (D1 and R2), not in this repository.
+Posts are written, previewed and published in the admin at [blog.etak64n.dev/_emdash/admin](https://blog.etak64n.dev/_emdash/admin), signed in with a passkey. While signed in, the footer of every page links to it. Posts, tags and images are kept by EmDash (D1 and R2), not in this repository.
 
 Two lines in a quote are set in their own way:
 

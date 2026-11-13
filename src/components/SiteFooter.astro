@@ -2,11 +2,22 @@
 import { AUTHOR } from "../site";
 
 const year = new Date().getFullYear();
+
+// The way to the admin, only for signed-in editors. Their requests bypass the page cache
+// (src/middleware.ts), so a page with the link is never kept for other visitors.
+const signedIn = Boolean(Astro.locals.user);
 ---
 
 <footer class="site-footer">
 	<div class="wrap">
 		<p><a href="/rss.xml">RSS</a></p>
+		{
+			signedIn && (
+				<p>
+					<a href="/_emdash/admin/">Admin</a>
+				</p>
+			)
+		}
 		<p>© {year} {AUTHOR}</p>
 	</div>
 </footer>

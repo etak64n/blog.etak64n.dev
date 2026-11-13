@@ -913,9 +913,53 @@ article { padding: 8px 0; }
   color: #93c5fd;
 }
 
-/* Home: the magazines, then the latest posts. The section titles have the size of a page title. */
+/* Home: the latest posts, then the magazines. The section titles have the size of a page title. */
 .home-section + .home-section { margin-top: 32px; }
 .home-section .section-title { font-size: 1.8rem; margin: 0 0 12px; }
+.home-more { margin: 4px 0 0; text-align: right; }
+
+/* Posts one to a row (the home page): the image beside the date, the title, the excerpt and the tags */
+.post-list.post-rows > li {
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
+  padding-bottom: 16px;
+}
+.post-rows .post-meta { position: static; text-align: left; font-size: 0.85rem; }
+.post-rows .post-title { margin: 2px 0 0; font-size: 1.15rem; line-height: 1.4; }
+.post-rows .post-excerpt {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.post-rows .tax { display: flex; flex-wrap: wrap; gap: 6px 8px; margin: 10px 0 0; }
+.post-rows .tax .pill { margin: 0; }
+
+/* Magazines two to a row (the home page): the cover beside the title and the description */
+.post-list.magazine-rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.post-list.magazine-rows > li {
+  margin: 0;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  padding-bottom: 16px;
+}
+.magazine-rows .post-title { margin: 2px 0 0; font-size: 1.1rem; line-height: 1.4; }
+.magazine-rows .magazine-card-description { -webkit-line-clamp: 3; white-space: pre-line; }
+
+@media (max-width: 899px) {
+  .post-list.post-rows > li { grid-template-columns: 200px minmax(0, 1fr); gap: 16px; }
+  .post-list.magazine-rows { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .post-list.post-rows > li,
+  .post-list.magazine-rows > li { grid-template-columns: 120px minmax(0, 1fr); gap: 12px; align-items: start; padding: 12px; }
+  .post-rows .post-title { font-size: 1rem; }
+}
 
 /* Magazine cards: the start of the description under the title */
 .magazine-card-description {

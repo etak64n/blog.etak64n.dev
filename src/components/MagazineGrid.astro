@@ -6,18 +6,24 @@ import { HERO_PLACEHOLDER } from "../site";
 
 interface Props {
 	magazines: Magazine[];
+	/**
+	 * `above`: the cover over the title, in columns (/magazines/). `beside`: the cover beside the title
+	 * and the description, two cards to a row (the home page).
+	 */
+	cover?: "above" | "beside";
 }
 
-const { magazines } = Astro.props;
+const { magazines, cover = "above" } = Astro.props;
+const sizes = cover === "above" ? "(min-width: 640px) 400px, 100vw" : "(min-width: 641px) 220px, 120px";
 ---
 
-<ul class="post-list post-grid magazine-grid">
+<ul class:list={["post-list", cover === "above" ? "post-grid magazine-grid" : "magazine-rows"]}>
 	{
 		magazines.map((magazine) => (
 			<li>
 				<a class="thumb" href={magazinePath(magazine.id)} tabindex="-1" aria-hidden="true">
 					{magazine.data.cover ? (
-						<Image image={magazine.data.cover} alt="" width={800} height={420} sizes="(min-width: 640px) 400px, 100vw" />
+						<Image image={magazine.data.cover} alt="" width={800} height={420} sizes={sizes} />
 					) : (
 						<img src={HERO_PLACEHOLDER.path} width={HERO_PLACEHOLDER.width} height={HERO_PLACEHOLDER.height} alt="" loading="lazy" decoding="async" />
 					)}

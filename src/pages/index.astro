@@ -1,6 +1,6 @@
 ---
 import MagazineGrid from "../components/MagazineGrid.astro";
-import PostGrid from "../components/PostGrid.astro";
+import PostRows from "../components/PostRows.astro";
 import Base from "../layouts/Base.astro";
 import { getMagazines } from "../lib/magazines";
 import { getLatestPosts } from "../lib/posts";
@@ -17,16 +17,27 @@ if (Astro.cache?.enabled) {
 ---
 
 <Base>
+	<section class="home-section">
+		<h2 class="section-title">最新記事</h2>
+		{
+			posts.length > 0 ? (
+				<>
+					<PostRows posts={posts} />
+					<p class="home-more">
+						<a href="/articles/">記事一覧 →</a>
+					</p>
+				</>
+			) : (
+				<p class="empty-state">まだ記事がありません。</p>
+			)
+		}
+	</section>
 	{
 		magazines.length > 0 && (
 			<section class="home-section">
 				<h2 class="section-title">マガジン</h2>
-				<MagazineGrid magazines={magazines} />
+				<MagazineGrid magazines={magazines} cover="beside" />
 			</section>
 		)
 	}
-	<section class="home-section">
-		<h2 class="section-title">最新記事</h2>
-		{posts.length > 0 ? <PostGrid posts={posts} /> : <p class="empty-state">まだ記事がありません。</p>}
-	</section>
 </Base>

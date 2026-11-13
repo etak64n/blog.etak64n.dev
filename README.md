@@ -13,11 +13,13 @@ Two lines in a quote are set in their own way:
 
 A paragraph starting with `出典:` right under an image appears as its caption.
 
+The featured image of a post appears beside it on the home page and over it in the lists of posts. Pages show images resized by Cloudflare Images to the size they take up.
+
 ## Pages
 
 | Page | Path |
 | --- | --- |
-| Magazines and latest posts | `/` |
+| Latest posts and magazines | `/` |
 | All posts | `/articles/` |
 | A post | `/articles/<slug>/` |
 | Magazines | `/magazines/`, `/magazines/<slug>/` |

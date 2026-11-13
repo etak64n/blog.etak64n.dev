@@ -1,0 +1,66 @@
+---
+/**
+ * A table, scrolled sideways when wider than the text column (.table-wrap, as on the previous site).
+ */
+import type { MarkDef, Span } from "../../lib/content";
+import Spans from "./Spans.astro";
+
+interface Cell {
+	content?: Span[];
+	markDefs?: MarkDef[];
+	isHeader?: boolean;
+	colspan?: number;
+	rowspan?: number;
+	textAlign?: string;
+}
+
+interface Props {
+	node: {
+		rows?: { cells?: Cell[] }[];
+		hasHeaderRow?: boolean;
+		markDefs?: MarkDef[];
+	};
+}
+
+const { node } = Astro.props;
+const rows = (node.rows ?? []).map((row) => row.cells ?? []);
+const header = node.hasHeaderRow && rows.length > 0 ? rows[0] : undefined;
+const body = header ? rows.slice(1) : rows;
+const align = (cell: Cell) =>
+	["center", "right", "justify"].includes(cell.textAlign ?? "") ? `text-align: ${cell.textAlign}` : undefined;
+const span = (n: number | undefined) => (n && n > 1 ? n : undefined);
+---
+
+<div class="table-wrap">
+	<table>
+		{
+			header && (
+				<thead>
+					<tr>
+						{header.map((cell) => (
+							<th colspan={span(cell.colspan)} rowspan={span(cell.rowspan)} style={align(cell)} scope="col">
+								<Spans spans={cell.content ?? []} markDefs={[...(node.markDefs ?? []), ...(cell.markDefs ?? [])]} />
+							</th>
+						))}
+					</tr>
+				</thead>
+			)
+		}
+		<tbody>
+			{
+				body.map((cells) => (
+					<tr>
+						{cells.map((cell) => {
+							const Tag = cell.isHeader ? "th" : "td";
+							return (
+								<Tag colspan={span(cell.colspan)} rowspan={span(cell.rowspan)} style={align(cell)}>
+									<Spans spans={cell.content ?? []} markDefs={[...(node.markDefs ?? []), ...(cell.markDefs ?? [])]} />
+								</Tag>
+							);
+						})}
+					</tr>
+				))
+			}
+		</tbody>
+	</table>
+</div>

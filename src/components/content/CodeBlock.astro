@@ -1,0 +1,47 @@
+---
+/**
+ * A code block in the code box of the previous site: a dark box with the file name in a tab above
+ * the code. src/scripts/code.ts adds the copy button and colours the code.
+ *
+ * The file name comes from the block's file name, or from a first line such as
+ * `// filename: src/main.rs`, which is then left out of the code.
+ */
+interface Props {
+	node: {
+		code?: string;
+		language?: string;
+		filename?: string;
+	};
+}
+
+const { node } = Astro.props;
+const FILENAME_LINE =
+	/^\s*(?:\/\/|#|;|--|%|\/\*|<!--)?\s*filename\s*[:=]\s*(.+?)\s*(?:\*\/|-->)?\s*$/i;
+const HAS_EXTENSION = /\.[A-Za-z0-9]+$/;
+
+let code = node.code ?? "";
+let filename = node.filename?.trim() || undefined;
+if (!filename) {
+	const [first, ...rest] = code.split("\n");
+	const match = FILENAME_LINE.exec(first ?? "");
+	if (match && HAS_EXTENSION.test(match[1])) {
+		filename = match[1];
+		code = rest.join("\n");
+	}
+}
+const language = node.language?.trim().toLowerCase() || undefined;
+---
+
+{
+	code && (
+		<div class:list={["codebox", "dark", filename && "has-title"]}>
+			<div class="codebox-bar" />
+			{filename && (
+				<div class="codebox-header">
+					<span class="codebox-filename">{filename}</span>
+				</div>
+			)}
+			<pre class="codebox-pre"><code class={language ? `language-${language}` : undefined}>{code}</code></pre>
+		</div>
+	)
+}

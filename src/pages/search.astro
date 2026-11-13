@@ -1,0 +1,35 @@
+---
+// /search/?q=<words>: posts whose title or text contains every word.
+//
+// The index matches parts of words, which Japanese needs, and only words of three characters or
+// more (the trigram tokenizer of SQLite).
+import { search } from "emdash";
+import PostGrid from "../components/PostGrid.astro";
+import Base from "../layouts/Base.astro";
+import { getPublishedPosts, type Post } from "../lib/posts";
+
+const MIN_WORD_LENGTH = 3;
+
+const query = (Astro.url.searchParams.get("q") ?? "").trim().slice(0, 100);
+const words = query.split(/\s+/).filter(Boolean);
+const tooShort = words.some((word) => [...word].length < MIN_WORD_LENGTH);
+
+let results: Post[] = [];
+if (words.length > 0 && !tooShort) {
+	const [{ items }, { posts }] = await Promise.all([
+		search(query, { collections: ["posts"], limit: 50 }),
+		getPublishedPosts(),
+	]);
+	const byId = new Map(posts.map((post) => [post.data.id, post]));
+	results = items.flatMap((item) => byId.get(item.id) ?? []);
+}
+---
+
+<Base title={query ? `「${query}」の検索結果` : "Search"} noindex={query !== ""}>
+	<h1>Search</h1>
+	<form class="search-form" action="/search/" method="get" role="search">
+		<input type="search" name="q" value={query} aria-label="検索する語" required />
+		<button type="submit">検索</button>
+	</form>
+	{results.length > 0 && <PostGrid posts={results} />}
+</Base>

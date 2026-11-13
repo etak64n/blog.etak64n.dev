@@ -1,0 +1,28 @@
+name: Lockfile
+
+# Resolves pnpm-lock.yaml on the runner, so nothing has to be installed on a local machine. It runs
+# when the dependencies change on the emdash branch, and by hand; download the artifact and commit it.
+on:
+  push:
+    branches: [emdash]
+    paths: [package.json, pnpm-workspace.yaml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Resolve the lockfile
+        run: pnpm install --lockfile-only
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pnpm-lock
+          path: pnpm-lock.yaml

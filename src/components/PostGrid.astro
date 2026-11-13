@@ -1,0 +1,37 @@
+---
+/** Post cards: the featured image (or the placeholder), the title and the date. */
+import { Image } from "emdash/ui";
+import FormattedDate from "./FormattedDate.astro";
+import { postDate, postPath, type Post } from "../lib/posts";
+import { HERO_PLACEHOLDER } from "../site";
+
+interface Props {
+	posts: Post[];
+}
+
+const { posts } = Astro.props;
+---
+
+<ul class="post-list post-grid">
+	{
+		posts.map((post) => (
+			<li>
+				<a class="thumb" href={postPath(post.id)} tabindex="-1" aria-hidden="true">
+					{post.data.featured_image ? (
+						<Image image={post.data.featured_image} alt="" width={800} height={420} sizes="(min-width: 640px) 400px, 100vw" />
+					) : (
+						<img src={HERO_PLACEHOLDER.path} width={HERO_PLACEHOLDER.width} height={HERO_PLACEHOLDER.height} alt="" loading="lazy" decoding="async" />
+					)}
+				</a>
+				<div class="card-body">
+					<div class="post-title">
+						<a href={postPath(post.id)}>{post.data.title}</a>
+					</div>
+					<div class="post-meta">
+						<FormattedDate date={postDate(post)} />
+					</div>
+				</div>
+			</li>
+		))
+	}
+</ul>

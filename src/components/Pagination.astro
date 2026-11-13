@@ -1,0 +1,52 @@
+---
+/** Page links under a list: the current page, its neighbours, the first and the last. */
+import { listPagePath } from "../lib/posts";
+
+interface Props {
+	/** URL of the first page, e.g. `/articles/`; page n is at `<base>page/<n>/`. */
+	base: string;
+	current: number;
+	last: number;
+}
+
+const { base, current, last } = Astro.props;
+
+// The first and last pages, and two on each side of the current one; a gap stands for the rest.
+const items: (number | "gap")[] = [];
+for (let n = 1; n <= last; n += 1) {
+	if (n === 1 || n === last || Math.abs(n - current) <= 2) items.push(n);
+	else if (items.at(-1) !== "gap") items.push("gap");
+}
+---
+
+<nav class="pagination" aria-label="ページ送り">
+	{
+		current > 1 && (
+			<a href={listPagePath(base, current - 1)} rel="prev" aria-label="前のページ">
+				←
+			</a>
+		)
+	}
+	{
+		items.map((item) =>
+			item === "gap" ? (
+				<span class="gap" aria-hidden="true">
+					…
+				</span>
+			) : item === current ? (
+				<span class="current" aria-current="page">
+					{item}
+				</span>
+			) : (
+				<a href={listPagePath(base, item)}>{item}</a>
+			),
+		)
+	}
+	{
+		current < last && (
+			<a href={listPagePath(base, current + 1)} rel="next" aria-label="次のページ">
+				→
+			</a>
+		)
+	}
+</nav>

@@ -1,0 +1,28 @@
+---
+/**
+ * The text of a post: EmDash's Portable Text renderer, with the paragraphs, quotes, code blocks and
+ * tables drawn in the look of the previous site. Images, lists and links keep EmDash's renderers.
+ */
+import { PortableText } from "emdash/ui";
+import Block from "./Block.astro";
+import CodeBlock from "./CodeBlock.astro";
+import Quote from "./Quote.astro";
+import Table from "./Table.astro";
+
+interface Props {
+	/** Blocks prepared by prepareContent() in src/lib/content.ts. */
+	value: unknown[];
+}
+
+const { value } = Astro.props;
+const components = {
+	block: Block,
+	type: {
+		blockquoteGroup: Quote,
+		code: CodeBlock,
+		table: Table,
+	},
+};
+---
+
+<PortableText value={value as never} components={components} />

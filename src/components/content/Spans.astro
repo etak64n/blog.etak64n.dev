@@ -1,0 +1,59 @@
+---
+/**
+ * Inline text of a Portable Text block without the block element around it: the cells of tables
+ * and the lines of quotes. Line breaks in the text become <br>.
+ */
+import type { MarkDef, Span } from "../../lib/content";
+
+interface Props {
+	spans: Span[];
+	markDefs?: MarkDef[];
+}
+
+const { spans, markDefs = [] } = Astro.props;
+const defs = new Map(markDefs.map((def) => [def._key, def]));
+
+/** Only web, mail and same-site links are rendered as links. */
+function safeHref(href: string | undefined): string | undefined {
+	if (!href) return undefined;
+	const value = href.trim();
+	if (/^(https?:|mailto:)/i.test(value) || value.startsWith("/") || value.startsWith("#")) return value;
+	return undefined;
+}
+
+const escape = (text: string) =>
+	text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+
+const DECORATORS: Record<string, string> = {
+	strong: "strong",
+	em: "em",
+	code: "code",
+	underline: "u",
+	"strike-through": "s",
+	superscript: "sup",
+	subscript: "sub",
+};
+
+const html = spans
+	.filter((span) => span._type === "span")
+	.map((span) => {
+		let out = escape(span.text ?? "").replaceAll("\n", "<br>");
+		for (const mark of span.marks ?? []) {
+			const tag = DECORATORS[mark];
+			if (tag) {
+				out = `<${tag}>${out}</${tag}>`;
+				continue;
+			}
+			const def = defs.get(mark);
+			const href = def?._type === "link" ? safeHref(def.href) : undefined;
+			if (href) {
+				const blank = def?.blank && !href.startsWith("#");
+				out = `<a href="${escape(href)}"${blank ? ' target="_blank" rel="noopener noreferrer"' : ""}>${out}</a>`;
+			}
+		}
+		return out;
+	})
+	.join("");
+---
+
+<Fragment set:html={html} />

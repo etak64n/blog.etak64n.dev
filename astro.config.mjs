@@ -17,6 +17,9 @@ export default defineConfig({
 		// The EmDash admin is a React app.
 		react(),
 		emdash({
+			// Known at build time, so EmDash lets Astro resize its own media (/_emdash/api/media/file/…)
+			// through the Cloudflare Images binding. Without it, pages show the uploaded originals.
+			siteUrl: "https://blog.etak64n.dev",
 			database: d1({ binding: "DB", session: "auto", coalesce: true }),
 			storage: r2({ binding: "MEDIA" }),
 		}),

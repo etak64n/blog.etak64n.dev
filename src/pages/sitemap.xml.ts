@@ -2,25 +2,29 @@
 // at their canonical URLs (with the trailing slash). Replaces EmDash's sitemap index, whose post URLs
 // drop the slash and so would each answer with a redirect.
 import type { APIRoute } from "astro";
-import { getPostTags, getPublishedPosts, postPath, tagPath } from "../lib/posts";
+import { getEmDashCollection } from "emdash";
+import { getUsedTags, postPath, tagPath } from "../lib/posts";
 
 const escapeXml = (text: string) =>
 	text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 
 export const GET: APIRoute = async ({ site }) => {
 	const base = site ?? new URL("https://blog.etak64n.dev");
-	const { posts } = await getPublishedPosts();
-	const tags = new Set<string>();
-	for (const list of (await getPostTags(posts)).values()) {
-		for (const tag of list) tags.add(tag.slug);
-	}
+	// The only route that reads every post; crawlers fetch it now and then.
+	const { entries: posts, error } = await getEmDashCollection("posts", {
+		status: "published",
+		orderBy: { published_at: "desc" },
+		limit: 1000,
+	});
+	if (error) throw error;
+	const tags = (await getUsedTags()).map((tag) => tag.slug);
 
 	const entries: { path: string; lastmod?: Date }[] = [
 		{ path: "/", lastmod: posts[0]?.data.updatedAt },
 		{ path: "/articles/", lastmod: posts[0]?.data.updatedAt },
 		...posts.map((post) => ({ path: postPath(post.id), lastmod: post.data.updatedAt })),
 		{ path: "/tags/" },
-		...[...tags].sort().map((slug) => ({ path: tagPath(slug) })),
+		...tags.map((slug) => ({ path: tagPath(slug) })),
 	];
 
 	const body = [

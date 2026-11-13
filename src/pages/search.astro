@@ -6,7 +6,7 @@
 import { search } from "emdash";
 import PostGrid from "../components/PostGrid.astro";
 import Base from "../layouts/Base.astro";
-import { getPublishedPosts, type Post } from "../lib/posts";
+import { getPostsByIds, type Post } from "../lib/posts";
 
 const MIN_WORD_LENGTH = 3;
 
@@ -16,12 +16,8 @@ const tooShort = words.some((word) => [...word].length < MIN_WORD_LENGTH);
 
 let results: Post[] = [];
 if (words.length > 0 && !tooShort) {
-	const [{ items }, { posts }] = await Promise.all([
-		search(query, { collections: ["posts"], limit: 50 }),
-		getPublishedPosts(),
-	]);
-	const byId = new Map(posts.map((post) => [post.data.id, post]));
-	results = items.flatMap((item) => byId.get(item.id) ?? []);
+	const { items } = await search(query, { collections: ["posts"], limit: 50 });
+	results = await getPostsByIds(items.map((item) => item.id));
 }
 ---
 

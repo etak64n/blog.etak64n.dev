@@ -1,20 +1,25 @@
 ---
-/** Page links under a list: the current page, its neighbours, the first and the last. */
+/**
+ * Page links under a list: the pages up to the current one, and the next one while there is more.
+ * Lists are read a page at a time without a total count (src/lib/posts.ts), so the last page is the
+ * one whose next page is empty.
+ */
 import { listPagePath } from "../lib/posts";
 
 interface Props {
 	/** URL of the first page, e.g. `/articles/`; page n is at `<base>page/<n>/`. */
 	base: string;
 	current: number;
-	last: number;
+	hasMore: boolean;
 }
 
-const { base, current, last } = Astro.props;
+const { base, current, hasMore } = Astro.props;
 
-// The first and last pages, and two on each side of the current one; a gap stands for the rest.
+// The first page, the two before the current one, the current one and the next; a gap stands for the rest.
 const items: (number | "gap")[] = [];
+const last = hasMore ? current + 1 : current;
 for (let n = 1; n <= last; n += 1) {
-	if (n === 1 || n === last || Math.abs(n - current) <= 2) items.push(n);
+	if (n === 1 || n >= current - 2) items.push(n);
 	else if (items.at(-1) !== "gap") items.push("gap");
 }
 ---
@@ -43,7 +48,7 @@ for (let n = 1; n <= last; n += 1) {
 		)
 	}
 	{
-		current < last && (
+		hasMore && (
 			<a href={listPagePath(base, current + 1)} rel="next" aria-label="次のページ">
 				→
 			</a>

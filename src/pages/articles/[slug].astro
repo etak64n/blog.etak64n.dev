@@ -8,7 +8,7 @@ import TagList from "../../components/TagList.astro";
 import Toc from "../../components/Toc.astro";
 import Base from "../../layouts/Base.astro";
 import { prepareContent } from "../../lib/content";
-import { getPostTags, getPublishedPosts, postDate, relatedPosts } from "../../lib/posts";
+import { getRelatedPosts, postDate, postTags } from "../../lib/posts";
 import { CONTENT_IMAGE_SIZES, HERO_PLACEHOLDER } from "../../site";
 import type { Post as PostData } from "../../../emdash-env";
 
@@ -19,15 +19,10 @@ if (!slug) return Astro.rewrite("/404");
 const { entry: post, cacheHint } = await getEmDashEntry("posts", slug);
 if (!post) return Astro.rewrite("/404");
 
-const { posts, cacheHint: postsHint } = await getPublishedPosts();
-if (Astro.cache?.enabled) {
-	Astro.cache.set(cacheHint);
-	Astro.cache.set(postsHint);
-}
+if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
 
-const tagsByPost = await getPostTags([post, ...posts]);
-const tags = tagsByPost.get(post.data.id) ?? [];
-const related = relatedPosts(post, posts, tagsByPost);
+const tags = postTags(post);
+const related = await getRelatedPosts(post);
 const { blocks, toc } = prepareContent(post.data.content);
 const isDraft = post.data.status !== "published";
 

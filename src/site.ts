@@ -25,6 +25,13 @@ export const FEED_POSTS = 20;
  */
 export const PAGE_CACHE_SECONDS = 300;
 
+/**
+ * How long a Cloudflare data center, and then the browser, keeps a resized image (/_image, see
+ * src/middleware.ts). Each kept image saves a Worker request and an R2 read; an image replaced in the
+ * media library in place can take up to twice this time to reach visitors.
+ */
+export const IMAGE_CACHE_SECONDS = 86400;
+
 /** Posts per page on /articles/ and on tag pages. */
 export const POSTS_PER_PAGE = 20;
 

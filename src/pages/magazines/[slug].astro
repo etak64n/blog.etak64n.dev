@@ -4,6 +4,7 @@ import { decodeSlug } from "emdash";
 import { Image } from "emdash/ui";
 import PostGrid from "../../components/PostGrid.astro";
 import Base from "../../layouts/Base.astro";
+import { heightAtWidth } from "../../lib/images";
 import { getMagazine } from "../../lib/magazines";
 import { HERO_PLACEHOLDER } from "../../site";
 
@@ -27,7 +28,14 @@ const isDraft = magazine.data.status !== "published";
 		<div class="thumb">
 			{
 				magazine.data.cover ? (
-					<Image image={magazine.data.cover} alt="" width={800} height={420} sizes="(min-width: 900px) 360px, 100vw" priority />
+					<Image
+						image={magazine.data.cover}
+						alt=""
+						width={800}
+						height={heightAtWidth(magazine.data.cover, 800)}
+						sizes="(min-width: 900px) 360px, 100vw"
+						priority
+					/>
 				) : (
 					<img src={HERO_PLACEHOLDER.path} width={HERO_PLACEHOLDER.width} height={HERO_PLACEHOLDER.height} alt="" />
 				)

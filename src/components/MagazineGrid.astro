@@ -1,6 +1,7 @@
 ---
 /** Magazine cards: the cover (or the placeholder), the title and the start of the description. */
 import { Image } from "emdash/ui";
+import { heightAtWidth } from "../lib/images";
 import { magazinePath, type Magazine } from "../lib/magazines";
 import { HERO_PLACEHOLDER } from "../site";
 
@@ -23,7 +24,7 @@ const sizes = cover === "above" ? "(min-width: 640px) 400px, 100vw" : "(min-widt
 			<li>
 				<a class="thumb" href={magazinePath(magazine.id)} tabindex="-1" aria-hidden="true">
 					{magazine.data.cover ? (
-						<Image image={magazine.data.cover} alt="" width={800} height={420} sizes={sizes} />
+						<Image image={magazine.data.cover} alt="" width={800} height={heightAtWidth(magazine.data.cover, 800)} sizes={sizes} />
 					) : (
 						<img src={HERO_PLACEHOLDER.path} width={HERO_PLACEHOLDER.width} height={HERO_PLACEHOLDER.height} alt="" loading="lazy" decoding="async" />
 					)}

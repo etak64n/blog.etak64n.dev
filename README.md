@@ -36,6 +36,8 @@ The About page is the page with the slug `about` in the Pages collection. The he
 
 Public pages are kept for 5 minutes in the cache of the Cloudflare data center that served them, so a page viewed again there costs no database reads. A published or edited post reaches visitors within those 5 minutes; while signed in to the admin, and in previews, pages are always fresh. The time is `PAGE_CACHE_SECONDS` in `src/site.ts`.
 
+Resized images are kept for a day, in the data center and in the browser (`IMAGE_CACHE_SECONDS`). An image replaced in place in the media library can take up to two days to change for visitors; an image uploaded anew and chosen instead appears like any other edit, within the 5 minutes of the page.
+
 ## Deploying
 
 A push to `main` deploys the site with the Cloudflare CLI (`pnpm exec cf deploy`), as `.github/workflows/deploy.yml` does. The Worker, its domain and its D1, R2 and KV bindings are in `cloudflare.config.ts`.

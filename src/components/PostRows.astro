@@ -3,6 +3,7 @@
 import { Image } from "emdash/ui";
 import FormattedDate from "./FormattedDate.astro";
 import TagList from "./TagList.astro";
+import { heightAtWidth } from "../lib/images";
 import { postDate, postPath, postTags, type Post } from "../lib/posts";
 import { HERO_PLACEHOLDER } from "../site";
 
@@ -23,7 +24,7 @@ const { posts } = Astro.props;
 							image={post.data.featured_image}
 							alt=""
 							width={520}
-							height={273}
+							height={heightAtWidth(post.data.featured_image, 520)}
 							sizes="(min-width: 900px) 260px, (min-width: 641px) 200px, 120px"
 						/>
 					) : (

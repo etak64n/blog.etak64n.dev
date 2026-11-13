@@ -1,13 +1,13 @@
 // Admin side of the AI image plugin: the editor of an image field that uses `widget: "ai-image:image"`.
 //
 // Top: the current image, with buttons to choose another from the media library or to remove it.
-// Below: a subject (the entry's title to start with) and a button that draws CANDIDATES images with
+// Below: a subject (the entry's title until edited) and a button that draws CANDIDATES images with
 // Workers AI through the plugin's routes (plugin.ts). Choosing a candidate uploads it to the media
 // library and puts it in the field; the entry is saved as usual. Colors come from the admin's own
 // variables, so the editor follows its light and dark themes.
 
 import { MediaPickerModal, uploadMedia, type MediaItem } from "@emdash-cms/admin";
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 /** The value EmDash keeps in an image field, as its own image field editor writes it. */
 interface ImageValue {
@@ -36,8 +36,11 @@ interface FieldProps {
 type Candidate = { state: "drawing" } | { state: "ready"; image: string } | { state: "failed" };
 
 const CANDIDATES = 4;
-/** The id of the title field in the entry editor; its value starts the subject. */
+/** The id of the title field in the entry editor. The subject follows it until edited by hand. */
 const TITLE_FIELD_ID = "field-title";
+/** How long to look for the title once the editor shows this field: the entry may still be loading. */
+const TITLE_WAIT_MS = 10_000;
+const TITLE_POLL_MS = 250;
 const RADIUS = 6;
 /** The shape the site's cards crop images to, so candidates show as they will appear there. */
 const CARD_RATIO = "1200 / 630";
@@ -170,12 +173,31 @@ function AiImageField({ value, onChange, label, id }: FieldProps) {
 	const [saving, setSaving] = useState<number | null>(null);
 	const [error, setError] = useState("");
 
-	/** Starts an empty subject with the entry's title, when the editor shows it. */
-	function fillFromTitle() {
-		const title = document.getElementById(TITLE_FIELD_ID);
-		if (title instanceof HTMLInputElement && title.value) setSubject((current) => current || title.value);
-	}
-	useEffect(fillFromTitle, []);
+	const subjectEdited = useRef(false);
+
+	// The subject is the entry's title until it is edited here. The title field is found by polling,
+	// as the editor fills it in once the entry has loaded, and followed through its input events.
+	useEffect(() => {
+		let title: HTMLInputElement | null = null;
+		const follow = () => {
+			if (!subjectEdited.current && title) setSubject(title.value);
+		};
+		const startedAt = Date.now();
+		const timer = window.setInterval(() => {
+			const found = document.getElementById(TITLE_FIELD_ID);
+			if (found instanceof HTMLInputElement && found !== title) {
+				title?.removeEventListener("input", follow);
+				title = found;
+				title.addEventListener("input", follow);
+			}
+			follow();
+			if (title?.value || Date.now() - startedAt > TITLE_WAIT_MS) window.clearInterval(timer);
+		}, TITLE_POLL_MS);
+		return () => {
+			window.clearInterval(timer);
+			title?.removeEventListener("input", follow);
+		};
+	}, []);
 
 	async function draw() {
 		setDrawing(true);
@@ -255,8 +277,10 @@ function AiImageField({ value, onChange, label, id }: FieldProps) {
 						id={id}
 						type="text"
 						value={subject}
-						onChange={(event) => setSubject(event.target.value)}
-						onFocus={fillFromTitle}
+						onChange={(event) => {
+							subjectEdited.current = true;
+							setSubject(event.target.value);
+						}}
 						placeholder="題材"
 						aria-label="描く題材"
 						style={styles.input}

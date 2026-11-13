@@ -87,6 +87,18 @@ export async function getRelatedPosts(post: Post): Promise<Post[]> {
 	return entries.filter(isOther).slice(0, RELATED_POSTS);
 }
 
+/** The published posts just before and just after `post`, in the order they were published. */
+export async function getAdjacentPosts(post: Post) {
+	const published = post.data.publishedAt;
+	if (!published) return { previous: undefined, next: undefined };
+	const at = published.toISOString();
+	const [before, after] = await Promise.all([
+		query({ where: { published_at: { lt: at } }, limit: 1 }),
+		query({ where: { published_at: { gt: at } }, orderBy: { published_at: "asc" }, limit: 1 }),
+	]);
+	return { previous: before.entries[0], next: after.entries[0] };
+}
+
 /** Tags on at least one published post, with their counts, in the order of their slugs. */
 export async function getUsedTags() {
 	const terms = await getTaxonomyTerms("tag", { includeCounts: true });

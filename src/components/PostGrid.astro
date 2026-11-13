@@ -7,12 +7,14 @@ import { HERO_PLACEHOLDER } from "../site";
 
 interface Props {
 	posts: Post[];
+	/** `grid`: cards in columns (lists of posts). `list`: one card per row (the posts of a magazine, in order). */
+	layout?: "grid" | "list";
 }
 
-const { posts } = Astro.props;
+const { posts, layout = "grid" } = Astro.props;
 ---
 
-<ul class="post-list post-grid">
+<ul class:list={["post-list", layout === "grid" && "post-grid"]}>
 	{
 		posts.map((post) => (
 			<li>

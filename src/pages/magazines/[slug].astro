@@ -1,0 +1,43 @@
+---
+// A magazine: its cover, title and description, then its published posts in the order chosen in the admin.
+import { decodeSlug } from "emdash";
+import { Image } from "emdash/ui";
+import PostGrid from "../../components/PostGrid.astro";
+import Base from "../../layouts/Base.astro";
+import { getMagazine } from "../../lib/magazines";
+import { HERO_PLACEHOLDER } from "../../site";
+
+const slug = decodeSlug(Astro.params.slug);
+if (!slug) return Astro.rewrite("/404");
+
+const { magazine, posts, cacheHint } = await getMagazine(slug);
+if (!magazine) return Astro.rewrite("/404");
+if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+
+const isDraft = magazine.data.status !== "published";
+---
+
+<Base
+	title={magazine.data.title}
+	description={magazine.data.description}
+	noindex={isDraft}
+	content={{ collection: "magazines", id: magazine.data.id, slug }}
+>
+	<header class="magazine-header">
+		<div class="thumb">
+			{
+				magazine.data.cover ? (
+					<Image image={magazine.data.cover} alt="" width={800} height={420} sizes="(min-width: 900px) 360px, 100vw" priority />
+				) : (
+					<img src={HERO_PLACEHOLDER.path} width={HERO_PLACEHOLDER.width} height={HERO_PLACEHOLDER.height} alt="" />
+				)
+			}
+		</div>
+		<div class="magazine-header-body">
+			<h1>{magazine.data.title}</h1>
+			{isDraft && <span class="badge">下書き</span>}
+			{magazine.data.description && <p class="magazine-description">{magazine.data.description}</p>}
+		</div>
+	</header>
+	{posts.length > 0 && <PostGrid posts={posts} layout="list" />}
+</Base>

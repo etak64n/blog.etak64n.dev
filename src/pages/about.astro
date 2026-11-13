@@ -1,0 +1,33 @@
+---
+// /about/: the page with the slug `about` in the Pages collection, written in the admin. It shows
+// once it is published; the header links to it from then on.
+import { getEmDashEntry } from "emdash";
+import Body from "../components/content/Body.astro";
+import Toc from "../components/Toc.astro";
+import Base from "../layouts/Base.astro";
+import { prepareContent } from "../lib/content";
+
+const { entry: page, cacheHint } = await getEmDashEntry("pages", "about");
+if (!page) return Astro.rewrite("/404");
+if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+
+const { blocks } = prepareContent(page.data.content);
+const isDraft = page.data.status !== "published";
+---
+
+<Base title={page.data.title} noindex={isDraft} content={{ collection: "pages", id: page.data.id, slug: "about" }}>
+	<div class="page-body">
+		<Toc items={[]} />
+		<article class="post-col">
+			<h1>{page.data.title}</h1>
+			{isDraft && <p class="post-meta"><span class="badge">下書き</span></p>}
+			<div class="content">
+				<Body value={blocks} />
+			</div>
+		</article>
+	</div>
+</Base>
+
+<script>
+	import "../scripts/code.ts";
+</script>

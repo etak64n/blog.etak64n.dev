@@ -912,3 +912,84 @@ article { padding: 8px 0; }
   border-color: rgba(96, 165, 250, 0.5);
   color: #93c5fd;
 }
+
+/* Home: the magazines, then the latest posts. The section titles have the size of a page title. */
+.home-section + .home-section { margin-top: 32px; }
+.home-section .section-title { font-size: 1.8rem; margin: 0 0 12px; }
+
+/* Magazine cards: the start of the description under the title */
+.magazine-card-description {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.post-list.magazine-grid > li { padding-bottom: 16px; }
+
+/* A magazine: the cover beside its title and description, then its posts one per row */
+.magazine-header {
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  margin: 0 0 24px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+}
+.magazine-header .thumb img { aspect-ratio: 1200 / 630; }
+.magazine-header h1 { margin: 4px 0 8px; }
+.magazine-description { margin: 8px 0 0; white-space: pre-line; }
+@media (max-width: 900px) { .magazine-header { grid-template-columns: 1fr; } }
+
+/* Sharing, under the post text */
+.share {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 32px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.share-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.share-button:hover { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; text-decoration: none; }
+.share-hatena { font-weight: 700; font-family: Verdana, sans-serif; }
+:root[data-theme='dark'] .share-button:hover { background: rgba(59, 130, 246, 0.18); border-color: rgba(96, 165, 250, 0.45); color: #93c5fd; }
+
+/* The posts before and after this one */
+.post-nav { margin: 16px 0 0; }
+.post-nav-magazine { margin: 0 0 8px; color: var(--muted); font-size: 0.9rem; }
+.post-nav-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.post-nav-links a {
+  display: block;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  text-decoration: none;
+}
+.post-nav-links a:hover { border-color: #bfdbfe; background: #eff6ff; }
+:root[data-theme='dark'] .post-nav-links a:hover { border-color: rgba(96, 165, 250, 0.45); background: rgba(59, 130, 246, 0.12); }
+.post-nav-links a.next { text-align: right; }
+.post-nav-label { display: block; color: var(--muted); font-size: 0.8rem; }
+.post-nav-title { display: block; margin-top: 2px; font-weight: 600; font-size: 0.95rem; line-height: 1.35; }
+@media (max-width: 640px) { .post-nav-links { grid-template-columns: 1fr; } }
+
+/* Footer: the feed link beside the copyright */
+.site-footer .wrap { gap: 16px; }

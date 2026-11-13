@@ -1,0 +1,48 @@
+---
+/**
+ * Links to the post before and after this one: in its magazine when it is in one, otherwise in the
+ * order of publication.
+ */
+import { postPath, type Post } from "../lib/posts";
+
+interface Props {
+	previous?: Post;
+	next?: Post;
+	/** The magazine the order comes from. */
+	magazine?: { title: string; href: string };
+}
+
+const { previous, next, magazine } = Astro.props;
+---
+
+{
+	(previous || next || magazine) && (
+		<nav class="post-nav" aria-label="前後の記事">
+			{magazine && (
+				<p class="post-nav-magazine">
+					マガジン「<a href={magazine.href}>{magazine.title}</a>」
+				</p>
+			)}
+			{(previous || next) && (
+				<div class="post-nav-links">
+					{previous ? (
+						<a class="prev" href={postPath(previous.id)} rel="prev">
+							<span class="post-nav-label">← 前の記事</span>
+							<span class="post-nav-title">{previous.data.title}</span>
+						</a>
+					) : (
+						<span />
+					)}
+					{next ? (
+						<a class="next" href={postPath(next.id)} rel="next">
+							<span class="post-nav-label">次の記事 →</span>
+							<span class="post-nav-title">{next.data.title}</span>
+						</a>
+					) : (
+						<span />
+					)}
+				</div>
+			)}
+		</nav>
+	)
+}

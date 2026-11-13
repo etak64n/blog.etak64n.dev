@@ -6,17 +6,18 @@ This is an EmDash site -- a CMS built on Astro with a full admin UI at `/_emdash
 | --- | --- |
 | `cloudflare.config.ts` | The Worker, its domain and bindings, read by `cf` and `@astrojs/cloudflare` |
 | `astro.config.mjs` | Astro config with the `emdash()` integration |
-| `seed/seed.json` | The schema (the `posts` collection and the `tag` taxonomy) and the posts moved over from the previous blog. It is applied once, when setup runs on an empty database |
+| `seed/seed.json` | The schema (the `posts`, `magazines` and `pages` collections, the `magazines_posts` relation and the `tag` taxonomy) and the posts moved over from the previous blog. It is applied once, when setup runs on an empty database; the live site's schema is changed through the admin or its API |
 | `src/styles/global.css` | All the styles. The look is that of the previous blog (Zola, then Astro); keep it |
 | `src/layouts/Base.astro` | The page frame: head, header, footer |
 | `src/components/content/` | How the post text (Portable Text) is drawn: headings with anchors, quotes with their source, note boxes, code boxes, tables |
-| `src/lib/` | Post queries, pagination, related posts, dates (YYYY/MM/DD in Japan time), the table of contents |
+| `src/lib/` | Post and magazine queries, pagination, related and adjacent posts, dates (YYYY/MM/DD in Japan time), the table of contents |
 
 ## Rules
 
 - All pages are server-rendered. No `getStaticPaths()` for CMS content.
 - `entry.id` is the slug (for URLs); `entry.data.id` is the database ULID (for `getTermsForEntries` and the like).
 - Posts are at `/articles/<slug>/` and tags at `/tags/<slug>/`; pages end in a slash (`src/middleware.ts`).
+- Pages read only the entries they show (a page of posts, the related posts through tags): D1's read allowance is shared by every database on the account. Never read every post on a page view.
 - Nothing is installed or run on the local machine. The lockfile comes from the Lockfile workflow, and builds run in the Deploy workflow.
 
 ## Skills and docs

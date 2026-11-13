@@ -17,11 +17,18 @@ A paragraph starting with `出典:` right under an image appears as its caption.
 
 | Page | Path |
 | --- | --- |
-| Latest posts | `/` |
+| Magazines and latest posts | `/` |
 | All posts | `/articles/` |
 | A post | `/articles/<slug>/` |
+| Magazines | `/magazines/`, `/magazines/<slug>/` |
 | Tags | `/tags/`, `/tags/<slug>/` |
 | Search | `/search/?q=<words>` |
+| About | `/about/` |
+| RSS feed | `/rss.xml` |
+
+A magazine gathers posts in an order, with a cover and a description. Posts are added to it from the magazine or from the post, in the admin. A post in a magazine links to the posts before and after it in the magazine; other posts link to the posts published before and after them.
+
+The About page is the page with the slug `about` in the Pages collection. The header links to it, and to the magazines, once they are published.
 
 ## Deploying
 

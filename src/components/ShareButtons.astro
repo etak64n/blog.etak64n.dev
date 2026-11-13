@@ -1,0 +1,51 @@
+---
+/** Sharing a post: posting it on X, bookmarking it on Hatena Bookmark, or copying its link. */
+interface Props {
+	/** Canonical URL of the post. */
+	url: string;
+	title: string;
+}
+
+const { url, title } = Astro.props;
+const xUrl = `https://x.com/intent/post?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`;
+const hatenaUrl = `https://b.hatena.ne.jp/entry/s/${url.replace(/^https:\/\//, "")}`;
+---
+
+<div class="share" aria-label="この記事を共有">
+	<a class="share-button" href={xUrl} target="_blank" rel="noopener noreferrer">
+		<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="currentColor">
+			<path d="M18.9 2H22l-6.8 7.8L23.2 22h-6.3l-4.9-6.4L6.4 22H3.3l7.3-8.3L2.9 2h6.4l4.4 5.9L18.9 2Zm-1.1 18.1h1.7L8.3 3.8H6.5l11.3 16.3Z"></path>
+		</svg>
+		ポスト
+	</a>
+	<a class="share-button" href={hatenaUrl} target="_blank" rel="noopener noreferrer">
+		<span class="share-hatena" aria-hidden="true">B!</span>
+		ブックマーク
+	</a>
+	<button class="share-button" type="button" data-copy-link={url}>
+		<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"></path>
+			<path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"></path>
+		</svg>
+		<span data-copy-label>リンクをコピー</span>
+	</button>
+</div>
+
+<script>
+	// Copies the post's link; the label says so for a moment.
+	for (const button of document.querySelectorAll<HTMLButtonElement>("[data-copy-link]")) {
+		const label = button.querySelector<HTMLElement>("[data-copy-label]");
+		const original = label?.textContent ?? "";
+		button.addEventListener("click", async () => {
+			try {
+				await navigator.clipboard.writeText(button.dataset.copyLink ?? "");
+				if (label) label.textContent = "コピーしました";
+				setTimeout(() => {
+					if (label) label.textContent = original;
+				}, 1500);
+			} catch {
+				// The clipboard can be unavailable (an insecure page or a denied permission); nothing is copied.
+			}
+		});
+	}
+</script>

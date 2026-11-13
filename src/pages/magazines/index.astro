@@ -1,0 +1,13 @@
+---
+import MagazineGrid from "../../components/MagazineGrid.astro";
+import Base from "../../layouts/Base.astro";
+import { getMagazines } from "../../lib/magazines";
+
+const { magazines, cacheHint } = await getMagazines(100);
+if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+---
+
+<Base title="Magazines">
+	<h1>Magazines</h1>
+	{magazines.length > 0 && <MagazineGrid magazines={magazines} />}
+</Base>

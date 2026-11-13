@@ -12,6 +12,12 @@ export const AUTHOR = "etak64n";
 /** Posts on the home page. */
 export const HOME_POSTS = 10;
 
+/** Magazines on the home page; /magazines/ lists them all. */
+export const HOME_MAGAZINES = 8;
+
+/** Posts in the RSS feed. */
+export const FEED_POSTS = 20;
+
 /** Posts per page on /articles/ and on tag pages. */
 export const POSTS_PER_PAGE = 20;
 

@@ -3,13 +3,24 @@
 	"version": "1",
 	"meta": {
 		"name": "etak64n's blog",
-		"description": "Posts, tags and the posts moved over from the previous blog",
+		"description": "Posts, magazines that gather them, standalone pages, tags, and the posts moved over from the previous blog",
 		"author": "etak64n"
 	},
 	"settings": {
 		"title": "etak64n's blog",
 		"timezone": "Asia/Tokyo"
 	},
+	"relations": [
+		{
+			"slug": "magazines_posts",
+			"parentCollection": "magazines",
+			"childCollection": "posts",
+			"parentLabel": "Magazines",
+			"parentLabelSingular": "Magazine",
+			"childLabel": "Posts",
+			"childLabelSingular": "Post"
+		}
+	],
 	"collections": [
 		{
 			"slug": "posts",
@@ -46,6 +57,81 @@
 					"slug": "excerpt",
 					"label": "Excerpt",
 					"type": "text"
+				},
+				{
+					"slug": "magazines",
+					"label": "Magazines",
+					"type": "reference",
+					"validation": {
+						"relation": "magazines_posts",
+						"relationSide": "child",
+						"multiple": true
+					}
+				}
+			]
+		},
+		{
+			"slug": "magazines",
+			"label": "Magazines",
+			"labelSingular": "Magazine",
+			"urlPattern": "/magazines/{slug}/",
+			"supports": [
+				"drafts",
+				"revisions",
+				"preview",
+				"seo"
+			],
+			"fields": [
+				{
+					"slug": "title",
+					"label": "Title",
+					"type": "string",
+					"required": true
+				},
+				{
+					"slug": "description",
+					"label": "Description",
+					"type": "text"
+				},
+				{
+					"slug": "cover",
+					"label": "Cover",
+					"type": "image"
+				},
+				{
+					"slug": "posts",
+					"label": "Posts",
+					"type": "reference",
+					"validation": {
+						"relation": "magazines_posts",
+						"relationSide": "parent",
+						"multiple": true
+					}
+				}
+			]
+		},
+		{
+			"slug": "pages",
+			"label": "Pages",
+			"labelSingular": "Page",
+			"urlPattern": "/{slug}/",
+			"supports": [
+				"drafts",
+				"revisions",
+				"preview",
+				"seo"
+			],
+			"fields": [
+				{
+					"slug": "title",
+					"label": "Title",
+					"type": "string",
+					"required": true
+				},
+				{
+					"slug": "content",
+					"label": "Content",
+					"type": "portableText"
 				}
 			]
 		}

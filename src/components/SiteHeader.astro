@@ -1,15 +1,19 @@
 ---
 import ThemeToggle from "./ThemeToggle.astro";
+import { getContentLinks } from "../lib/navigation";
 
 interface Props {
 	siteTitle: string;
 }
 
 const { siteTitle } = Astro.props;
+const show = await getContentLinks();
 const links = [
 	{ href: "/articles/", label: "Articles" },
+	...(show.magazines ? [{ href: "/magazines/", label: "Magazines" }] : []),
 	{ href: "/tags/", label: "Tags" },
 	{ href: "/search/", label: "Search" },
+	...(show.about ? [{ href: "/about/", label: "About" }] : []),
 ];
 ---
 

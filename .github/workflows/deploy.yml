@@ -1,10 +1,10 @@
 name: Deploy
 
-# Publishes the site to the Worker blog-etak64n-dev. The emdash branch deploys too until the site
-# moves to blog.etak64n.dev; the type check only reports, so it never holds back a deploy.
+# Publishes the site to the Worker blog-etak64n-dev on blog.etak64n.dev. The type check only
+# reports, so it never holds back a deploy.
 on:
   push:
-    branches: [main, emdash]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
